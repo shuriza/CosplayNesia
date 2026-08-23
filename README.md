@@ -1,6 +1,6 @@
 # CosplayNesia
 
-Homepage marketplace sewa dan beli kostum cosplay yang terinspirasi dari pola pengalaman pengguna Cosulagi, dibangun sebagai implementasi mandiri dengan identitas CosplayNesia.
+Homepage marketplace sewa dan beli kostum cosplay yang terinspirasi dari pola pengalaman pengguna, dibangun sebagai implementasi mandiri dengan identitas CosplayNesia.
 
 ## Menjalankan Lokal
 
