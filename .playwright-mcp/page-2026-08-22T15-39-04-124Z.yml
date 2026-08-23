@@ -1,0 +1,198 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e4]:
+    - navigation [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e7] [cursor=pointer]:
+          - /url: /
+          - img "Cosulagi Logo" [ref=e8]
+        - generic [ref=e10]:
+          - textbox "Cari kostum..." [ref=e11]
+          - button "Cari" [ref=e12] [cursor=pointer]
+        - generic [ref=e17]:
+          - button "Masuk" [ref=e18] [cursor=pointer]
+          - link [ref=e19] [cursor=pointer]:
+            - /url: /register
+            - button "Daftar" [ref=e20]
+    - generic [ref=e23]:
+      - link "Terlaris" [ref=e24] [cursor=pointer]:
+        - /url: /search?sort_by=popular
+      - link "Terbaru" [ref=e27] [cursor=pointer]:
+        - /url: /search?sort_by=newest
+      - link "Sedang Tren" [ref=e30] [cursor=pointer]:
+        - /url: /search?sort_by=trending
+      - link "Termurah" [ref=e34] [cursor=pointer]:
+        - /url: /search?sort_by=cheapest
+      - link "Premium" [ref=e38] [cursor=pointer]:
+        - /url: /search?sort_by=expensive
+      - link "Paling Relevan" [ref=e42] [cursor=pointer]:
+        - /url: /search?sort_by=best_match
+      - link "Semua Kategori" [ref=e47] [cursor=pointer]:
+        - /url: /search
+    - generic [ref=e53]:
+      - link "Jelajahi semua kostum cosplay" [ref=e54] [cursor=pointer]:
+        - /url: /search
+        - img "Sewa & beli kostum cosplay dari series favoritmu" [ref=e55]
+        - generic [ref=e57]:
+          - generic [ref=e58]: "Marketplace kostum cosplay #1"
+          - heading "Beli & sewa kostum cosplay dari series favoritmu" [level=1] [ref=e61]
+          - paragraph [ref=e62]: Ribuan kostum ready & custom dari penjual terpercaya se-Indonesia.
+          - generic [ref=e63]: Jelajahi Kostum
+      - link "Buka Comipara 7 Interactive Map" [ref=e66] [cursor=pointer]:
+        - /url: /event/comipara7
+        - generic [ref=e67]:
+          - img "Logo Comipara" [ref=e68]
+          - generic [ref=e69]:
+            - paragraph [ref=e70]: Comipara 7 Interactive Map
+            - paragraph [ref=e71]: Jelajahi venue & susun rute kunjunganmu · 17-18 Okt 2026 · Jogja Expo Center
+      - link "Lihat cara kerja Cosulagi untuk pengguna baru" [ref=e74] [cursor=pointer]:
+        - /url: /bantuan
+        - generic [ref=e80]:
+          - paragraph [ref=e81]: Baru di Cosulagi? Lihat cara kerjanya
+          - paragraph [ref=e82]: Cari kostum · Bayar aman, dana ditahan · Terima atau kembalikan (sewa)
+      - link "Buka halaman kerjasama untuk Event Organizer dan Komunitas" [ref=e85] [cursor=pointer]:
+        - /url: /kerjasama
+        - generic [ref=e93]:
+          - paragraph [ref=e94]: Butuh partner buat eventmu?
+          - paragraph [ref=e95]: Hadiah lomba · Media partner · Booth kostum · Gratis
+      - generic [ref=e98]:
+        - generic [ref=e106]:
+          - paragraph [ref=e107]: Terverifikasi
+          - paragraph [ref=e108]: Toko terpercaya
+        - generic [ref=e114]:
+          - paragraph [ref=e115]: Transaksi Aman
+          - paragraph [ref=e116]: Dana ditahan aman
+        - generic [ref=e121]:
+          - paragraph [ref=e122]: Ribuan Karakter
+          - paragraph [ref=e123]: Anime, game, VTuber
+      - generic [ref=e125]:
+        - link "Kategori Genshin" [ref=e126] [cursor=pointer]:
+          - /url: /kategori/genshin-impact
+          - generic [ref=e130]: Genshin
+        - link "Kategori Honkai SR" [ref=e131] [cursor=pointer]:
+          - /url: /kategori/honkai-star-rail
+          - generic [ref=e135]: Honkai SR
+        - link "Kategori Wuthering" [ref=e136] [cursor=pointer]:
+          - /url: /kategori/wuthering-waves
+          - generic [ref=e141]: Wuthering
+        - link "Kategori Jujutsu" [ref=e142] [cursor=pointer]:
+          - /url: /kategori/jujutsu-kaisen
+          - generic [ref=e146]: Jujutsu
+        - link "Kategori Evangelion" [ref=e147] [cursor=pointer]:
+          - /url: /kategori/evangelion
+          - generic [ref=e151]: Evangelion
+        - link "Kategori Mobile Legends" [ref=e152] [cursor=pointer]:
+          - /url: /kategori/mobile-legends
+          - generic [ref=e163]: Mobile Legends
+        - link "Kategori Blue Archive" [ref=e164] [cursor=pointer]:
+          - /url: /kategori/blue-archive
+          - generic [ref=e168]: Blue Archive
+        - link "Kategori Hololive" [ref=e169] [cursor=pointer]:
+          - /url: /kategori/hololive
+          - generic [ref=e174]: Hololive
+        - link "Kategori Fate" [ref=e175] [cursor=pointer]:
+          - /url: /kategori/fate
+          - generic [ref=e179]: Fate
+        - link "Semua kategori" [ref=e180] [cursor=pointer]:
+          - /url: /search
+          - generic [ref=e184]: Semua
+    - main [ref=e185]:
+      - generic [ref=e187]:
+        - generic [ref=e188]:
+          - heading "Produk Terbaru" [level=2] [ref=e189]
+          - paragraph [ref=e190]: Koleksi kostum terbaru yang baru saja tiba
+        - link "Lihat Semua untuk Produk Terbaru" [ref=e191] [cursor=pointer]:
+          - /url: /search?sort_by=newest
+          - text: Lihat Semua
+      - generic [ref=e461]:
+        - generic [ref=e462]:
+          - heading "Karakter Hits Minggu Ini" [level=2] [ref=e463]
+          - paragraph [ref=e464]: Karakter yang paling banyak di-cosplay di komunitas minggu ini
+        - link "Lihat Semua untuk Karakter Hits Minggu Ini" [ref=e465] [cursor=pointer]:
+          - /url: /search?sort_by=trending
+          - text: Lihat Semua
+      - generic [ref=e876]:
+        - generic [ref=e877]:
+          - heading "Series Hits Minggu Ini" [level=2] [ref=e878]
+          - paragraph [ref=e879]: Series anime/game yang paling rame minggu ini
+        - link "Lihat Semua untuk Series Hits Minggu Ini" [ref=e880] [cursor=pointer]:
+          - /url: /search?sort_by=trending
+          - text: Lihat Semua
+      - generic [ref=e1291]:
+        - generic [ref=e1292]:
+          - heading "POSTINGAN TERBARU" [level=2] [ref=e1293]
+          - paragraph [ref=e1294]: Update terbaru dari toko-toko di Cosulagi
+        - link "Lihat Semua untuk POSTINGAN TERBARU" [ref=e1295] [cursor=pointer]:
+          - /url: /postingan
+          - text: Lihat Semua
+    - contentinfo [ref=e1338]:
+      - generic [ref=e1339]:
+        - generic [ref=e1340]:
+          - generic [ref=e1342]:
+            - img "Cosulagi.id Logo" [ref=e1344]
+            - paragraph [ref=e1345]: Wujudin cosplan kamu tanpa ribet! Dari cari kostum karakter inceran sampai transaksi yang dijamin aman, Cosulagi.id hadir biar kamu bisa fokus tampil maksimal di event.
+          - generic [ref=e1347]:
+            - generic [ref=e1348]:
+              - heading "Bantuan" [level=3] [ref=e1349]
+              - list [ref=e1351]:
+                - listitem [ref=e1352]:
+                  - link "Pusat Bantuan" [ref=e1353] [cursor=pointer]:
+                    - /url: /bantuan
+                - listitem [ref=e1355]:
+                  - link "Kerjasama Event & Komunitas" [ref=e1356] [cursor=pointer]:
+                    - /url: /kerjasama
+            - generic [ref=e1358]:
+              - heading "Ikuti Kami" [level=3] [ref=e1359]
+              - list [ref=e1361]:
+                - listitem [ref=e1362]:
+                  - link "Instagram" [ref=e1363] [cursor=pointer]:
+                    - /url: https://www.instagram.com/cosulagi_id
+            - generic [ref=e1369]:
+              - heading "Kontak" [level=3] [ref=e1370]
+              - list [ref=e1372]:
+                - listitem [ref=e1373]:
+                  - link "+6289677717105" [ref=e1374] [cursor=pointer]:
+                    - /url: https://wa.me/6289677717105
+                - listitem [ref=e1380]:
+                  - link "contact@cosulagi.id" [ref=e1381] [cursor=pointer]:
+                    - /url: mailto:contact@cosulagi.id
+                - listitem [ref=e1387]:
+                  - link "085692085873" [ref=e1388] [cursor=pointer]:
+                    - /url: https://wa.me/6285692085873
+        - generic [ref=e1395]:
+          - generic [ref=e1396]:
+            - heading "Jasa Kirim" [level=4] [ref=e1397]
+            - generic [ref=e1398]:
+              - img "Paxel" [ref=e1400]
+              - img "JNE" [ref=e1402]
+              - img "SiCepat" [ref=e1404]
+              - img "J&T" [ref=e1406]
+              - img "TIKI" [ref=e1408]
+              - img "AnterAja" [ref=e1410]
+              - img "Wahana" [ref=e1412]
+              - img "ID Express" [ref=e1414]
+              - img "Ninja Xpress" [ref=e1416]
+              - img "SAP" [ref=e1418]
+              - img "RPX" [ref=e1420]
+              - img "Lion Parcel" [ref=e1422]
+              - img "AlfaTrex" [ref=e1424]
+              - img "JET Express" [ref=e1426]
+              - img "FedEx" [ref=e1428]
+              - img "TLX" [ref=e1430]
+              - img "DHL" [ref=e1432]
+              - img "Rara" [ref=e1434]
+              - img "Lalamove" [ref=e1436]
+              - img "POS Indonesia" [ref=e1438]
+              - img "Deliveree" [ref=e1440]
+              - img "JDL" [ref=e1442]
+              - img "GoJek" [ref=e1444]
+              - img "Grab" [ref=e1446]
+          - generic [ref=e1447]:
+            - heading "Metode Pembayaran" [level=4] [ref=e1448]
+            - generic [ref=e1449]:
+              - img "QRIS" [ref=e1451]
+              - img "GoPay" [ref=e1453]
+              - img "DANA" [ref=e1455]
+        - paragraph [ref=e1457]: © 2026 Cosulagi.id. All rights reserved.
+  - region "Notifications (F8)":
+    - list

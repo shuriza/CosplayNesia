@@ -1,0 +1,72 @@
+[
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "node --check \"app.js\"",
+    "status": "unknown",
+    "summary": "node --check \"app.js\" -> unknown",
+    "area": "auto-capture",
+    "id": "ev-1787413660113-1",
+    "timestamp": "2026-08-22T15:47:40.113Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npx --yes html-validate \"index.html\"",
+    "status": "fail",
+    "summary": "npx --yes html-validate \"index.html\" -> fail",
+    "area": "auto-capture",
+    "id": "ev-1787413674213-2",
+    "timestamp": "2026-08-22T15:47:54.213Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "node --check \"app.js\"",
+    "status": "unknown",
+    "summary": "node --check \"app.js\" -> unknown",
+    "area": "auto-capture",
+    "id": "ev-1787413808656-3",
+    "timestamp": "2026-08-22T15:50:08.656Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npx --yes html-validate \"index.html\"",
+    "status": "fail",
+    "summary": "npx --yes html-validate \"index.html\" -> fail",
+    "area": "auto-capture",
+    "id": "ev-1787413812232-4",
+    "timestamp": "2026-08-22T15:50:12.232Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npx --yes html-validate \"index.html\"",
+    "status": "unknown",
+    "summary": "npx --yes html-validate \"index.html\" -> unknown",
+    "area": "auto-capture",
+    "id": "ev-1787413839533-5",
+    "timestamp": "2026-08-22T15:50:39.533Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+    "status": "unknown",
+    "summary": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+    "area": "auto-capture",
+    "id": "ev-1787414078649-6",
+    "timestamp": "2026-08-22T15:54:38.649Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+    "status": "unknown",
+    "summary": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+    "area": "auto-capture",
+    "id": "ev-1787414114678-7",
+    "timestamp": "2026-08-22T15:55:14.678Z"
+  }
+]

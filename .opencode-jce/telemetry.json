@@ -1,0 +1,177 @@
+[
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 20
+    },
+    "at": "2026-08-22T15:38:32.580Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-22T15:38:32.595Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": false,
+      "confidence": 0.1,
+      "reason": "no concrete action verb",
+      "signals": []
+    },
+    "at": "2026-08-22T15:38:32.613Z"
+  },
+  {
+    "kind": "skill_final_used",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "source": "system_injection"
+    },
+    "at": "2026-08-22T15:38:32.896Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "node --check \"app.js\"",
+    "metadata": {
+      "command": "node --check \"app.js\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-22T15:47:40.116Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "node --check \"app.js\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "node --check \"app.js\""
+    },
+    "at": "2026-08-22T15:47:40.139Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npx --yes html-validate \"index.html\"",
+    "metadata": {
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail"
+    },
+    "at": "2026-08-22T15:47:54.215Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npx --yes html-validate \"index.html\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npx --yes html-validate \"index.html\""
+    },
+    "at": "2026-08-22T15:47:54.238Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "node --check \"app.js\"",
+    "metadata": {
+      "command": "node --check \"app.js\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-22T15:50:08.658Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "node --check \"app.js\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "node --check \"app.js\""
+    },
+    "at": "2026-08-22T15:50:08.681Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npx --yes html-validate \"index.html\"",
+    "metadata": {
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail"
+    },
+    "at": "2026-08-22T15:50:12.233Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npx --yes html-validate \"index.html\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npx --yes html-validate \"index.html\""
+    },
+    "at": "2026-08-22T15:50:12.257Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npx --yes html-validate \"index.html\"",
+    "metadata": {
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-22T15:50:39.536Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npx --yes html-validate \"index.html\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npx --yes html-validate \"index.html\""
+    },
+    "at": "2026-08-22T15:50:39.561Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+    "metadata": {
+      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-22T15:54:38.651Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
+    },
+    "at": "2026-08-22T15:54:38.676Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+    "metadata": {
+      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-22T15:55:14.680Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
+    },
+    "at": "2026-08-22T15:55:14.701Z"
+  }
+]

@@ -1,0 +1,1092 @@
+{
+  "version": 1,
+  "updatedAt": "2026-08-22T15:56:16.555Z",
+  "activeTasks": [],
+  "completedSummaries": [],
+  "blockers": [],
+  "verificationEvidence": [
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "fail",
+      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\"",
+      "status": "unknown",
+      "summary": "npx --yes html-validate \"index.html\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
+      "status": "unknown",
+      "summary": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto"
+    }
+  ],
+  "retryHistory": [],
+  "traceEvents": [
+    {
+      "type": "verification.recorded",
+      "message": "node --check \"app.js\" -> unknown",
+      "at": "2026-08-22T15:47:40.140Z",
+      "metadata": {
+        "command": "node --check \"app.js\""
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "npx --yes html-validate \"index.html\" -> fail",
+      "at": "2026-08-22T15:47:54.240Z",
+      "metadata": {
+        "command": "npx --yes html-validate \"index.html\""
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:47:54.248Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 7766,
+        "compressedChars": 5729,
+        "estimatedTokensSaved": 509
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:48:10.992Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 308,
+        "compressedChars": 307,
+        "estimatedTokensSaved": 0
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "node --check \"app.js\" -> unknown",
+      "at": "2026-08-22T15:50:08.682Z",
+      "metadata": {
+        "command": "node --check \"app.js\""
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "npx --yes html-validate \"index.html\" -> fail",
+      "at": "2026-08-22T15:50:12.259Z",
+      "metadata": {
+        "command": "npx --yes html-validate \"index.html\""
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:50:12.264Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 462,
+        "compressedChars": 461,
+        "estimatedTokensSaved": 0
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:50:36.265Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 7,
+        "compressedChars": 6,
+        "estimatedTokensSaved": 0
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "npx --yes html-validate \"index.html\" -> unknown",
+      "at": "2026-08-22T15:50:39.561Z",
+      "metadata": {
+        "command": "npx --yes html-validate \"index.html\""
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:50:52.393Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 350,
+        "compressedChars": 344,
+        "estimatedTokensSaved": 2
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:50:53.476Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 499,
+        "compressedChars": 493,
+        "estimatedTokensSaved": 1
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+      "at": "2026-08-22T15:54:38.677Z",
+      "metadata": {
+        "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "Context budget applied to bash output",
+      "at": "2026-08-22T15:55:11.561Z",
+      "metadata": {
+        "tool": "bash",
+        "originalChars": 5,
+        "compressedChars": 4,
+        "estimatedTokensSaved": 1
+      }
+    },
+    {
+      "type": "verification.recorded",
+      "message": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+      "at": "2026-08-22T15:55:14.703Z",
+      "metadata": {
+        "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
+      }
+    }
+  ],
+  "changedFiles": [
+    "C:\\casuragi",
+    "cosulagi-network.txt",
+    "cosulagi-desktop-snapshot.md",
+    "C:\\casuragi\\cosulagi-desktop-snapshot.md",
+    "C:\\casuragi\\cosulagi-network.txt",
+    "cosulagi-reference-desktop.png",
+    "C:\\casuragi\\cosulagi-reference-desktop.png",
+    "C:\\casuragi\\.opencode-context.md",
+    "cosulagi-images.json",
+    "cosulagi-mobile-snapshot.md",
+    "C:\\casuragi\\cosulagi-images.json",
+    "cosulagi-reference-mobile.png",
+    "C:\\casuragi\\index.html",
+    "C:\\casuragi\\styles.css",
+    "C:\\casuragi\\app.js",
+    "casuragi-mobile-qa.md",
+    "casuragi-mobile-qa.png",
+    "C:\\casuragi\\casuragi-mobile-qa.md",
+    "casuragi-desktop-qa.md",
+    "casuragi-desktop-qa.png",
+    "C:\\casuragi\\README.md",
+    "C:\\casuragi\\cosulagi-reference-mobile.png",
+    "C:\\casuragi\\cosulagi-mobile-snapshot.md",
+    "C:\\casuragi\\casuragi-mobile-qa.png",
+    "C:\\casuragi\\casuragi-desktop-qa.png",
+    "C:\\casuragi\\casuragi-desktop-qa.md"
+  ],
+  "workflowRuns": [],
+  "wisdom": [],
+  "taskLearnings": [],
+  "failureMemories": [],
+  "contextBudgetSummary": {
+    "originalChars": 0,
+    "compressedChars": 0,
+    "estimatedTokensSaved": 0,
+    "estimatedSavingsPercent": 0,
+    "tasks": 0,
+    "byTool": {
+      "bash": {
+        "originalChars": 0,
+        "compressedChars": 0,
+        "estimatedTokensSaved": 0,
+        "tasks": 0
+      }
+    }
+  }
+}

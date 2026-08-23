@@ -1,0 +1,20 @@
+{
+  "name": "casuragi",
+  "version": "1.0.0",
+  "description": "Homepage marketplace sewa dan beli kostum cosplay yang terinspirasi dari pola pengalaman pengguna Cosulagi, dibangun sebagai implementasi mandiri dengan identitas CosplayNesia.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie": "^2.0.1",
+    "jsonwebtoken": "^9.0.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}

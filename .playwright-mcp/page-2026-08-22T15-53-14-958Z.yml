@@ -1,0 +1,476 @@
+- generic [ref=f3e1]:
+  - generic [ref=f3e3]:
+    - paragraph [ref=f3e4]:
+      - strong [ref=f3e5]: Gratis ongkir
+      - text: hingga Rp25.000 untuk transaksi pertamamu
+    - link "Lihat caranya" [ref=f3e6] [cursor=pointer]:
+      - /url: "#cara-kerja"
+      - text: Lihat caranya →
+  - banner [ref=f3e7]:
+    - generic [ref=f3e8]:
+      - link "Casuragi beranda" [ref=f3e9] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f3e10]: C
+        - generic [ref=f3e12]: casuragi
+      - search [ref=f3e13]:
+        - searchbox "Cari produk" [active] [ref=f3e16]
+        - button "Cari" [ref=f3e17] [cursor=pointer]
+      - navigation "Akun" [ref=f3e18]:
+        - button "Buka keranjang" [ref=f3e19] [cursor=pointer]:
+          - generic [ref=f3e22]: "0"
+        - button "Masuk" [ref=f3e23] [cursor=pointer]
+        - button "Daftar" [ref=f3e24] [cursor=pointer]
+    - navigation "Navigasi kategori" [ref=f3e25]:
+      - generic [ref=f3e26]:
+        - button "Semua" [ref=f3e27] [cursor=pointer]
+        - button "Terbaru" [ref=f3e28] [cursor=pointer]
+        - button "Terlaris" [ref=f3e29] [cursor=pointer]
+        - button "Anime" [ref=f3e30] [cursor=pointer]
+        - button "Game" [ref=f3e31] [cursor=pointer]
+        - button "VTuber" [ref=f3e32] [cursor=pointer]
+        - button "Aksesoris" [ref=f3e33] [cursor=pointer]
+        - link "Mulai Jualan" [ref=f3e34] [cursor=pointer]:
+          - /url: "#seller"
+          - text: Mulai Jualan
+          - generic [ref=f3e35]: ↗
+  - main [ref=f3e36]:
+    - region [ref=f3e37]:
+      - generic [ref=f3e38]:
+        - generic [ref=f3e39]: Marketplace cosplay terpercaya
+        - heading [level=1] [ref=f3e41]:
+          - text: Jadi karakter favoritmu,
+          - emphasis [ref=f3e42]: tanpa ribet.
+        - paragraph [ref=f3e43]: Temukan kostum berkualitas dari ratusan cosplayer dan rental terpercaya di seluruh Indonesia.
+        - generic [ref=f3e44]:
+          - link "Jelajahi kostum" [ref=f3e45] [cursor=pointer]:
+            - /url: "#produk"
+          - link "Cara kerja" [ref=f3e46] [cursor=pointer]:
+            - /url: "#cara-kerja"
+            - generic [ref=f3e47]: ▶
+            - text: Cara kerja
+        - paragraph [ref=f3e50]:
+          - strong [ref=f3e51]: 4.9/5
+          - text: dari 2.000+ transaksi
+      - img "Koleksi kostum pilihan" [ref=f3e52]:
+        - generic [ref=f3e53]:
+          - img "Koleksi karakter anime" [ref=f3e54]
+          - generic [ref=f3e55]: Pilihan minggu ini
+        - img "Aksesoris karakter" [ref=f3e57]
+        - generic [ref=f3e62]:
+          - strong [ref=f3e63]: Transaksi aman
+          - generic [ref=f3e64]: Dana ditahan Casuragi
+        - generic [ref=f3e65]:
+          - generic [ref=f3e66]: ✦
+          - generic [ref=f3e67]:
+            - strong [ref=f3e68]: 1.200+
+            - generic [ref=f3e69]: Kostum tersedia
+        - text: ✦
+    - region "Keunggulan Casuragi" [ref=f3e70]:
+      - generic [ref=f3e71]:
+        - article [ref=f3e72]:
+          - generic [ref=f3e77]:
+            - strong [ref=f3e78]: Pembayaran aman
+            - generic [ref=f3e79]: Dana diteruskan setelah pesanan diterima
+        - article [ref=f3e80]:
+          - generic [ref=f3e84]:
+            - strong [ref=f3e85]: Pengiriman terintegrasi
+            - generic [ref=f3e86]: Lacak paket langsung dari satu tempat
+        - article [ref=f3e87]:
+          - generic [ref=f3e92]:
+            - strong [ref=f3e93]: Fleksibel sewa & beli
+            - generic [ref=f3e94]: Pilih durasi sesuai jadwal eventmu
+    - region [ref=f3e95]:
+      - generic [ref=f3e96]:
+        - generic [ref=f3e97]:
+          - generic [ref=f3e98]: Cari berdasarkan dunia
+          - heading "Kategori populer" [level=2] [ref=f3e99]
+        - button "Lihat semua" [ref=f3e100] [cursor=pointer]:
+          - text: Lihat semua
+          - generic [ref=f3e101]: →
+      - generic [ref=f3e102]:
+        - button "Genshin Impact 286 kostum" [ref=f3e103] [cursor=pointer]:
+          - generic [ref=f3e104]:
+            - strong [ref=f3e105]: Genshin Impact
+            - generic [ref=f3e106]: 286 kostum
+        - button "Anime 520 kostum" [ref=f3e107] [cursor=pointer]:
+          - generic [ref=f3e108]:
+            - strong [ref=f3e109]: Anime
+            - generic [ref=f3e110]: 520 kostum
+        - 'button "Honkai: Star Rail 194 kostum" [ref=f3e111] [cursor=pointer]':
+          - generic [ref=f3e112]:
+            - strong [ref=f3e113]: "Honkai: Star Rail"
+            - generic [ref=f3e114]: 194 kostum
+        - button "VTuber 148 kostum" [ref=f3e115] [cursor=pointer]:
+          - generic [ref=f3e116]:
+            - strong [ref=f3e117]: VTuber
+            - generic [ref=f3e118]: 148 kostum
+        - button "Lainnya Semua kategori" [ref=f3e119] [cursor=pointer]:
+          - generic [ref=f3e123]:
+            - strong [ref=f3e124]: Lainnya
+            - generic [ref=f3e125]: Semua kategori
+    - region [ref=f3e126]:
+      - generic [ref=f3e127]:
+        - generic [ref=f3e128]:
+          - generic [ref=f3e129]:
+            - generic [ref=f3e130]: Koleksi terkurasi
+            - heading "Lagi banyak dicari" [level=2] [ref=f3e131]
+          - generic [ref=f3e132]:
+            - generic [ref=f3e133]: 12 produk
+            - generic [ref=f3e134]:
+              - generic [ref=f3e135]: "Urutkan:"
+              - combobox "Urutkan produk" [ref=f3e136] [cursor=pointer]:
+                - option "Terpopuler" [selected]
+                - option "Terbaru"
+                - option "Harga terendah"
+                - option "Harga tertinggi"
+        - generic [ref=f3e137]:
+          - article "Lihat Furina Fontaine Premium Set" [ref=f3e472] [cursor=pointer]:
+            - generic [ref=f3e473]:
+              - img "Furina Fontaine Premium Set" [ref=f3e474]
+              - generic [ref=f3e475]: Best seller
+              - button "Tambah ke favorit" [ref=f3e476]
+            - generic [ref=f3e479]:
+              - text: Genshin Impact
+              - heading "Furina Fontaine Premium Set" [level=3] [ref=f3e480]
+              - generic [ref=f3e481]:
+                - generic [ref=f3e482]: Sewa
+                - generic [ref=f3e483]: M-L
+                - generic [ref=f3e484]: ★ 4.9
+              - generic [ref=f3e485]:
+                - generic [ref=f3e486]: K
+                - generic [ref=f3e487]: Kitsune Wardrobe
+                - generic "Terverifikasi" [ref=f3e488]: ✓
+              - generic [ref=f3e489]:
+                - generic [ref=f3e490]:
+                  - strong [ref=f3e491]: Rp 145.000
+                  - text: / 3 hari
+                - button "Tambah Furina Fontaine Premium Set ke keranjang" [ref=f3e492]
+          - article "Lihat Frieren Full Costume & Wig" [ref=f3e495] [cursor=pointer]:
+            - generic [ref=f3e496]:
+              - img "Frieren Full Costume & Wig" [ref=f3e497]
+              - generic [ref=f3e498]: Baru
+              - button "Tambah ke favorit" [ref=f3e499]
+            - generic [ref=f3e502]:
+              - text: Sousou no Frieren
+              - heading "Frieren Full Costume & Wig" [level=3] [ref=f3e503]
+              - generic [ref=f3e504]:
+                - generic [ref=f3e505]: Sewa
+                - generic [ref=f3e506]: S-M
+                - generic [ref=f3e507]: ★ 5
+              - generic [ref=f3e508]:
+                - generic [ref=f3e509]: M
+                - generic [ref=f3e510]: Moonlight Rent
+                - generic "Terverifikasi" [ref=f3e511]: ✓
+              - generic [ref=f3e512]:
+                - generic [ref=f3e513]:
+                  - strong [ref=f3e514]: Rp 185.000
+                  - text: / 3 hari
+                - button "Tambah Frieren Full Costume & Wig ke keranjang" [ref=f3e515]
+          - article "Lihat Firefly Complete Battle Suit" [ref=f3e518] [cursor=pointer]:
+            - generic [ref=f3e519]:
+              - img "Firefly Complete Battle Suit" [ref=f3e520]
+              - generic [ref=f3e521]: Populer
+              - button "Tambah ke favorit" [ref=f3e522]
+            - generic [ref=f3e525]:
+              - text: "Honkai: Star Rail"
+              - heading "Firefly Complete Battle Suit" [level=3] [ref=f3e526]
+              - generic [ref=f3e527]:
+                - generic [ref=f3e528]: Sewa
+                - generic [ref=f3e529]: S-M
+                - generic [ref=f3e530]: ★ 4.9
+              - generic [ref=f3e531]:
+                - generic [ref=f3e532]: A
+                - generic [ref=f3e533]: Astral Cosrent
+                - generic "Terverifikasi" [ref=f3e534]: ✓
+              - generic [ref=f3e535]:
+                - generic [ref=f3e536]:
+                  - strong [ref=f3e537]: Rp 195.000
+                  - text: / 3 hari
+                - button "Tambah Firefly Complete Battle Suit ke keranjang" [ref=f3e538]
+          - article "Lihat Kafka Stellaron Hunter" [ref=f3e541] [cursor=pointer]:
+            - generic [ref=f3e542]:
+              - img "Kafka Stellaron Hunter" [ref=f3e543]
+              - generic [ref=f3e544]: Populer
+              - button "Tambah ke favorit" [ref=f3e545]
+            - generic [ref=f3e548]:
+              - text: "Honkai: Star Rail"
+              - heading "Kafka Stellaron Hunter" [level=3] [ref=f3e549]
+              - generic [ref=f3e550]:
+                - generic [ref=f3e551]: Sewa
+                - generic [ref=f3e552]: M
+                - generic [ref=f3e553]: ★ 4.8
+              - generic [ref=f3e554]:
+                - generic [ref=f3e555]: A
+                - generic [ref=f3e556]: Astral Cosrent
+                - generic "Terverifikasi" [ref=f3e557]: ✓
+              - generic [ref=f3e558]:
+                - generic [ref=f3e559]:
+                  - strong [ref=f3e560]: Rp 165.000
+                  - text: / 3 hari
+                - button "Tambah Kafka Stellaron Hunter ke keranjang" [ref=f3e561]
+          - article "Lihat Raiden Shogun Deluxe" [ref=f3e564] [cursor=pointer]:
+            - generic [ref=f3e565]:
+              - img "Raiden Shogun Deluxe" [ref=f3e566]
+              - generic [ref=f3e567]: Best seller
+              - button "Tambah ke favorit" [ref=f3e568]
+            - generic [ref=f3e571]:
+              - text: Genshin Impact
+              - heading "Raiden Shogun Deluxe" [level=3] [ref=f3e572]
+              - generic [ref=f3e573]:
+                - generic [ref=f3e574]: Sewa
+                - generic [ref=f3e575]: L
+                - generic [ref=f3e576]: ★ 4.8
+              - generic [ref=f3e577]:
+                - generic [ref=f3e578]: K
+                - generic [ref=f3e579]: Kitsune Wardrobe
+                - generic "Terverifikasi" [ref=f3e580]: ✓
+              - generic [ref=f3e581]:
+                - generic [ref=f3e582]:
+                  - strong [ref=f3e583]: Rp 175.000
+                  - text: / 3 hari
+                - button "Tambah Raiden Shogun Deluxe ke keranjang" [ref=f3e584]
+          - article "Lihat Maomao Apothecary Set" [ref=f3e587] [cursor=pointer]:
+            - generic [ref=f3e588]:
+              - img "Maomao Apothecary Set" [ref=f3e589]
+              - generic [ref=f3e590]: Baru
+              - button "Tambah ke favorit" [ref=f3e591]
+            - generic [ref=f3e594]:
+              - text: Kusuriya no Hitorigoto
+              - heading "Maomao Apothecary Set" [level=3] [ref=f3e595]
+              - generic [ref=f3e596]:
+                - generic [ref=f3e597]: Sewa
+                - generic [ref=f3e598]: M
+                - generic [ref=f3e599]: ★ 4.9
+              - generic [ref=f3e600]:
+                - generic [ref=f3e601]: H
+                - generic [ref=f3e602]: Hanami Costume
+                - generic "Terverifikasi" [ref=f3e603]: ✓
+              - generic [ref=f3e604]:
+                - generic [ref=f3e605]:
+                  - strong [ref=f3e606]: Rp 120.000
+                  - text: / 3 hari
+                - button "Tambah Maomao Apothecary Set ke keranjang" [ref=f3e607]
+          - article "Lihat Hatsune Miku Magical Mirai" [ref=f3e610] [cursor=pointer]:
+            - generic [ref=f3e611]:
+              - img "Hatsune Miku Magical Mirai" [ref=f3e612]
+              - generic [ref=f3e613]: Premium
+              - button "Tambah ke favorit" [ref=f3e614]
+            - generic [ref=f3e617]:
+              - text: Vocaloid
+              - heading "Hatsune Miku Magical Mirai" [level=3] [ref=f3e618]
+              - generic [ref=f3e619]:
+                - generic [ref=f3e620]: Sewa
+                - generic [ref=f3e621]: M-L
+                - generic [ref=f3e622]: ★ 4.7
+              - generic [ref=f3e623]:
+                - generic [ref=f3e624]: "N"
+                - generic [ref=f3e625]: Neo Cosplay
+                - generic "Terverifikasi" [ref=f3e626]: ✓
+              - generic [ref=f3e627]:
+                - generic [ref=f3e628]:
+                  - strong [ref=f3e629]: Rp 210.000
+                  - text: / 3 hari
+                - button "Tambah Hatsune Miku Magical Mirai ke keranjang" [ref=f3e630]
+          - article "Lihat Marcille Dungeon Meshi" [ref=f3e633] [cursor=pointer]:
+            - generic [ref=f3e634]:
+              - img "Marcille Dungeon Meshi" [ref=f3e635]
+              - generic [ref=f3e636]: Baru
+              - button "Tambah ke favorit" [ref=f3e637]
+            - generic [ref=f3e640]:
+              - text: Dungeon Meshi
+              - heading "Marcille Dungeon Meshi" [level=3] [ref=f3e641]
+              - generic [ref=f3e642]:
+                - generic [ref=f3e643]: Sewa
+                - generic [ref=f3e644]: M
+                - generic [ref=f3e645]: ★ 4.8
+              - generic [ref=f3e646]:
+                - generic [ref=f3e647]: C
+                - generic [ref=f3e648]: Clover Cosrent
+                - generic "Terverifikasi" [ref=f3e649]: ✓
+              - generic [ref=f3e650]:
+                - generic [ref=f3e651]:
+                  - strong [ref=f3e652]: Rp 135.000
+                  - text: / 3 hari
+                - button "Tambah Marcille Dungeon Meshi ke keranjang" [ref=f3e653]
+          - article "Lihat Ninomae Ina'nis Casual" [ref=f3e656] [cursor=pointer]:
+            - generic [ref=f3e657]:
+              - img "Ninomae Ina'nis Casual" [ref=f3e658]
+              - generic [ref=f3e659]: Populer
+              - button "Tambah ke favorit" [ref=f3e660]
+            - generic [ref=f3e663]:
+              - text: Hololive
+              - heading "Ninomae Ina'nis Casual" [level=3] [ref=f3e664]
+              - generic [ref=f3e665]:
+                - generic [ref=f3e666]: Sewa
+                - generic [ref=f3e667]: M
+                - generic [ref=f3e668]: ★ 4.9
+              - generic [ref=f3e669]:
+                - generic [ref=f3e670]: H
+                - generic [ref=f3e671]: Holo Closet
+                - generic "Terverifikasi" [ref=f3e672]: ✓
+              - generic [ref=f3e673]:
+                - generic [ref=f3e674]:
+                  - strong [ref=f3e675]: Rp 155.000
+                  - text: / 3 hari
+                - button "Tambah Ninomae Ina'nis Casual ke keranjang" [ref=f3e676]
+          - article "Lihat Elf Ears Handmade Premium" [ref=f3e679] [cursor=pointer]:
+            - generic [ref=f3e680]:
+              - img "Elf Ears Handmade Premium" [ref=f3e681]
+              - generic [ref=f3e682]: Handmade
+              - button "Tambah ke favorit" [ref=f3e683]
+            - generic [ref=f3e686]:
+              - text: Fantasy Props
+              - heading "Elf Ears Handmade Premium" [level=3] [ref=f3e687]
+              - generic [ref=f3e688]:
+                - generic [ref=f3e689]: Beli
+                - generic [ref=f3e690]: All size
+                - generic [ref=f3e691]: ★ 4.9
+              - generic [ref=f3e692]:
+                - generic [ref=f3e693]: P
+                - generic [ref=f3e694]: Prop Lab ID
+                - generic "Terverifikasi" [ref=f3e695]: ✓
+              - generic [ref=f3e696]:
+                - generic [ref=f3e697]:
+                  - strong [ref=f3e698]: Rp 89.000
+                  - text: Harga jual
+                - button "Tambah Elf Ears Handmade Premium ke keranjang" [ref=f3e699]
+          - article "Lihat Silver Fantasy Wig 80cm" [ref=f3e702] [cursor=pointer]:
+            - generic [ref=f3e703]:
+              - img "Silver Fantasy Wig 80cm" [ref=f3e704]
+              - generic [ref=f3e705]: Premium
+              - button "Tambah ke favorit" [ref=f3e706]
+            - generic [ref=f3e709]:
+              - text: Wig Collection
+              - heading "Silver Fantasy Wig 80cm" [level=3] [ref=f3e710]
+              - generic [ref=f3e711]:
+                - generic [ref=f3e712]: Beli
+                - generic [ref=f3e713]: All size
+                - generic [ref=f3e714]: ★ 4.7
+              - generic [ref=f3e715]:
+                - generic [ref=f3e716]: W
+                - generic [ref=f3e717]: Wigcraft Studio
+                - generic "Terverifikasi" [ref=f3e718]: ✓
+              - generic [ref=f3e719]:
+                - generic [ref=f3e720]:
+                  - strong [ref=f3e721]: Rp 265.000
+                  - text: Harga jual
+                - button "Tambah Silver Fantasy Wig 80cm ke keranjang" [ref=f3e722]
+          - article "Lihat Anya Forger Eden Uniform" [ref=f3e725] [cursor=pointer]:
+            - generic [ref=f3e726]:
+              - img "Anya Forger Eden Uniform" [ref=f3e727]
+              - generic [ref=f3e728]: Hemat
+              - button "Tambah ke favorit" [ref=f3e729]
+            - generic [ref=f3e732]:
+              - text: Spy x Family
+              - heading "Anya Forger Eden Uniform" [level=3] [ref=f3e733]
+              - generic [ref=f3e734]:
+                - generic [ref=f3e735]: Sewa
+                - generic [ref=f3e736]: S
+                - generic [ref=f3e737]: ★ 4.8
+              - generic [ref=f3e738]:
+                - generic [ref=f3e739]: P
+                - generic [ref=f3e740]: Peanut Cosrent
+                - generic "Terverifikasi" [ref=f3e741]: ✓
+              - generic [ref=f3e742]:
+                - generic [ref=f3e743]:
+                  - strong [ref=f3e744]: Rp 95.000
+                  - text: / 3 hari
+                - button "Tambah Anya Forger Eden Uniform ke keranjang" [ref=f3e745]
+        - button "Tampilkan lebih banyak" [ref=f3e322] [cursor=pointer]
+    - generic [ref=f3e323]:
+      - generic [ref=f3e324]:
+        - generic [ref=f3e325]: Untuk kreator & rental
+        - heading "Kostummu bisa jadi awal cerita orang lain." [level=2] [ref=f3e326]
+        - paragraph [ref=f3e327]: Buka toko gratis, atur kalender sewa, dan jangkau komunitas cosplay di seluruh Indonesia.
+        - button "Buka toko sekarang" [ref=f3e328] [cursor=pointer]:
+          - text: Buka toko sekarang
+          - generic [ref=f3e329]: →
+      - group "Statistik penjual" [ref=f3e330]:
+        - generic [ref=f3e331]:
+          - strong [ref=f3e332]: 350+
+          - generic [ref=f3e333]: Penjual aktif
+        - generic [ref=f3e334]:
+          - strong [ref=f3e335]: 50+
+          - generic [ref=f3e336]: Kota terjangkau
+        - generic [ref=f3e337]:
+          - strong [ref=f3e338]: 0%
+          - generic [ref=f3e339]: Biaya buka toko
+      - text: ✦
+    - region [ref=f3e340]:
+      - generic [ref=f3e342]:
+        - generic [ref=f3e343]: Mudah dan terlindungi
+        - heading "Tiga langkah jadi karakter impian" [level=2] [ref=f3e344]
+      - generic [ref=f3e345]:
+        - article [ref=f3e346]:
+          - generic [ref=f3e347]: "01"
+          - heading "Pilih kostum" [level=3] [ref=f3e348]
+          - paragraph [ref=f3e349]: Cari berdasarkan karakter, ukuran, lokasi, dan tanggal eventmu.
+        - article [ref=f3e350]:
+          - generic [ref=f3e351]: "02"
+          - heading "Pesan dengan aman" [level=3] [ref=f3e352]
+          - paragraph [ref=f3e353]: Bayar melalui Casuragi. Danamu kami tahan hingga pesanan diterima.
+        - article [ref=f3e354]:
+          - generic [ref=f3e355]: "03"
+          - heading "Siap tampil" [level=3] [ref=f3e356]
+          - paragraph [ref=f3e357]: Terima kostum, tampil maksimal, lalu kembalikan jika kamu menyewa.
+  - contentinfo [ref=f3e358]:
+    - generic [ref=f3e359]:
+      - generic [ref=f3e360]:
+        - link "C casuragi" [ref=f3e361] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f3e362]: C
+          - generic [ref=f3e364]: casuragi
+        - paragraph [ref=f3e365]: Marketplace aman untuk sewa dan beli kostum cosplay dari komunitas Indonesia.
+        - generic [ref=f3e366]:
+          - link "Instagram" [ref=f3e367] [cursor=pointer]:
+            - /url: "#"
+            - text: ig
+          - link "TikTok" [ref=f3e368] [cursor=pointer]:
+            - /url: "#"
+            - text: tk
+          - link "X" [ref=f3e369] [cursor=pointer]:
+            - /url: "#"
+            - text: x
+      - generic [ref=f3e370]:
+        - heading "Casuragi" [level=3] [ref=f3e371]
+        - link "Tentang kami" [ref=f3e372] [cursor=pointer]:
+          - /url: "#cara-kerja"
+        - link "Jadi penjual" [ref=f3e373] [cursor=pointer]:
+          - /url: "#seller"
+        - link "Karier" [ref=f3e374] [cursor=pointer]:
+          - /url: "#"
+        - link "Blog" [ref=f3e375] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=f3e376]:
+        - heading "Bantuan" [level=3] [ref=f3e377]
+        - link "Pusat bantuan" [ref=f3e378] [cursor=pointer]:
+          - /url: "#"
+        - link "Cara menyewa" [ref=f3e379] [cursor=pointer]:
+          - /url: "#"
+        - link "Keamanan" [ref=f3e380] [cursor=pointer]:
+          - /url: "#"
+        - link "Hubungi kami" [ref=f3e381] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=f3e382]:
+        - heading "Legal" [level=3] [ref=f3e383]
+        - link "Syarat & ketentuan" [ref=f3e384] [cursor=pointer]:
+          - /url: "#"
+        - link "Kebijakan privasi" [ref=f3e385] [cursor=pointer]:
+          - /url: "#"
+        - link "Kebijakan refund" [ref=f3e386] [cursor=pointer]:
+          - /url: "#"
+    - generic [ref=f3e387]:
+      - paragraph [ref=f3e388]: © 2026 Casuragi. Dibuat untuk komunitas cosplay Indonesia.
+      - paragraph [ref=f3e389]: Indonesia · IDR
+  - dialog [ref=f3e467]:
+    - generic [ref=f3e391]:
+      - generic [ref=f3e392]:
+        - generic [ref=f3e393]: Pesananmu
+        - heading [level=2] [ref=f3e468]: Keranjang
+      - button [ref=f3e469] [cursor=pointer]: ×
+    - generic [ref=f3e397]:
+      - text: 🛍
+      - heading [level=3] [ref=f3e470]: Keranjangmu masih kosong
+      - paragraph [ref=f3e399]: Yuk, temukan kostum untuk event berikutnya.
+      - button [ref=f3e471] [cursor=pointer]: Mulai belanja
+  - status: Frieren Full Costume & Wig ditambahkan ke keranjang

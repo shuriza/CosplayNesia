@@ -1,0 +1,277 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e3]:
+    - paragraph [ref=f3e4]:
+      - strong [ref=f3e5]: Gratis ongkir
+      - text: hingga Rp25.000 untuk transaksi pertamamu
+    - link "Lihat caranya" [ref=f3e6] [cursor=pointer]:
+      - /url: "#cara-kerja"
+      - text: Lihat caranya →
+  - banner [ref=f3e7]:
+    - generic [ref=f3e8]:
+      - link "Casuragi beranda" [ref=f3e9] [cursor=pointer]:
+        - /url: "#"
+        - generic [ref=f3e10]: C
+        - generic [ref=f3e12]: casuragi
+      - search [ref=f3e13]:
+        - searchbox "Cari produk" [ref=f3e16]: Frieren
+        - button "Cari" [ref=f3e17] [cursor=pointer]
+      - navigation "Akun" [ref=f3e18]:
+        - button "Buka keranjang" [ref=f3e19] [cursor=pointer]:
+          - generic [ref=f3e22]: "1"
+        - button "Masuk" [ref=f3e23] [cursor=pointer]
+        - button "Daftar" [ref=f3e24] [cursor=pointer]
+    - navigation "Navigasi kategori" [ref=f3e25]:
+      - generic [ref=f3e26]:
+        - button "Semua" [ref=f3e27] [cursor=pointer]
+        - button "Terbaru" [ref=f3e28] [cursor=pointer]
+        - button "Terlaris" [ref=f3e29] [cursor=pointer]
+        - button "Anime" [ref=f3e30] [cursor=pointer]
+        - button "Game" [ref=f3e31] [cursor=pointer]
+        - button "VTuber" [ref=f3e32] [cursor=pointer]
+        - button "Aksesoris" [ref=f3e33] [cursor=pointer]
+        - link "Mulai Jualan" [ref=f3e34] [cursor=pointer]:
+          - /url: "#seller"
+          - text: Mulai Jualan
+          - generic [ref=f3e35]: ↗
+  - main [ref=f3e36]:
+    - region [ref=f3e37]:
+      - generic [ref=f3e38]:
+        - generic [ref=f3e39]: Marketplace cosplay terpercaya
+        - heading [level=1] [ref=f3e41]:
+          - text: Jadi karakter favoritmu,
+          - emphasis [ref=f3e42]: tanpa ribet.
+        - paragraph [ref=f3e43]: Temukan kostum berkualitas dari ratusan cosplayer dan rental terpercaya di seluruh Indonesia.
+        - generic [ref=f3e44]:
+          - link "Jelajahi kostum" [ref=f3e45] [cursor=pointer]:
+            - /url: "#produk"
+          - link "Cara kerja" [ref=f3e46] [cursor=pointer]:
+            - /url: "#cara-kerja"
+            - generic [ref=f3e47]: ▶
+            - text: Cara kerja
+        - paragraph [ref=f3e50]:
+          - strong [ref=f3e51]: 4.9/5
+          - text: dari 2.000+ transaksi
+      - img "Koleksi kostum pilihan" [ref=f3e52]:
+        - generic [ref=f3e53]:
+          - img "Koleksi karakter anime" [ref=f3e54]
+          - generic [ref=f3e55]: Pilihan minggu ini
+        - img "Aksesoris karakter" [ref=f3e57]
+        - generic [ref=f3e62]:
+          - strong [ref=f3e63]: Transaksi aman
+          - generic [ref=f3e64]: Dana ditahan Casuragi
+        - generic [ref=f3e65]:
+          - generic [ref=f3e66]: ✦
+          - generic [ref=f3e67]:
+            - strong [ref=f3e68]: 1.200+
+            - generic [ref=f3e69]: Kostum tersedia
+        - text: ✦
+    - region "Keunggulan Casuragi" [ref=f3e70]:
+      - generic [ref=f3e71]:
+        - article [ref=f3e72]:
+          - generic [ref=f3e77]:
+            - strong [ref=f3e78]: Pembayaran aman
+            - generic [ref=f3e79]: Dana diteruskan setelah pesanan diterima
+        - article [ref=f3e80]:
+          - generic [ref=f3e84]:
+            - strong [ref=f3e85]: Pengiriman terintegrasi
+            - generic [ref=f3e86]: Lacak paket langsung dari satu tempat
+        - article [ref=f3e87]:
+          - generic [ref=f3e92]:
+            - strong [ref=f3e93]: Fleksibel sewa & beli
+            - generic [ref=f3e94]: Pilih durasi sesuai jadwal eventmu
+    - region [ref=f3e95]:
+      - generic [ref=f3e96]:
+        - generic [ref=f3e97]:
+          - generic [ref=f3e98]: Cari berdasarkan dunia
+          - heading "Kategori populer" [level=2] [ref=f3e99]
+        - button "Lihat semua" [ref=f3e100] [cursor=pointer]:
+          - text: Lihat semua
+          - generic [ref=f3e101]: →
+      - generic [ref=f3e102]:
+        - button "Genshin Impact 286 kostum" [ref=f3e103] [cursor=pointer]:
+          - generic [ref=f3e104]:
+            - strong [ref=f3e105]: Genshin Impact
+            - generic [ref=f3e106]: 286 kostum
+        - button "Anime 520 kostum" [ref=f3e107] [cursor=pointer]:
+          - generic [ref=f3e108]:
+            - strong [ref=f3e109]: Anime
+            - generic [ref=f3e110]: 520 kostum
+        - 'button "Honkai: Star Rail 194 kostum" [ref=f3e111] [cursor=pointer]':
+          - generic [ref=f3e112]:
+            - strong [ref=f3e113]: "Honkai: Star Rail"
+            - generic [ref=f3e114]: 194 kostum
+        - button "VTuber 148 kostum" [ref=f3e115] [cursor=pointer]:
+          - generic [ref=f3e116]:
+            - strong [ref=f3e117]: VTuber
+            - generic [ref=f3e118]: 148 kostum
+        - button "Lainnya Semua kategori" [ref=f3e119] [cursor=pointer]:
+          - generic [ref=f3e123]:
+            - strong [ref=f3e124]: Lainnya
+            - generic [ref=f3e125]: Semua kategori
+    - region [ref=f3e126]:
+      - generic [ref=f3e127]:
+        - generic [ref=f3e128]:
+          - generic [ref=f3e129]:
+            - generic [ref=f3e130]: Koleksi terkurasi
+            - heading "Lagi banyak dicari" [level=2] [ref=f3e131]
+          - generic [ref=f3e132]:
+            - generic [ref=f3e133]: 1 produk
+            - generic [ref=f3e134]:
+              - generic [ref=f3e135]: "Urutkan:"
+              - combobox "Urutkan produk" [ref=f3e136] [cursor=pointer]:
+                - option "Terpopuler" [selected]
+                - option "Terbaru"
+                - option "Harga terendah"
+                - option "Harga tertinggi"
+        - article "Lihat Frieren Full Costume & Wig" [ref=f3e401] [cursor=pointer]:
+          - generic [ref=f3e402]:
+            - img "Frieren Full Costume & Wig" [ref=f3e403]
+            - generic [ref=f3e404]: Baru
+            - button "Tambah ke favorit" [ref=f3e405]
+          - generic [ref=f3e408]:
+            - text: Sousou no Frieren
+            - heading "Frieren Full Costume & Wig" [level=3] [ref=f3e409]
+            - generic [ref=f3e410]:
+              - generic [ref=f3e411]: Sewa
+              - generic [ref=f3e412]: S-M
+              - generic [ref=f3e413]: ★ 5
+            - generic [ref=f3e414]:
+              - generic [ref=f3e415]: M
+              - generic [ref=f3e416]: Moonlight Rent
+              - generic "Terverifikasi" [ref=f3e417]: ✓
+            - generic [ref=f3e418]:
+              - generic [ref=f3e419]:
+                - strong [ref=f3e420]: Rp 185.000
+                - text: / 3 hari
+              - button "Tambah Frieren Full Costume & Wig ke keranjang" [ref=f3e421]
+        - button "Tampilkan lebih banyak" [ref=f3e322] [cursor=pointer]
+    - generic [ref=f3e323]:
+      - generic [ref=f3e324]:
+        - generic [ref=f3e325]: Untuk kreator & rental
+        - heading "Kostummu bisa jadi awal cerita orang lain." [level=2] [ref=f3e326]
+        - paragraph [ref=f3e327]: Buka toko gratis, atur kalender sewa, dan jangkau komunitas cosplay di seluruh Indonesia.
+        - button "Buka toko sekarang" [ref=f3e328] [cursor=pointer]:
+          - text: Buka toko sekarang
+          - generic [ref=f3e329]: →
+      - group "Statistik penjual" [ref=f3e330]:
+        - generic [ref=f3e331]:
+          - strong [ref=f3e332]: 350+
+          - generic [ref=f3e333]: Penjual aktif
+        - generic [ref=f3e334]:
+          - strong [ref=f3e335]: 50+
+          - generic [ref=f3e336]: Kota terjangkau
+        - generic [ref=f3e337]:
+          - strong [ref=f3e338]: 0%
+          - generic [ref=f3e339]: Biaya buka toko
+      - text: ✦
+    - region [ref=f3e340]:
+      - generic [ref=f3e342]:
+        - generic [ref=f3e343]: Mudah dan terlindungi
+        - heading "Tiga langkah jadi karakter impian" [level=2] [ref=f3e344]
+      - generic [ref=f3e345]:
+        - article [ref=f3e346]:
+          - generic [ref=f3e347]: "01"
+          - heading "Pilih kostum" [level=3] [ref=f3e348]
+          - paragraph [ref=f3e349]: Cari berdasarkan karakter, ukuran, lokasi, dan tanggal eventmu.
+        - article [ref=f3e350]:
+          - generic [ref=f3e351]: "02"
+          - heading "Pesan dengan aman" [level=3] [ref=f3e352]
+          - paragraph [ref=f3e353]: Bayar melalui Casuragi. Danamu kami tahan hingga pesanan diterima.
+        - article [ref=f3e354]:
+          - generic [ref=f3e355]: "03"
+          - heading "Siap tampil" [level=3] [ref=f3e356]
+          - paragraph [ref=f3e357]: Terima kostum, tampil maksimal, lalu kembalikan jika kamu menyewa.
+  - contentinfo [ref=f3e358]:
+    - generic [ref=f3e359]:
+      - generic [ref=f3e360]:
+        - link "C casuragi" [ref=f3e361] [cursor=pointer]:
+          - /url: "#"
+          - generic [ref=f3e362]: C
+          - generic [ref=f3e364]: casuragi
+        - paragraph [ref=f3e365]: Marketplace aman untuk sewa dan beli kostum cosplay dari komunitas Indonesia.
+        - generic [ref=f3e366]:
+          - link "Instagram" [ref=f3e367] [cursor=pointer]:
+            - /url: "#"
+            - text: ig
+          - link "TikTok" [ref=f3e368] [cursor=pointer]:
+            - /url: "#"
+            - text: tk
+          - link "X" [ref=f3e369] [cursor=pointer]:
+            - /url: "#"
+            - text: x
+      - generic [ref=f3e370]:
+        - heading "Casuragi" [level=3] [ref=f3e371]
+        - link "Tentang kami" [ref=f3e372] [cursor=pointer]:
+          - /url: "#cara-kerja"
+        - link "Jadi penjual" [ref=f3e373] [cursor=pointer]:
+          - /url: "#seller"
+        - link "Karier" [ref=f3e374] [cursor=pointer]:
+          - /url: "#"
+        - link "Blog" [ref=f3e375] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=f3e376]:
+        - heading "Bantuan" [level=3] [ref=f3e377]
+        - link "Pusat bantuan" [ref=f3e378] [cursor=pointer]:
+          - /url: "#"
+        - link "Cara menyewa" [ref=f3e379] [cursor=pointer]:
+          - /url: "#"
+        - link "Keamanan" [ref=f3e380] [cursor=pointer]:
+          - /url: "#"
+        - link "Hubungi kami" [ref=f3e381] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=f3e382]:
+        - heading "Legal" [level=3] [ref=f3e383]
+        - link "Syarat & ketentuan" [ref=f3e384] [cursor=pointer]:
+          - /url: "#"
+        - link "Kebijakan privasi" [ref=f3e385] [cursor=pointer]:
+          - /url: "#"
+        - link "Kebijakan refund" [ref=f3e386] [cursor=pointer]:
+          - /url: "#"
+    - generic [ref=f3e387]:
+      - paragraph [ref=f3e388]: © 2026 Casuragi. Dibuat untuk komunitas cosplay Indonesia.
+      - paragraph [ref=f3e389]: Indonesia · IDR
+  - dialog [ref=f3e390]:
+    - generic [ref=f3e391]:
+      - generic [ref=f3e392]:
+        - generic [ref=f3e393]: Pesananmu
+        - heading "Keranjang" [level=2] [ref=f3e394]
+      - button "Tutup keranjang" [ref=f3e395] [cursor=pointer]: ×
+    - article [ref=f3e450]:
+      - img "Frieren Full Costume & Wig" [ref=f3e451]
+      - generic [ref=f3e452]:
+        - heading "Frieren Full Costume & Wig" [level=3] [ref=f3e453]
+        - paragraph [ref=f3e454]: Rp 185.000
+        - text: Sewa · S-M
+      - button "Hapus Frieren Full Costume & Wig" [ref=f3e455] [cursor=pointer]: ×
+    - generic [ref=f3e456]:
+      - generic [ref=f3e457]:
+        - generic [ref=f3e458]: Subtotal
+        - strong [ref=f3e459]: Rp 185.000
+      - generic [ref=f3e460]: Ongkir dihitung saat checkout
+      - button "Lanjut checkout" [ref=f3e461] [cursor=pointer]
+  - dialog [ref=f3e462]:
+    - button [ref=f3e463] [cursor=pointer]: ×
+    - generic [ref=f3e431]:
+      - generic [ref=f3e432]: Sousou no Frieren
+      - heading [level=2] [ref=f3e465]: Frieren Full Costume & Wig
+      - generic [ref=f3e434]:
+        - generic [ref=f3e435]: M
+        - generic [ref=f3e436]: Moonlight Rent
+        - generic [ref=f3e437]: ✓
+        - generic [ref=f3e438]: · Surabaya
+      - generic [ref=f3e439]:
+        - strong [ref=f3e440]: Rp 185.000
+        - text: / 3 hari
+      - paragraph [ref=f3e441]: Kostum lengkap, terawat, dan siap dipakai untuk event berikutnya. Setiap pesanan dilindungi pembayaran aman Casuragi.
+      - generic [ref=f3e442]:
+        - generic [ref=f3e443]:
+          - strong [ref=f3e444]: S-M
+          - text: Ukuran
+        - generic [ref=f3e445]:
+          - strong [ref=f3e446]: ★ 5
+          - text: Rating
+        - generic [ref=f3e447]:
+          - strong [ref=f3e448]: Sewa
+          - text: Tipe
+      - button [ref=f3e466] [cursor=pointer]: Tambah ke keranjang
+  - status: Frieren Full Costume & Wig ditambahkan ke keranjang
