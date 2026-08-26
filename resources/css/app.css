@@ -78,6 +78,10 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
   border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase;
 }
 .listing-status--inactive { color: #8a6116; background: #fff4d6; }
+.fulfillment-status { display: inline-block; padding: 4px 7px; color: var(--primary-dark); background: #eeecff; border-radius: 999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.fulfillment-status--completed { color: #17633d; background: #def7e9; }
+.fulfillment-status--cancelled { color: #8b2439; background: #fde8ed; }
+.fulfillment-card .profile-card__actions { margin-top: 12px; }
 .profile-card__actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); }
 .profile-card__actions button {
   min-height: 34px; padding: 0 11px; color: var(--primary-dark); background: white;
@@ -86,6 +90,18 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
 .profile-card__actions button:hover { border-color: var(--primary); }
 .profile-card__actions .danger-action { color: #a82038; margin-left: auto; }
 .order-items { display: grid; gap: 4px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 11px; }
+.checkout-handoff-form { margin-top: 16px; }
+.checkout-handoff-form fieldset { display: grid; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; }
+.checkout-handoff-form legend { padding: 0 5px; color: var(--ink); font-size: 12px; font-weight: 800; }
+.checkout-handoff-form label { display: grid; gap: 5px; color: var(--ink); font-size: 11px; font-weight: 700; }
+.checkout-handoff-form input, .checkout-handoff-form textarea { width: 100%; padding: 9px 10px; color: var(--ink); background: white; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; }
+.checkout-handoff-form input { min-height: 38px; }
+.checkout-handoff-form textarea { resize: vertical; }
+.checkout-handoff-form input:focus, .checkout-handoff-form textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(81,69,205,.08); outline: 0; }
+.handoff-detail { display: grid; gap: 7px; margin-top: 10px; padding: 11px; color: var(--muted); background: white; border: 1px solid var(--line); border-radius: 9px; font-size: 11px; line-height: 1.45; }
+.handoff-detail p { margin: 0; }
+.handoff-detail strong, .handoff-detail span { display: block; }
+.handoff-detail strong { color: var(--ink); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
 .list-message { margin: 0; padding: 17px; color: var(--muted); background: var(--surface); border-radius: 10px; font-size: 12px; text-align: center; }
 
 .stack-form { display: grid; gap: 15px; padding: 0 2px 24px; }
@@ -106,6 +122,13 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
 .modal-product__info > .product-description { color: var(--muted); font-size: 13px; line-height: 1.65; }
 .cart-item small { color: var(--muted); font-size: 10px; }
 .cart-item__remove { width: 34px; height: 34px; border-radius: 50%; }
+.cart-rental-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.cart-rental-fields label { color: var(--muted); font-size: 10px; display: grid; gap: 4px; }
+.cart-rental-fields input { width: 100%; min-width: 0; padding: 6px 7px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: var(--surface); font: inherit; font-size: 11px; }
+.cart-rental-fields small { grid-column: 1 / -1; }
+.cart-rental-fields small.is-unavailable { color: #a82038; }
+.order-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rental-order-detail { margin: 9px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
 
 @media (min-width: 721px) and (max-width: 960px) {
   .header-actions .auth-action[data-auth-mode="login"]:not([hidden]),

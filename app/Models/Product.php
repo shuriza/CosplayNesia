@@ -13,6 +13,10 @@ class Product extends Model
 {
     use HasFactory;
 
+    public const TYPE_RENTAL = 'Sewa';
+
+    public const TYPE_SALE = 'Beli';
+
     protected $fillable = [
         'seller_id', 'name', 'series', 'category', 'price', 'type', 'size',
         'seller', 'city', 'rating', 'popular', 'newest', 'badge', 'image', 'stock', 'is_active',
@@ -43,6 +47,11 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function rentalReservations(): HasMany
+    {
+        return $this->hasMany(RentalReservation::class);
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

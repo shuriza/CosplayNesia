@@ -15,7 +15,7 @@ class ProductFactory extends Factory
             'series' => 'Original',
             'category' => fake()->randomElement(['Anime', 'Game', 'VTuber', 'Aksesoris']),
             'price' => fake()->numberBetween(50000, 500000),
-            'type' => fake()->randomElement(['Sewa', 'Beli']),
+            'type' => 'Beli',
             'size' => 'M',
             'seller' => fake()->name(),
             'city' => fake()->city(),

@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\FulfillmentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +13,7 @@ Route::view('/', 'home')->name('home');
 
 Route::prefix('api')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{product}/availability', [AvailabilityController::class, 'show']);
     Route::get('/me', [AuthController::class, 'show']);
 
     Route::middleware('guest')->prefix('auth')->group(function (): void {
@@ -32,5 +35,10 @@ Route::prefix('api')->group(function (): void {
 
         Route::post('/checkout', [CheckoutController::class, 'store']);
         Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+        Route::delete('/orders/{order}/items/{item}/rental', [OrderController::class, 'cancelRental']);
+        Route::get('/seller/fulfillments', [FulfillmentController::class, 'index']);
+        Route::get('/seller/fulfillments/{fulfillment}', [FulfillmentController::class, 'show']);
+        Route::patch('/seller/fulfillments/{fulfillment}/status', [FulfillmentController::class, 'updateStatus']);
     });
 });

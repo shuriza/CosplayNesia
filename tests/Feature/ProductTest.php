@@ -113,9 +113,9 @@ class ProductTest extends TestCase
             'stock' => 1,
         ]);
 
-        $this->actingAs($buyer)->postJson('/api/checkout', [
+        $this->actingAs($buyer)->postJson('/api/checkout', $this->checkoutPayload([
             'items' => [['id' => $product->id, 'quantity' => 1]],
-        ])->assertCreated();
+        ]))->assertCreated();
         $this->actingAs($owner)->deleteJson("/api/products/{$product->id}")->assertNoContent();
 
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
