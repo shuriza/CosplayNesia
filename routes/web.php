@@ -1,0 +1,36 @@
+<?php
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
+use Illuminate\Support\Facades\Route;
+
+Route::view('/', 'home')->name('home');
+
+Route::prefix('api')->group(function (): void {
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/me', [AuthController::class, 'show']);
+
+    Route::middleware('guest')->prefix('auth')->group(function (): void {
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
+    });
+
+    Route::middleware('auth')->group(function (): void {
+        Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+        Route::post('/products', [ProductController::class, 'store']);
+        Route::patch('/products/{product}', [ProductController::class, 'update']);
+        Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+        Route::get('/my-products', [ProductController::class, 'owned']);
+
+        Route::get('/favorites', [FavoriteController::class, 'index']);
+        Route::post('/favorites', [FavoriteController::class, 'store']);
+        Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy']);
+
+        Route::post('/checkout', [CheckoutController::class, 'store']);
+        Route::get('/orders', [OrderController::class, 'index']);
+    });
+});
