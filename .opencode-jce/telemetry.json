@@ -173,5 +173,738 @@
       "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
     },
     "at": "2026-08-22T15:55:14.701Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git status --short --branch --untracked-files=all",
+    "metadata": {
+      "command": "git status --short --branch --untracked-files=all",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:34:17.800Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git status --short --branch --untracked-files=all",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git status --short --branch --untracked-files=all"
+    },
+    "at": "2026-08-26T11:34:17.824Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\"",
+    "metadata": {
+      "command": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T11:35:56.338Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\"",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\""
+    },
+    "at": "2026-08-26T11:35:56.364Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git status",
+    "metadata": {
+      "command": "git status",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:35:56.700Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git status",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git status"
+    },
+    "at": "2026-08-26T11:35:56.728Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git status --short",
+    "metadata": {
+      "command": "git status --short",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:43:42.278Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git status --short",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git status --short"
+    },
+    "at": "2026-08-26T11:43:42.310Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue",
+    "metadata": {
+      "command": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:46:55.960Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue"
+    },
+    "at": "2026-08-26T11:46:55.992Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git diff --stat origin/main..HEAD",
+    "metadata": {
+      "command": "git diff --stat origin/main..HEAD",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:48:31.214Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git diff --stat origin/main..HEAD",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git diff --stat origin/main..HEAD"
+    },
+    "at": "2026-08-26T11:48:31.236Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules",
+    "metadata": {
+      "command": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:56:51.231Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules"
+    },
+    "at": "2026-08-26T11:56:51.256Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npm run build",
+    "metadata": {
+      "command": "npm run build",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:56:51.374Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npm run build",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npm run build"
+    },
+    "at": "2026-08-26T11:56:51.406Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git diff --check origin/main..HEAD",
+    "metadata": {
+      "command": "git diff --check origin/main..HEAD",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T11:56:51.676Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git diff --check origin/main..HEAD",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git diff --check origin/main..HEAD"
+    },
+    "at": "2026-08-26T11:56:51.704Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git show --format=fuller --stat --oneline HEAD",
+    "metadata": {
+      "command": "git show --format=fuller --stat --oneline HEAD",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:56:52.074Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git show --format=fuller --stat --oneline HEAD",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git show --format=fuller --stat --oneline HEAD"
+    },
+    "at": "2026-08-26T11:56:52.106Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "php artisan test && vendor\\bin\\pint --test",
+    "metadata": {
+      "command": "php artisan test && vendor\\bin\\pint --test",
+      "status": "fail"
+    },
+    "at": "2026-08-26T11:56:56.861Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "php artisan test && vendor\\bin\\pint --test",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "php artisan test && vendor\\bin\\pint --test"
+    },
+    "at": "2026-08-26T11:56:56.884Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git diff --check",
+    "metadata": {
+      "command": "git diff --check",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T12:00:09.483Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git diff --check",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git diff --check"
+    },
+    "at": "2026-08-26T12:00:09.511Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all",
+    "metadata": {
+      "command": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T12:00:44.888Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all"
+    },
+    "at": "2026-08-26T12:00:44.915Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "node --check resources/js/app.js && npm audit",
+    "metadata": {
+      "command": "node --check resources/js/app.js && npm audit",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T12:00:45.784Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "node --check resources/js/app.js && npm audit",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "node --check resources/js/app.js && npm audit"
+    },
+    "at": "2026-08-26T12:00:45.814Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "composer validate --strict && composer audit",
+    "metadata": {
+      "command": "composer validate --strict && composer audit",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T12:00:46.028Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "composer validate --strict && composer audit",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "composer validate --strict && composer audit"
+    },
+    "at": "2026-08-26T12:00:46.054Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "php artisan test && vendor\\bin\\pint --test",
+    "metadata": {
+      "command": "php artisan test && vendor\\bin\\pint --test",
+      "status": "fail"
+    },
+    "at": "2026-08-26T12:00:46.924Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "php artisan test && vendor\\bin\\pint --test",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "php artisan test && vendor\\bin\\pint --test"
+    },
+    "at": "2026-08-26T12:00:46.953Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "npm run build",
+    "metadata": {
+      "command": "npm run build",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T12:00:48.018Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "npm run build",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "npm run build"
+    },
+    "at": "2026-08-26T12:00:48.040Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "composer audit",
+    "metadata": {
+      "command": "composer audit",
+      "status": "unknown"
+    },
+    "at": "2026-08-26T12:01:13.283Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "composer audit",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": false,
+      "command": "composer audit"
+    },
+    "at": "2026-08-26T12:01:13.313Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 28
+    },
+    "at": "2026-08-28T01:36:37.456Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T01:36:37.483Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": true,
+      "confidence": 0.85,
+      "reason": "direct action instruction",
+      "signals": [
+        "action_verb"
+      ]
+    },
+    "at": "2026-08-28T01:36:37.512Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 12
+    },
+    "at": "2026-08-28T01:39:18.884Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T01:39:18.909Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": true,
+      "confidence": 0.85,
+      "reason": "direct action instruction",
+      "signals": [
+        "action_verb"
+      ]
+    },
+    "at": "2026-08-28T01:39:18.929Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "omp --help",
+    "metadata": {
+      "command": "omp --help",
+      "status": "pass"
+    },
+    "at": "2026-08-28T01:39:44.635Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "omp --help",
+    "metadata": {
+      "skill": "software-engineering",
+      "passed": true,
+      "command": "omp --help"
+    },
+    "at": "2026-08-28T01:39:44.665Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 12
+    },
+    "at": "2026-08-28T01:55:41.608Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T01:55:41.633Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": false,
+      "confidence": 0.1,
+      "reason": "no concrete action verb",
+      "signals": []
+    },
+    "at": "2026-08-28T01:55:41.657Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 12
+    },
+    "at": "2026-08-28T01:56:32.389Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T01:56:32.409Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": false,
+      "confidence": 0.1,
+      "reason": "no concrete action verb",
+      "signals": []
+    },
+    "at": "2026-08-28T01:56:32.432Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 12
+    },
+    "at": "2026-08-28T01:57:10.875Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T01:57:10.898Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": false,
+      "confidence": 0.1,
+      "reason": "no concrete action verb",
+      "signals": []
+    },
+    "at": "2026-08-28T01:57:10.922Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 12
+    },
+    "at": "2026-08-28T02:00:11.712Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T02:00:11.741Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": false,
+      "confidence": 0.1,
+      "reason": "no concrete action verb",
+      "signals": []
+    },
+    "at": "2026-08-28T02:00:11.769Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "general",
+    "metadata": {
+      "intent": "general",
+      "selectedSkills": [
+        "software-engineering"
+      ],
+      "suppressedSkills": [],
+      "confidence": 12
+    },
+    "at": "2026-08-28T02:10:03.442Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "software-engineering",
+    "metadata": {
+      "skill": "software-engineering",
+      "intent": "general"
+    },
+    "at": "2026-08-28T02:10:03.467Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": false,
+      "confidence": 0.1,
+      "reason": "no concrete action verb",
+      "signals": []
+    },
+    "at": "2026-08-28T02:10:03.498Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "release",
+    "metadata": {
+      "intent": "release",
+      "selectedSkills": [
+        "release-engineering",
+        "verification-discipline"
+      ],
+      "suppressedSkills": [],
+      "confidence": 51
+    },
+    "at": "2026-08-28T02:12:14.350Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "release-engineering",
+    "metadata": {
+      "skill": "release-engineering",
+      "intent": "release"
+    },
+    "at": "2026-08-28T02:12:14.372Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "verification-discipline",
+    "metadata": {
+      "skill": "verification-discipline",
+      "intent": "release"
+    },
+    "at": "2026-08-28T02:12:14.391Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": true,
+      "confidence": 0.85,
+      "reason": "direct action instruction",
+      "signals": [
+        "action_verb"
+      ]
+    },
+    "at": "2026-08-28T02:12:14.413Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "planner",
+    "metadata": {
+      "plannerMode": "linear-fallback",
+      "detectedUnits": [],
+      "fallbackReason": "Intent not eligible for parallel fan-out."
+    },
+    "at": "2026-08-28T02:12:14.438Z"
+  },
+  {
+    "kind": "skill_final_used",
+    "name": "release-engineering",
+    "metadata": {
+      "skill": "release-engineering",
+      "source": "system_injection"
+    },
+    "at": "2026-08-28T02:12:14.995Z"
+  },
+  {
+    "kind": "skill_final_used",
+    "name": "verification-discipline",
+    "metadata": {
+      "skill": "verification-discipline",
+      "source": "system_injection"
+    },
+    "at": "2026-08-28T02:12:15.016Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "release",
+    "metadata": {
+      "intent": "release",
+      "selectedSkills": [
+        "release-engineering",
+        "verification-discipline"
+      ],
+      "suppressedSkills": [],
+      "confidence": 51
+    },
+    "at": "2026-08-28T02:17:14.633Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "release-engineering",
+    "metadata": {
+      "skill": "release-engineering",
+      "intent": "release"
+    },
+    "at": "2026-08-28T02:17:14.657Z"
+  },
+  {
+    "kind": "skill_selected",
+    "name": "verification-discipline",
+    "metadata": {
+      "skill": "verification-discipline",
+      "intent": "release"
+    },
+    "at": "2026-08-28T02:17:14.685Z"
+  },
+  {
+    "kind": "routing_decision",
+    "name": "auto_activation",
+    "metadata": {
+      "activate": true,
+      "confidence": 0.85,
+      "reason": "direct action instruction",
+      "signals": [
+        "action_verb"
+      ]
+    },
+    "at": "2026-08-28T02:17:14.704Z"
+  },
+  {
+    "kind": "verification_used",
+    "name": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\"",
+    "metadata": {
+      "command": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\"",
+      "status": "unknown"
+    },
+    "at": "2026-08-28T02:18:06.803Z"
+  },
+  {
+    "kind": "verification_result",
+    "name": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\"",
+    "metadata": {
+      "skill": "release-engineering",
+      "passed": false,
+      "command": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\""
+    },
+    "at": "2026-08-28T02:18:06.829Z"
   }
 ]

@@ -68,5 +68,223 @@
     "area": "auto-capture",
     "id": "ev-1787414114678-7",
     "timestamp": "2026-08-22T15:55:14.678Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git status --short --branch --untracked-files=all",
+    "status": "fail",
+    "summary": "git status --short --branch --untracked-files=all -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787744057779-8",
+    "timestamp": "2026-08-26T11:34:17.779Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\"",
+    "status": "unknown",
+    "summary": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\" -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787744156334-9",
+    "timestamp": "2026-08-26T11:35:56.334Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git status",
+    "status": "fail",
+    "summary": "git status -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787744156696-10",
+    "timestamp": "2026-08-26T11:35:56.696Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git status --short",
+    "status": "fail",
+    "summary": "git status --short -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787744622274-11",
+    "timestamp": "2026-08-26T11:43:42.274Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue",
+    "status": "fail",
+    "summary": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787744815956-12",
+    "timestamp": "2026-08-26T11:46:55.956Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git diff --stat origin/main..HEAD",
+    "status": "fail",
+    "summary": "git diff --stat origin/main..HEAD -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787744911211-13",
+    "timestamp": "2026-08-26T11:48:31.211Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules",
+    "status": "fail",
+    "summary": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745411227-14",
+    "timestamp": "2026-08-26T11:56:51.227Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npm run build",
+    "status": "fail",
+    "summary": "npm run build -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745411370-15",
+    "timestamp": "2026-08-26T11:56:51.370Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git diff --check origin/main..HEAD",
+    "status": "unknown",
+    "summary": "git diff --check origin/main..HEAD -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745411673-16",
+    "timestamp": "2026-08-26T11:56:51.673Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git show --format=fuller --stat --oneline HEAD",
+    "status": "fail",
+    "summary": "git show --format=fuller --stat --oneline HEAD -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745412071-17",
+    "timestamp": "2026-08-26T11:56:52.071Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "php artisan test && vendor\\bin\\pint --test",
+    "status": "fail",
+    "summary": "php artisan test && vendor\\bin\\pint --test -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745416858-18",
+    "timestamp": "2026-08-26T11:56:56.858Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git diff --check",
+    "status": "unknown",
+    "summary": "git diff --check -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745609481-19",
+    "timestamp": "2026-08-26T12:00:09.481Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all",
+    "status": "unknown",
+    "summary": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745644885-20",
+    "timestamp": "2026-08-26T12:00:44.885Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "node --check resources/js/app.js && npm audit",
+    "status": "unknown",
+    "summary": "node --check resources/js/app.js && npm audit -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745645781-21",
+    "timestamp": "2026-08-26T12:00:45.781Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "composer validate --strict && composer audit",
+    "status": "unknown",
+    "summary": "composer validate --strict && composer audit -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745646025-22",
+    "timestamp": "2026-08-26T12:00:46.025Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "php artisan test && vendor\\bin\\pint --test",
+    "status": "fail",
+    "summary": "php artisan test && vendor\\bin\\pint --test -> fail",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745646921-23",
+    "timestamp": "2026-08-26T12:00:46.921Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "npm run build",
+    "status": "unknown",
+    "summary": "npm run build -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745648016-24",
+    "timestamp": "2026-08-26T12:00:48.016Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "composer audit",
+    "status": "unknown",
+    "summary": "composer audit -> unknown",
+    "area": "auto-capture",
+    "workflowId": "workflow-1787731170689",
+    "id": "ev-1787745673281-25",
+    "timestamp": "2026-08-26T12:01:13.281Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "omp --help",
+    "status": "pass",
+    "summary": "omp --help -> pass",
+    "area": "auto-capture",
+    "id": "ev-1787881184631-26",
+    "timestamp": "2026-08-28T01:39:44.631Z"
+  },
+  {
+    "taskId": "auto-capture",
+    "type": "command",
+    "command": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\"",
+    "status": "unknown",
+    "summary": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\" -> unknown",
+    "area": "auto-capture",
+    "id": "ev-1787883486800-27",
+    "timestamp": "2026-08-28T02:18:06.800Z"
   }
 ]

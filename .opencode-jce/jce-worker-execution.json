@@ -1,1074 +1,1435 @@
 {
   "version": 1,
-  "updatedAt": "2026-08-22T15:56:16.555Z",
+  "updatedAt": "2026-08-28T02:18:44.392Z",
   "activeTasks": [],
-  "completedSummaries": [],
-  "blockers": [],
+  "completedSummaries": [
+    {
+      "id": "bg-1787733148479-1effzk",
+      "description": "Inspect Laravel API contracts",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T08:32:33.594Z",
+      "reviewStatus": "blocked",
+      "reviewNotes": [
+        "Retry limit exhausted: Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent"
+      ],
+      "retryCount": 1,
+      "maxRetries": 1
+    },
+    {
+      "id": "bg-1787733848416-2k0hsl",
+      "description": "Review Laravel frontend port",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T08:44:15.972Z",
+      "reviewStatus": "blocked",
+      "reviewNotes": [
+        "Retry limit exhausted: Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent"
+      ],
+      "retryCount": 1,
+      "maxRetries": 1
+    },
+    {
+      "id": "bg-1787733890216-7uwvl0",
+      "description": "Review Laravel frontend port (retry 1/1)",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T08:44:55.619Z",
+      "reviewStatus": "pending_review",
+      "reviewNotes": [],
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryOfTaskId": "bg-1787733848416-2k0hsl",
+      "rootTaskId": "bg-1787733848416-2k0hsl"
+    },
+    {
+      "id": "bg-1787734799583-vlwpjo",
+      "description": "Review test coverage and Laravel compatibility",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T09:00:02.112Z",
+      "reviewStatus": "pending_review",
+      "reviewNotes": [],
+      "retryCount": 0,
+      "maxRetries": 1
+    },
+    {
+      "id": "bg-1787734799308-onwlhf",
+      "description": "Review Laravel backend security and integrity",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T09:00:02.479Z",
+      "reviewStatus": "pending_review",
+      "reviewNotes": [],
+      "retryCount": 0,
+      "maxRetries": 1
+    },
+    {
+      "id": "bg-1787734799777-zyqj9m",
+      "description": "Review frontend/backend contracts and XSS",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T09:00:02.861Z",
+      "reviewStatus": "pending_review",
+      "reviewNotes": [],
+      "retryCount": 0,
+      "maxRetries": 1
+    },
+    {
+      "id": "bg-1787739269459-fyu44o",
+      "description": "Review active Laravel app",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T10:14:31.797Z",
+      "reviewStatus": "blocked",
+      "reviewNotes": [
+        "Retry limit exhausted: Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent"
+      ],
+      "retryCount": 1,
+      "maxRetries": 1
+    },
+    {
+      "id": "bg-1787739317586-vl44c6",
+      "description": "Review active Laravel app (retry 1/1)",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T10:15:23.889Z",
+      "reviewStatus": "pending_review",
+      "reviewNotes": [],
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryOfTaskId": "bg-1787739269459-fyu44o",
+      "rootTaskId": "bg-1787739269459-fyu44o"
+    },
+    {
+      "id": "bg-1787739482045-k8mbkb",
+      "description": "Verify Laravel migration",
+      "result": "Task completed",
+      "completedAt": "2026-08-26T10:18:04.859Z",
+      "reviewStatus": "blocked",
+      "reviewNotes": [
+        "Retry limit exhausted: Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent"
+      ],
+      "retryCount": 1,
+      "maxRetries": 1
+    }
+  ],
+  "blockers": [
+    {
+      "id": "bg-1787883134456-zy76nr",
+      "description": "[orchestrated] node-release-0-yag8",
+      "failureReason": "Failed to create child session"
+    }
+  ],
   "verificationEvidence": [
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "node --check \"resources/js/app.js\" && npm run build",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "node --check \"resources/js/app.js\" && npm run build -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --stat -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" && node --check \"resources/js/app.js\"",
+      "status": "unknown",
+      "summary": "git diff --stat -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" && node --check \"resources/js/app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" && git status --short -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\"",
+      "status": "unknown",
+      "summary": "git diff --check -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" && git status --short -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"resources/js/app.js\" && php -l \"resources/views/home.blade.php\" && git diff --check -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"resources/js/app.js\" && php -l \"resources/views/home.blade.php\" && git diff --check -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check \"resources/js/app.js\" && php -l \"resources/views/home.blade.php\" && git diff --check -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" && git status --short -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\"",
+      "status": "unknown",
+      "summary": "node --check \"resources/js/app.js\" && php -l \"resources/views/home.blade.php\" && git diff --check -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" && git status --short -- \"resources/views/home.blade.php\" \"resources/css/app.css\" \"resources/js/app.js\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check resources/js/app.js",
+      "status": "unknown",
+      "summary": "node --check resources/js/app.js -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "vendor\\bin\\pint --test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "vendor\\bin\\pint --test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "php artisan test",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "php artisan test -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "composer validate --strict",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "composer validate --strict -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "vendor\\bin\\pint --test",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npm run build",
+      "status": "unknown",
+      "summary": "npm run build -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --stat",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --stat -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "composer audit",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "composer audit -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "npm audit --omit=dev",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "npm audit --omit=dev -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "php artisan test",
+      "status": "pass",
+      "summary": "php artisan test -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git rm -r --cached --ignore-unmatch node_modules",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git rm -r --cached --ignore-unmatch node_modules -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short --untracked-files=all",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short --untracked-files=all -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "php artisan test && vendor\\bin\\pint --test && npm run build && composer validate --strict && composer audit && npm audit",
+      "status": "pass",
+      "summary": "php artisan test && vendor\\bin\\pint --test && npm run build && composer validate --strict && composer audit && npm audit -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "composer validate --strict",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "composer validate --strict -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "npm run build",
+      "status": "unknown",
+      "summary": "npm run build -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test",
+      "status": "pass",
+      "summary": "php artisan test -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "composer audit",
+      "status": "unknown",
+      "summary": "composer audit -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npm audit --omit=dev",
+      "status": "unknown",
+      "summary": "npm audit --omit=dev -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git status --short -- app routes database resources config tests composer.json composer.lock package.json package-lock.json vite.config.js phpunit.xml artisan bootstrap/app.php public/build",
+      "status": "unknown",
+      "summary": "git status --short -- app routes database resources config tests composer.json composer.lock package.json package-lock.json vite.config.js phpunit.xml artisan bootstrap/app.php public/build -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
+      "status": "unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check resources/js/app.js && php -l app/Http/Controllers/AuthController.php",
+      "status": "unknown",
+      "summary": "node --check resources/js/app.js && php -l app/Http/Controllers/AuthController.php -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test && vendor\\bin\\pint --test && npm run build",
+      "status": "pass",
+      "summary": "php artisan test && vendor\\bin\\pint --test && npm run build -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test",
+      "status": "pass",
+      "summary": "php artisan test -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan migrate:fresh --seed --force && php artisan test",
+      "status": "pass",
+      "summary": "php artisan migrate:fresh --seed --force && php artisan test -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git check-ignore -v .env database/database.sqlite public/build/manifest.json vendor/autoload.php node_modules/vite/package.json",
+      "status": "unknown",
+      "summary": "git check-ignore -v .env database/database.sqlite public/build/manifest.json vendor/autoload.php node_modules/vite/package.json -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git rm -r --cached --ignore-unmatch node_modules",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git rm -r --cached --ignore-unmatch node_modules -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short --untracked-files=all",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short --untracked-files=all -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --stat HEAD -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\"",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --stat HEAD -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "command": "vendor\\bin\\pint --test && node --check resources/js/app.js && php -l resources/views/home.blade.php && php -l routes/web.php",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test && node --check resources/js/app.js && php -l resources/views/home.blade.php && php -l routes/web.php -> pass",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "php artisan migrate:fresh --seed --force && php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan migrate:fresh --seed --force && php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "composer validate --strict && composer audit",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "composer validate --strict && composer audit -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "npm run build && npm audit",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "npm run build && npm audit -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git rm -r --cached --ignore-unmatch node_modules",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git rm -r --cached --ignore-unmatch node_modules -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "Test-Path -LiteralPath \"node_modules\\vite\\package.json\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "Test-Path -LiteralPath \"node_modules\\vite\\package.json\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "composer audit --no-interaction",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "composer audit --no-interaction -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "npm audit --omit=dev",
+      "status": "unknown",
+      "summary": "npm audit --omit=dev -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff -- routes/web.php app config database/migrations database/seeders resources/views/home.blade.php resources/js/app.js tests composer.json package.json",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff -- routes/web.php app config database/migrations database/seeders resources/views/home.blade.php resources/js/app.js tests composer.json package.json -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "command": "vendor\\bin\\pint --test",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test -> pass",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "vendor\\bin\\pint --test",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan migrate:fresh --seed --force && php artisan test --filter=\"ProductTest|CheckoutTest\"",
+      "status": "pass",
+      "summary": "php artisan migrate:fresh --seed --force && php artisan test --filter=\"ProductTest|CheckoutTest\" -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "vendor\\bin\\pint --test && node --check resources/js/app.js && php -l resources/views/home.blade.php",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test && node --check resources/js/app.js && php -l resources/views/home.blade.php -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npm run build",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "npm run build -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "php artisan migrate:fresh --seed --force && php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan migrate:fresh --seed --force && php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "php artisan route:list --path=api/products --columns=Method,URI,Name,Action,Middleware; php artisan test --filter='ProductTest|CheckoutTest'",
+      "status": "pass",
+      "summary": "php artisan route:list --path=api/products --columns=Method,URI,Name,Action,Middleware; php artisan test --filter='ProductTest|CheckoutTest' -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "vendor\\bin\\pint --test && node --check resources/js/app.js",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test && node --check resources/js/app.js -> pass",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npm run build",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "npm run build -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "command": "vendor\\bin\\pint --test && npm run build",
+      "status": "pass",
+      "summary": "vendor\\bin\\pint --test && npm run build -> pass",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "php artisan migrate:fresh --seed --force && php artisan test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan migrate:fresh --seed --force && php artisan test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "command": "php artisan test --filter='CheckoutTest|ProductTest'",
+      "status": "pass",
+      "summary": "php artisan test --filter='CheckoutTest|ProductTest' -> pass",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short --branch --untracked-files=all",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short --branch --untracked-files=all -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --stat HEAD",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --stat HEAD -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --cached --stat",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --cached --stat -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "node --check resources/js/app.js",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "node --check resources/js/app.js -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --check -- . \":(exclude).opencode-context.md\" \":(exclude).opencode-jce/**\" \":(exclude)node_modules/**\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "composer validate --strict && composer audit",
+      "status": "unknown",
+      "summary": "composer validate --strict && composer audit -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test && vendor\\bin\\pint --test",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "php artisan test && vendor\\bin\\pint --test -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "npm run build && npm audit",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "npm run build && npm audit -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short --branch --untracked-files=all",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short --branch --untracked-files=all -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --cached --stat",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --cached --stat -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --cached --summary",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --cached --summary -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "git diff --cached --check",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "git diff --cached --check -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git commit -m \"feat(app): migrate marketplace to Laravel\"",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git commit -m \"feat(app): migrate marketplace to Laravel\" -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git show --stat --oneline --summary HEAD",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git show --stat --oneline --summary HEAD -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short --branch --untracked-files=all",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short --branch --untracked-files=all -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
+      "command": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\"",
       "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
+      "summary": "Test-Path -LiteralPath \".git\\rebase-merge\"; Test-Path -LiteralPath \".git\\rebase-apply\" -> unknown",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git status --short",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git status --short -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git commit -C 79e78cd2fb37d560e01a3097055203a1119e9e21 && git -c core.editor=true rebase --continue -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --stat origin/main..HEAD",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --stat origin/main..HEAD -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "git diff --name-only origin/main..HEAD -- .opencode-context.md .opencode-jce .env database/database.sqlite public/build storage vendor node_modules -> fail",
       "area": "auto-capture",
-      "captured": "auto"
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "npm run build",
       "status": "fail",
-      "summary": "npx --yes html-validate \"index.html\" -> fail",
+      "summary": "npm run build -> fail",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check origin/main..HEAD",
+      "status": "unknown",
+      "summary": "git diff --check origin/main..HEAD -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git show --format=fuller --stat --oneline HEAD",
+      "status": "fail",
+      "summary": "git show --format=fuller --stat --oneline HEAD -> fail",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test && vendor\\bin\\pint --test",
+      "status": "fail",
+      "summary": "php artisan test && vendor\\bin\\pint --test -> fail",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check",
+      "status": "unknown",
+      "summary": "git diff --check -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all",
+      "status": "unknown",
+      "summary": "git diff --check origin/main..HEAD && git status --short --branch --untracked-files=all -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "node --check resources/js/app.js && npm audit",
+      "status": "unknown",
+      "summary": "node --check resources/js/app.js && npm audit -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "composer validate --strict && composer audit",
+      "status": "unknown",
+      "summary": "composer validate --strict && composer audit -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "php artisan test && vendor\\bin\\pint --test",
+      "status": "fail",
+      "summary": "php artisan test && vendor\\bin\\pint --test -> fail",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "npm run build",
+      "status": "unknown",
+      "summary": "npm run build -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "composer audit",
+      "status": "unknown",
+      "summary": "composer audit -> unknown",
+      "area": "auto-capture",
+      "captured": "auto",
+      "workflowId": "workflow-1787731170689"
+    },
+    {
+      "taskId": "auto-capture",
+      "type": "command",
+      "command": "omp --help",
+      "status": "pass",
+      "summary": "omp --help -> pass",
       "area": "auto-capture",
       "captured": "auto"
     },
     {
       "taskId": "auto-capture",
       "type": "command",
-      "command": "npx --yes html-validate \"index.html\"",
+      "command": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\"",
       "status": "unknown",
-      "summary": "npx --yes html-validate \"index.html\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
-      "area": "auto-capture",
-      "captured": "auto"
-    },
-    {
-      "taskId": "auto-capture",
-      "type": "command",
-      "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\"",
-      "status": "unknown",
-      "summary": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
+      "summary": "Test-Path -LiteralPath \"C:\\Users\\surya\\AppData\\Local\\Kiro-Cli\\kiro-cli.exe\"; Test-Path -LiteralPath \"C:\\Program Files\\Kiro-Cli\\kiro-cli.exe\" -> unknown",
       "area": "auto-capture",
       "captured": "auto"
     }
   ],
-  "retryHistory": [],
+  "retryHistory": [
+    {
+      "id": "bg-1787733148479-1effzk",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryTaskId": "bg-1787733643247-ay27uc",
+      "recoveryCategory": "delegated_contract_failure",
+      "failureReason": "Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent",
+      "reviewStatus": "blocked",
+      "status": "completed",
+      "logicalState": "blocked",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787733643247-ay27uc",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryOfTaskId": "bg-1787733148479-1effzk",
+      "rootTaskId": "bg-1787733148479-1effzk",
+      "recoveryCategory": "unknown",
+      "failureReason": "No known error category matched.",
+      "reviewStatus": "blocked",
+      "status": "error",
+      "logicalState": "blocked",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787733848416-2k0hsl",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryTaskId": "bg-1787733890216-7uwvl0",
+      "recoveryCategory": "delegated_contract_failure",
+      "failureReason": "Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent",
+      "reviewStatus": "blocked",
+      "status": "completed",
+      "logicalState": "blocked",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787733890216-7uwvl0",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryOfTaskId": "bg-1787733848416-2k0hsl",
+      "rootTaskId": "bg-1787733848416-2k0hsl",
+      "recoveryCategory": "unknown",
+      "failureReason": "No known error category matched.",
+      "reviewStatus": "blocked",
+      "status": "error",
+      "logicalState": "blocked",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787739269459-fyu44o",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryTaskId": "bg-1787739317586-vl44c6",
+      "recoveryCategory": "delegated_contract_failure",
+      "failureReason": "Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent",
+      "reviewStatus": "blocked",
+      "status": "completed",
+      "logicalState": "blocked",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787739317586-vl44c6",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryOfTaskId": "bg-1787739269459-fyu44o",
+      "rootTaskId": "bg-1787739269459-fyu44o",
+      "recoveryCategory": "delegated_contract_failure",
+      "failureReason": "Switch agent recovery: Delegated output quality too low; consider switching agent",
+      "reviewStatus": "pending_review",
+      "status": "completed",
+      "logicalState": "delegating",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787739482045-k8mbkb",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryTaskId": "bg-1787739540203-ahbbh8",
+      "recoveryCategory": "delegated_contract_failure",
+      "failureReason": "Auto-recovery hint: switch agent — Delegated output quality too low; consider switching agent",
+      "reviewStatus": "blocked",
+      "status": "completed",
+      "logicalState": "blocked",
+      "resolved": false
+    },
+    {
+      "id": "bg-1787739540203-ahbbh8",
+      "retryCount": 1,
+      "maxRetries": 1,
+      "retryOfTaskId": "bg-1787739482045-k8mbkb",
+      "rootTaskId": "bg-1787739482045-k8mbkb",
+      "recoveryCategory": "unknown",
+      "failureReason": "No known error category matched.",
+      "reviewStatus": "blocked",
+      "status": "error",
+      "logicalState": "blocked",
+      "resolved": false
+    }
+  ],
   "traceEvents": [
     {
-      "type": "verification.recorded",
-      "message": "node --check \"app.js\" -> unknown",
-      "at": "2026-08-22T15:47:40.140Z",
-      "metadata": {
-        "command": "node --check \"app.js\""
-      }
+      "type": "task.created",
+      "taskId": "bg-1787883134456-zy76nr",
+      "message": "Created task: [orchestrated] node-release-0-yag8",
+      "at": "2026-08-28T02:12:14.456Z"
     },
     {
-      "type": "verification.recorded",
-      "message": "npx --yes html-validate \"index.html\" -> fail",
-      "at": "2026-08-22T15:47:54.240Z",
-      "metadata": {
-        "command": "npx --yes html-validate \"index.html\""
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:47:54.248Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 7766,
-        "compressedChars": 5729,
-        "estimatedTokensSaved": 509
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:48:10.992Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 308,
-        "compressedChars": 307,
-        "estimatedTokensSaved": 0
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "node --check \"app.js\" -> unknown",
-      "at": "2026-08-22T15:50:08.682Z",
-      "metadata": {
-        "command": "node --check \"app.js\""
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "npx --yes html-validate \"index.html\" -> fail",
-      "at": "2026-08-22T15:50:12.259Z",
-      "metadata": {
-        "command": "npx --yes html-validate \"index.html\""
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:50:12.264Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 462,
-        "compressedChars": 461,
-        "estimatedTokensSaved": 0
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:50:36.265Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 7,
-        "compressedChars": 6,
-        "estimatedTokensSaved": 0
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "npx --yes html-validate \"index.html\" -> unknown",
-      "at": "2026-08-22T15:50:39.561Z",
-      "metadata": {
-        "command": "npx --yes html-validate \"index.html\""
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:50:52.393Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 350,
-        "compressedChars": 344,
-        "estimatedTokensSaved": 2
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:50:53.476Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 499,
-        "compressedChars": 493,
-        "estimatedTokensSaved": 1
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
-      "at": "2026-08-22T15:54:38.677Z",
-      "metadata": {
-        "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "Context budget applied to bash output",
-      "at": "2026-08-22T15:55:11.561Z",
-      "metadata": {
-        "tool": "bash",
-        "originalChars": 5,
-        "compressedChars": 4,
-        "estimatedTokensSaved": 1
-      }
-    },
-    {
-      "type": "verification.recorded",
-      "message": "npx --yes html-validate \"index.html\" && node --check \"app.js\" -> unknown",
-      "at": "2026-08-22T15:55:14.703Z",
-      "metadata": {
-        "command": "npx --yes html-validate \"index.html\" && node --check \"app.js\""
-      }
+      "type": "task.failed",
+      "taskId": "bg-1787883134456-zy76nr",
+      "message": "Failed to create child session",
+      "at": "2026-08-28T02:12:14.482Z"
     }
   ],
   "changedFiles": [
+    "node_modules/tar/dist/esm/replace.js",
+    "node_modules/tar/dist/esm/replace.js.map",
+    "node_modules/tar/dist/esm/strip-absolute-path.d.ts",
+    "node_modules/tar/dist/esm/strip-absolute-path.d.ts.map",
+    "node_modules/tar/dist/esm/strip-absolute-path.js",
+    "node_modules/tar/dist/esm/strip-absolute-path.js.map",
+    "node_modules/tar/dist/esm/strip-trailing-slashes.d.ts",
+    "node_modules/tar/dist/esm/strip-trailing-slashes.d.ts.map",
+    "node_modules/tar/dist/esm/strip-trailing-slashes.js",
+    "node_modules/tar/dist/esm/strip-trailing-slashes.js.map",
+    "node_modules/tar/dist/esm/symlink-error.d.ts",
+    "node_modules/tar/dist/esm/symlink-error.d.ts.map",
+    "node_modules/tar/dist/esm/symlink-error.js",
+    "node_modules/tar/dist/esm/symlink-error.js.map",
+    "node_modules/tar/dist/esm/types.d.ts",
+    "node_modules/tar/dist/esm/types.d.ts.map",
+    "node_modules/tar/dist/esm/types.js",
+    "node_modules/tar/dist/esm/types.js.map",
+    "node_modules/tar/dist/esm/unpack.d.ts",
+    "node_modules/tar/dist/esm/unpack.d.ts.map",
+    "node_modules/tar/dist/esm/unpack.js",
+    "node_modules/tar/dist/esm/unpack.js.map",
+    "node_modules/tar/dist/esm/update.d.ts",
+    "node_modules/tar/dist/esm/update.d.ts.map",
+    "node_modules/tar/dist/esm/update.js",
+    "node_modules/tar/dist/esm/update.js.map",
+    "node_modules/tar/dist/esm/warn-method.d.ts",
+    "node_modules/tar/dist/esm/warn-method.d.ts.map",
+    "node_modules/tar/dist/esm/warn-method.js",
+    "node_modules/tar/dist/esm/warn-method.js.map",
+    "node_modules/tar/dist/esm/winchars.d.ts",
+    "node_modules/tar/dist/esm/winchars.d.ts.map",
+    "node_modules/tar/dist/esm/winchars.js",
+    "node_modules/tar/dist/esm/winchars.js.map",
+    "node_modules/tar/dist/esm/write-entry.d.ts",
+    "node_modules/tar/dist/esm/write-entry.d.ts.map",
+    "node_modules/tar/dist/esm/write-entry.js",
+    "node_modules/tar/dist/esm/write-entry.js.map",
+    "node_modules/tar/package.json",
+    "node_modules/tinyglobby/LICENSE",
+    "node_modules/tinyglobby/README.md",
+    "node_modules/tinyglobby/dist/index.cjs",
+    "node_modules/tinyglobby/dist/index.d.cts",
+    "node_modules/tinyglobby/dist/index.d.mts",
+    "node_modules/tinyglobby/dist/index.mjs",
+    "node_modules/tinyglobby/package.json",
+    "node_modules/tunnel-agent/LICENSE",
+    "node_modules/tunnel-agent/README.md",
+    "node_modules/tunnel-agent/index.js",
+    "node_modules/tunnel-agent/package.json",
+    "node_modules/undici/LICENSE",
+    "node_modules/undici/README.md",
+    "node_modules/undici/docs/docs/api/Agent.md",
+    "node_modules/undici/docs/docs/api/BalancedPool.md",
+    "node_modules/undici/docs/docs/api/CacheStorage.md",
+    "node_modules/undici/docs/docs/api/Client.md",
+    "node_modules/undici/docs/docs/api/Connector.md",
+    "node_modules/undici/docs/docs/api/ContentType.md",
+    "node_modules/undici/docs/docs/api/Cookies.md",
+    "node_modules/undici/docs/docs/api/Debug.md",
+    "node_modules/undici/docs/docs/api/DiagnosticsChannel.md",
+    "node_modules/undici/docs/docs/api/DispatchInterceptor.md",
+    "node_modules/undici/docs/docs/api/Dispatcher.md",
+    "node_modules/undici/docs/docs/api/EnvHttpProxyAgent.md",
+    "node_modules/undici/docs/docs/api/Errors.md",
+    "node_modules/undici/docs/docs/api/EventSource.md",
+    "node_modules/undici/docs/docs/api/Fetch.md",
+    "node_modules/undici/docs/docs/api/MockAgent.md",
+    "node_modules/undici/docs/docs/api/MockClient.md",
+    "node_modules/undici/docs/docs/api/MockErrors.md",
+    "node_modules/undici/docs/docs/api/MockPool.md",
+    "node_modules/undici/types/content-type.d.ts",
+    "node_modules/undici/types/cookies.d.ts",
+    "node_modules/undici/types/diagnostics-channel.d.ts",
+    "node_modules/undici/types/dispatcher.d.ts",
+    "node_modules/undici/types/env-http-proxy-agent.d.ts",
+    "node_modules/undici/types/errors.d.ts",
+    "node_modules/undici/types/eventsource.d.ts",
+    "node_modules/undici/types/fetch.d.ts",
+    "node_modules/undici/types/file.d.ts",
+    "node_modules/undici/types/filereader.d.ts",
+    "node_modules/undici/types/formdata.d.ts",
+    "node_modules/undici/types/global-dispatcher.d.ts",
+    "node_modules/undici/types/global-origin.d.ts",
+    "node_modules/undici/types/handlers.d.ts",
+    "node_modules/undici/types/header.d.ts",
+    "node_modules/undici/types/index.d.ts",
+    "node_modules/undici/types/interceptors.d.ts",
+    "node_modules/undici/types/mock-agent.d.ts",
+    "node_modules/undici/types/mock-client.d.ts",
+    "node_modules/undici/types/mock-errors.d.ts",
+    "node_modules/undici/types/mock-interceptor.d.ts",
+    "node_modules/undici/types/mock-pool.d.ts",
+    "node_modules/undici/types/patch.d.ts",
+    "node_modules/undici/types/pool-stats.d.ts",
+    "node_modules/undici/types/pool.d.ts",
+    "node_modules/undici/types/proxy-agent.d.ts",
+    "node_modules/undici/types/readable.d.ts",
+    "node_modules/undici/types/retry-agent.d.ts",
+    "node_modules/undici/types/retry-handler.d.ts",
+    "node_modules/undici/types/util.d.ts",
+    "node_modules/undici/types/webidl.d.ts",
+    "node_modules/undici/types/websocket.d.ts",
+    "node_modules/util-deprecate/History.md",
+    "node_modules/util-deprecate/LICENSE",
+    "node_modules/util-deprecate/README.md",
+    "node_modules/util-deprecate/browser.js",
+    "node_modules/util-deprecate/node.js",
+    "node_modules/util-deprecate/package.json",
+    "node_modules/which/LICENSE",
+    "node_modules/which/README.md",
+    "node_modules/which/bin/which.js",
+    "node_modules/which/lib/index.js",
+    "node_modules/which/package.json",
+    "node_modules/wrappy/LICENSE",
+    "node_modules/wrappy/README.md",
+    "node_modules/wrappy/package.json",
+    "node_modules/wrappy/wrappy.js",
+    "node_modules/yallist/LICENSE.md",
+    "node_modules/yallist/README.md",
+    "node_modules/yallist/dist/commonjs/index.d.ts",
+    "node_modules/yallist/dist/commonjs/index.d.ts.map",
+    "node_modules/yallist/dist/commonjs/index.js",
+    "node_modules/yallist/dist/commonjs/index.js.map",
+    "node_modules/yallist/dist/commonjs/package.json",
+    "node_modules/yallist/dist/esm/index.d.ts",
+    "node_modules/yallist/dist/esm/index.d.ts.map",
+    "node_modules/yallist/dist/esm/index.js",
+    "node_modules/yallist/dist/esm/index.js.map",
+    "node_modules/yallist/dist/esm/package.json",
+    "node_modules/yallist/package.json",
+    "resources/css/base.css",
+    "C:\\casuragi\\.git\\rebase-merge\\message",
+    "C:\\casuragi\\.git\\rebase-merge\\stopped-sha",
+    "C:\\casuragi\\.git\\rebase-merge\\autostash",
+    "C:\\casuragi\\.git\\rebase-merge\\git-rebase-todo",
+    ".opencode-jce/evidence.json",
+    ".opencode-jce/jce-worker-execution.json",
+    ".opencode-jce/orchestration-state.json",
+    ".opencode-jce/telemetry.json",
+    "C:\\casuragi\\.git\\rebase-merge\\done",
+    "README.md",
+    "app/Exceptions/InsufficientStockException.php",
+    "app/Http/Controllers/AuthController.php",
+    "app/Http/Controllers/CheckoutController.php",
+    "app/Http/Controllers/Controller.php",
+    "app/Http/Controllers/FavoriteController.php",
+    "app/Http/Controllers/OrderController.php",
+    "app/Http/Controllers/ProductController.php",
+    "app/Http/Requests/CheckoutRequest.php",
+    "app/Http/Requests/LoginRequest.php",
+    "app/Http/Requests/RegisterRequest.php",
+    "app/Http/Requests/StoreProductRequest.php",
+    "app/Models/Order.php",
+    "app/Models/OrderItem.php",
+    "app/Models/Product.php",
+    "app/Models/User.php",
+    "app/Providers/AppServiceProvider.php",
+    "app/Services/CheckoutService.php",
+    "bootstrap/app.php",
+    "bootstrap/providers.php",
+    "config/app.php",
+    "config/auth.php",
+    "config/cache.php",
+    "config/cosplaynesia.php",
+    "config/database.php",
+    "config/filesystems.php",
+    "config/logging.php",
+    "config/queue.php",
+    "config/session.php",
+    "database/factories/ProductFactory.php",
+    "database/factories/UserFactory.php",
+    "database/migrations/0001_01_01_000000_create_users_table.php",
+    "database/migrations/2026_08_26_000001_create_products_table.php",
+    "database/migrations/2026_08_26_000002_create_favorites_table.php",
+    "database/migrations/2026_08_26_000003_create_orders_table.php",
+    "database/migrations/2026_08_26_000004_add_is_active_to_products_table.php",
+    "database/seeders/DatabaseSeeder.php",
+    "database/seeders/ProductSeeder.php",
+    "public/index.php",
+    "routes/console.php",
+    "routes/web.php",
+    "tests/Feature/AuthenticationTest.php",
+    "tests/Feature/CheckoutTest.php",
+    "tests/Feature/FavoriteTest.php",
+    "tests/Feature/HomepageTest.php",
+    "tests/Feature/ProductTest.php",
+    "tests/TestCase.php",
+    ".opencode-context.md",
     "C:\\casuragi",
-    "cosulagi-network.txt",
-    "cosulagi-desktop-snapshot.md",
-    "C:\\casuragi\\cosulagi-desktop-snapshot.md",
-    "C:\\casuragi\\cosulagi-network.txt",
-    "cosulagi-reference-desktop.png",
-    "C:\\casuragi\\cosulagi-reference-desktop.png",
-    "C:\\casuragi\\.opencode-context.md",
-    "cosulagi-images.json",
-    "cosulagi-mobile-snapshot.md",
-    "C:\\casuragi\\cosulagi-images.json",
-    "cosulagi-reference-mobile.png",
-    "C:\\casuragi\\index.html",
-    "C:\\casuragi\\styles.css",
-    "C:\\casuragi\\app.js",
-    "casuragi-mobile-qa.md",
-    "casuragi-mobile-qa.png",
-    "C:\\casuragi\\casuragi-mobile-qa.md",
-    "casuragi-desktop-qa.md",
-    "casuragi-desktop-qa.png",
-    "C:\\casuragi\\README.md",
-    "C:\\casuragi\\cosulagi-reference-mobile.png",
-    "C:\\casuragi\\cosulagi-mobile-snapshot.md",
-    "C:\\casuragi\\casuragi-mobile-qa.png",
-    "C:\\casuragi\\casuragi-desktop-qa.png",
-    "C:\\casuragi\\casuragi-desktop-qa.md"
+    "C:\\Users\\surya\\.config\\opencode",
+    "C:\\Users\\surya\\.config\\opencode\\opencode.json",
+    "C:\\Users\\surya\\.config\\opencode\\.backup-update\\opencode.json",
+    "C:\\Users\\surya\\.config\\opencode\\opencode.json.etteum-backup-1786617842507",
+    "C:\\Users\\surya\\.config",
+    "C:\\Users\\surya",
+    "C:\\Users\\surya\\.omp",
+    "C:\\Users\\surya\\.omp\\agent\\config.yml",
+    "C:\\Users\\surya\\.omp\\agent\\models.yml",
+    "C:\\Users\\surya\\AppData\\Local\\Kiro-Cli"
   ],
   "workflowRuns": [],
   "wisdom": [],
@@ -1079,9 +1440,33 @@
     "compressedChars": 0,
     "estimatedTokensSaved": 0,
     "estimatedSavingsPercent": 0,
-    "tasks": 0,
+    "tasks": 69271552,
     "byTool": {
       "bash": {
+        "originalChars": 0,
+        "compressedChars": 0,
+        "estimatedTokensSaved": 0,
+        "tasks": 69271552
+      },
+      "grep": {
+        "originalChars": 0,
+        "compressedChars": 0,
+        "estimatedTokensSaved": 0,
+        "tasks": 0
+      },
+      "apply_patch": {
+        "originalChars": 0,
+        "compressedChars": 0,
+        "estimatedTokensSaved": 0,
+        "tasks": 0
+      },
+      "dispatch": {
+        "originalChars": 0,
+        "compressedChars": 0,
+        "estimatedTokensSaved": 0,
+        "tasks": 0
+      },
+      "bg_collect": {
         "originalChars": 0,
         "compressedChars": 0,
         "estimatedTokensSaved": 0,

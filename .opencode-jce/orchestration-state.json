@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "updatedAt": "2026-08-22T15:56:16.560Z",
+  "updatedAt": "2026-08-28T02:18:44.396Z",
   "memoryTiers": {
     "session": {
-      "blockers": []
+      "currentTask": "PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+      "blockers": [],
+      "pendingPlan": "PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n (executing)"
     },
     "project": {
       "conventions": [],
@@ -12,7 +14,9 @@
       "dangerousAreas": []
     },
     "failure": {
-      "knownErrors": [],
+      "knownErrors": [
+        "run.all.pre.release.checks.tests.type.checker.linter.version.sync.unknown.node.timed.out.pre.release.checks"
+      ],
       "badFixes": [],
       "successfulFixes": []
     },
@@ -22,8 +26,50 @@
       "preferBroadVerification": true
     }
   },
-  "facts": [],
-  "decisions": [],
+  "facts": [
+    {
+      "id": "fact-1787730721753-mlqgzc",
+      "key": "last.error.type",
+      "value": "syntax",
+      "source": "tool",
+      "confidence": 0.9,
+      "discoveredAt": "2026-08-26T07:52:01.753Z"
+    },
+    {
+      "id": "fact-1787733648190-3gewoy",
+      "key": "build.bundler",
+      "value": "vite",
+      "source": "tool",
+      "confidence": 0.7,
+      "discoveredAt": "2026-08-26T08:40:48.190Z"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "dec-1787733101084-0o2nn2",
+      "description": "Plan created for: Implement the Laravel frontend port in C:\\casuragi, modifying ONLY resources/views/home.blade.php, resources/css/app.css, and resources/js/app.js. Preserve the current visual identity and responsive UX from index.html/styles.css, but adapt functionality to Laravel session+CSRF API routes: GET /api/p",
+      "reasoning": "Intent: feature (confidence: 1), 11 nodes",
+      "alternatives": [],
+      "status": "active",
+      "madeAt": "2026-08-26T08:31:41.084Z"
+    },
+    {
+      "id": "dec-1787883134427-nw83y2",
+      "description": "Plan created for: PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+      "reasoning": "Intent: release (confidence: 0.6), 3 nodes",
+      "alternatives": [],
+      "status": "active",
+      "madeAt": "2026-08-28T02:12:14.427Z"
+    },
+    {
+      "id": "dec-1787883134448-9br3bl",
+      "description": "Plan created for: PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+      "reasoning": "Intent: release (confidence: 0.6), 3 nodes",
+      "alternatives": [],
+      "status": "active",
+      "madeAt": "2026-08-28T02:12:14.448Z"
+    }
+  ],
   "artifacts": [],
   "evidence": [],
   "wisdom": [],
@@ -35,10 +81,88 @@
       "nodesCompleted": 0,
       "nodesFailed": 0,
       "endedAt": "2026-08-22T15:56:16.560Z"
+    },
+    {
+      "id": "session-1787730456816-k3xx",
+      "startedAt": "2026-08-26T07:47:36.816Z",
+      "nodesCompleted": 0,
+      "nodesFailed": 0,
+      "endedAt": "2026-08-26T12:03:15.838Z"
+    },
+    {
+      "id": "session-1787880275391-u4dk",
+      "startedAt": "2026-08-28T01:24:35.391Z",
+      "nodesCompleted": 0,
+      "nodesFailed": 0,
+      "endedAt": "2026-08-28T01:41:48.878Z"
+    },
+    {
+      "id": "session-1787882115626-ucw4",
+      "startedAt": "2026-08-28T01:55:15.626Z",
+      "nodesCompleted": 0,
+      "nodesFailed": 0,
+      "endedAt": "2026-08-28T02:18:44.396Z"
     }
   ],
   "orchestration": {
-    "constraints": [],
+    "constraints": [
+      {
+        "id": "con-1787730593580-8242n3",
+        "description": "Do not edit files. Focus on frontend app.js/index.html plus api/*.js and db/*.js. Retur",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T07:49:53.579Z"
+      },
+      {
+        "id": "con-1787730593778-85wk5n",
+        "description": "Do not edit. Clearly distinguish must-fix before demo vs production migration, with fil",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T07:49:53.778Z"
+      },
+      {
+        "id": "con-1787731857547-3v460f",
+        "description": "Do not modify anything. Assume local demo is current target unless choices need clarifi",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T08:10:57.547Z"
+      },
+      {
+        "id": "con-1787733101038-ppnfqh",
+        "description": "Do not modify any other files. Verify npm build if dependencies are available, otherwis",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T08:31:41.038Z"
+      },
+      {
+        "id": "con-1787733148716-b88d13",
+        "description": "Do not modify unrelated files",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T08:32:28.716Z"
+      },
+      {
+        "id": "con-1787734763833-lu9lw5",
+        "description": "Do not edit. Mention if no high-severity findings. Return minimal fixes for concrete is",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T08:59:23.833Z"
+      },
+      {
+        "id": "con-1787739581444-fvufm5",
+        "description": "Do not modify files. Return concise review findings ordered severity, each exact file:l",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T10:19:41.444Z"
+      },
+      {
+        "id": "con-1787741467525-0zzl8r",
+        "description": "Do not modify files. Return findings ordered severity with exact file:line and minimal",
+        "origin": "user",
+        "active": true,
+        "createdAt": "2026-08-26T10:51:07.524Z"
+      }
+    ],
     "signals": []
   },
   "autonomyLevel": "balanced",
@@ -51,5 +175,398 @@
   },
   "agentPerformanceLog": [],
   "calibrationLog": [],
-  "recoveryLog": []
+  "recoveryLog": [],
+  "graph": {
+    "id": "graph-1787883134448-7mcm",
+    "goal": "PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+    "status": "executing",
+    "nodes": [
+      {
+        "id": "node-release-0-yag8",
+        "type": "verify",
+        "title": "Pre-release checks",
+        "description": "Pre-release checks for: PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+        "agent": "self",
+        "status": "pending",
+        "dependencies": [],
+        "input": {
+          "prompt": "Run all pre-release checks: tests, type checker, linter, version sync.",
+          "context": [
+            {
+              "id": "fact-1787730721753-mlqgzc",
+              "key": "last.error.type",
+              "value": "syntax",
+              "source": "tool",
+              "confidence": 0.9,
+              "discoveredAt": "2026-08-26T07:52:01.753Z"
+            },
+            {
+              "id": "fact-1787733648190-3gewoy",
+              "key": "build.bundler",
+              "value": "vite",
+              "source": "tool",
+              "confidence": 0.7,
+              "discoveredAt": "2026-08-26T08:40:48.190Z"
+            }
+          ],
+          "constraints": [
+            {
+              "id": "con-1787730593580-8242n3",
+              "description": "Do not edit files. Focus on frontend app.js/index.html plus api/*.js and db/*.js. Retur",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T07:49:53.579Z"
+            },
+            {
+              "id": "con-1787730593778-85wk5n",
+              "description": "Do not edit. Clearly distinguish must-fix before demo vs production migration, with fil",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T07:49:53.778Z"
+            },
+            {
+              "id": "con-1787731857547-3v460f",
+              "description": "Do not modify anything. Assume local demo is current target unless choices need clarifi",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:10:57.547Z"
+            },
+            {
+              "id": "con-1787733101038-ppnfqh",
+              "description": "Do not modify any other files. Verify npm build if dependencies are available, otherwis",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:31:41.038Z"
+            },
+            {
+              "id": "con-1787733148716-b88d13",
+              "description": "Do not modify unrelated files",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:32:28.716Z"
+            },
+            {
+              "id": "con-1787734763833-lu9lw5",
+              "description": "Do not edit. Mention if no high-severity findings. Return minimal fixes for concrete is",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:59:23.833Z"
+            },
+            {
+              "id": "con-1787739581444-fvufm5",
+              "description": "Do not modify files. Return concise review findings ordered severity, each exact file:l",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T10:19:41.444Z"
+            },
+            {
+              "id": "con-1787741467525-0zzl8r",
+              "description": "Do not modify files. Return findings ordered severity with exact file:line and minimal",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T10:51:07.524Z"
+            }
+          ],
+          "skills": [
+            "release-engineering",
+            "verification-discipline"
+          ]
+        },
+        "evidence": [],
+        "retryPolicy": {
+          "maxRetries": 2,
+          "strategy": [
+            "different_agent",
+            "different_approach",
+            "escalate_user"
+          ],
+          "currentRetry": 1
+        },
+        "priority": 10,
+        "createdAt": "2026-08-28T02:12:14.448Z",
+        "transitionHistory": [
+          {
+            "from": "ready",
+            "to": "running",
+            "reason": "transition ready -> running",
+            "at": "2026-08-28T02:12:14.449Z"
+          },
+          {
+            "from": "running",
+            "to": "failed",
+            "reason": "Node timed out",
+            "at": "2026-08-28T02:15:48.203Z"
+          }
+        ],
+        "metadata": {
+          "plannerMode": "careful",
+          "plannerReason": "High certainty/blast-radius/reversibility weighting",
+          "parallelization": "linear-fallback",
+          "parallelFallbackReason": "Intent not eligible for parallel fan-out."
+        },
+        "startedAt": "2026-08-28T02:12:14.449Z",
+        "failureReason": "Node timed out",
+        "blockerClass": "unknown"
+      },
+      {
+        "id": "node-release-1-jom4",
+        "type": "config",
+        "title": "Update version",
+        "description": "Update version for: PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+        "agent": "self",
+        "status": "pending",
+        "dependencies": [
+          "node-release-0-yag8"
+        ],
+        "input": {
+          "prompt": "Update version for release: PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n. Sync across all version files.",
+          "context": [
+            {
+              "id": "fact-1787730721753-mlqgzc",
+              "key": "last.error.type",
+              "value": "syntax",
+              "source": "tool",
+              "confidence": 0.9,
+              "discoveredAt": "2026-08-26T07:52:01.753Z"
+            },
+            {
+              "id": "fact-1787733648190-3gewoy",
+              "key": "build.bundler",
+              "value": "vite",
+              "source": "tool",
+              "confidence": 0.7,
+              "discoveredAt": "2026-08-26T08:40:48.190Z"
+            }
+          ],
+          "constraints": [
+            {
+              "id": "con-1787730593580-8242n3",
+              "description": "Do not edit files. Focus on frontend app.js/index.html plus api/*.js and db/*.js. Retur",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T07:49:53.579Z"
+            },
+            {
+              "id": "con-1787730593778-85wk5n",
+              "description": "Do not edit. Clearly distinguish must-fix before demo vs production migration, with fil",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T07:49:53.778Z"
+            },
+            {
+              "id": "con-1787731857547-3v460f",
+              "description": "Do not modify anything. Assume local demo is current target unless choices need clarifi",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:10:57.547Z"
+            },
+            {
+              "id": "con-1787733101038-ppnfqh",
+              "description": "Do not modify any other files. Verify npm build if dependencies are available, otherwis",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:31:41.038Z"
+            },
+            {
+              "id": "con-1787733148716-b88d13",
+              "description": "Do not modify unrelated files",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:32:28.716Z"
+            },
+            {
+              "id": "con-1787734763833-lu9lw5",
+              "description": "Do not edit. Mention if no high-severity findings. Return minimal fixes for concrete is",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:59:23.833Z"
+            },
+            {
+              "id": "con-1787739581444-fvufm5",
+              "description": "Do not modify files. Return concise review findings ordered severity, each exact file:l",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T10:19:41.444Z"
+            },
+            {
+              "id": "con-1787741467525-0zzl8r",
+              "description": "Do not modify files. Return findings ordered severity with exact file:line and minimal",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T10:51:07.524Z"
+            }
+          ],
+          "skills": [
+            "release-engineering",
+            "verification-discipline"
+          ]
+        },
+        "evidence": [],
+        "retryPolicy": {
+          "maxRetries": 2,
+          "strategy": [
+            "same",
+            "different_approach",
+            "escalate_user"
+          ],
+          "currentRetry": 0
+        },
+        "priority": 9,
+        "createdAt": "2026-08-28T02:12:14.448Z",
+        "transitionHistory": [],
+        "metadata": {
+          "plannerMode": "careful",
+          "plannerReason": "High certainty/blast-radius/reversibility weighting",
+          "parallelization": "linear-fallback",
+          "parallelFallbackReason": "Intent not eligible for parallel fan-out."
+        }
+      },
+      {
+        "id": "node-release-2-7s3i",
+        "type": "verify",
+        "title": "Post-version verification",
+        "description": "Post-version verification for: PS C:\\casuragi> irm 'https://cli.kiro.dev/install.ps1' | iex\n\nKiro CLI Installer\n==================\n\n  Fetching latest version...\n  Latest version: 2.20.1\n  Downloading installer (401.8 MB)...\n  Downloaded\n  Verifying checksum...\n  Checksum verified\n  Installing Kiro CLI...\n  Installed successfully\n",
+        "agent": "self",
+        "status": "pending",
+        "dependencies": [
+          "node-release-1-jom4"
+        ],
+        "input": {
+          "prompt": "Verify version sync and run tests again after version bump.",
+          "context": [
+            {
+              "id": "fact-1787730721753-mlqgzc",
+              "key": "last.error.type",
+              "value": "syntax",
+              "source": "tool",
+              "confidence": 0.9,
+              "discoveredAt": "2026-08-26T07:52:01.753Z"
+            },
+            {
+              "id": "fact-1787733648190-3gewoy",
+              "key": "build.bundler",
+              "value": "vite",
+              "source": "tool",
+              "confidence": 0.7,
+              "discoveredAt": "2026-08-26T08:40:48.190Z"
+            }
+          ],
+          "constraints": [
+            {
+              "id": "con-1787730593580-8242n3",
+              "description": "Do not edit files. Focus on frontend app.js/index.html plus api/*.js and db/*.js. Retur",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T07:49:53.579Z"
+            },
+            {
+              "id": "con-1787730593778-85wk5n",
+              "description": "Do not edit. Clearly distinguish must-fix before demo vs production migration, with fil",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T07:49:53.778Z"
+            },
+            {
+              "id": "con-1787731857547-3v460f",
+              "description": "Do not modify anything. Assume local demo is current target unless choices need clarifi",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:10:57.547Z"
+            },
+            {
+              "id": "con-1787733101038-ppnfqh",
+              "description": "Do not modify any other files. Verify npm build if dependencies are available, otherwis",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:31:41.038Z"
+            },
+            {
+              "id": "con-1787733148716-b88d13",
+              "description": "Do not modify unrelated files",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:32:28.716Z"
+            },
+            {
+              "id": "con-1787734763833-lu9lw5",
+              "description": "Do not edit. Mention if no high-severity findings. Return minimal fixes for concrete is",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T08:59:23.833Z"
+            },
+            {
+              "id": "con-1787739581444-fvufm5",
+              "description": "Do not modify files. Return concise review findings ordered severity, each exact file:l",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T10:19:41.444Z"
+            },
+            {
+              "id": "con-1787741467525-0zzl8r",
+              "description": "Do not modify files. Return findings ordered severity with exact file:line and minimal",
+              "origin": "user",
+              "active": true,
+              "createdAt": "2026-08-26T10:51:07.524Z"
+            }
+          ],
+          "skills": [
+            "release-engineering",
+            "verification-discipline"
+          ]
+        },
+        "evidence": [],
+        "retryPolicy": {
+          "maxRetries": 2,
+          "strategy": [
+            "same",
+            "different_approach",
+            "escalate_user"
+          ],
+          "currentRetry": 0
+        },
+        "priority": 8,
+        "createdAt": "2026-08-28T02:12:14.448Z",
+        "transitionHistory": [],
+        "metadata": {
+          "plannerMode": "careful",
+          "plannerReason": "High certainty/blast-radius/reversibility weighting",
+          "parallelization": "linear-fallback",
+          "parallelFallbackReason": "Intent not eligible for parallel fan-out."
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "node-release-0-yag8",
+        "to": "node-release-1-jom4",
+        "type": "blocks"
+      },
+      {
+        "from": "node-release-1-jom4",
+        "to": "node-release-2-7s3i",
+        "type": "blocks"
+      }
+    ],
+    "createdAt": "2026-08-28T02:12:14.448Z",
+    "updatedAt": "2026-08-28T02:15:48.203Z",
+    "metadata": {
+      "executionStrategy": "direct",
+      "strategySource": "rule",
+      "plannedIntent": "release"
+    }
+  },
+  "failurePatterns": [
+    {
+      "signature": "run.all.pre.release.checks.tests.type.checker.linter.version.sync.unknown.pre.release.checks",
+      "errorClass": "unknown",
+      "rootCause": "Node timed out",
+      "badFixes": [
+        "Pre-release checks"
+      ],
+      "successCount": 0,
+      "failCount": 1,
+      "firstSeenAt": "2026-08-28T02:15:48.206Z",
+      "lastSeenAt": "2026-08-28T02:15:48.206Z"
+    }
+  ]
 }
