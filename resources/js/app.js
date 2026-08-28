@@ -20,7 +20,8 @@ const state = {
   query: '',
   filter: 'Semua',
   sort: 'popular',
-  visible: 8,
+  nextProductCursor: null,
+  hasMoreProducts: false,
   cart: new Map(),
   rentalDates: new Map(),
   checkoutKey: null,
@@ -32,7 +33,14 @@ const state = {
   returnFocus: null,
   productRequest: null,
   ownedProducts: new Map(),
+  ownedProductsCursor: null,
+  hasMoreOwnedProducts: false,
   incomingFulfillments: [],
+  incomingFulfillmentsCursor: null,
+  hasMoreIncomingFulfillments: false,
+  orders: [],
+  ordersCursor: null,
+  hasMoreOrders: false,
   editingProductId: null,
 };
 
@@ -102,6 +110,13 @@ function productPrice(product) {
   const nested = product?.product && typeof product.product === 'object' ? product.product : product;
   const amount = Number(valueOf(product, ['price', 'unit_price', 'price_at_purchase'], valueOf(nested, ['price', 'amount'], 0)));
   return Number.isFinite(amount) ? amount : 0;
+}
+
+function productRatingLabel(product) {
+  const rating = Number(valueOf(product, ['rating'], NaN));
+  const count = Number(valueOf(product, ['review_count'], 0));
+  if (!Number.isFinite(rating) || count < 1) return 'Baru';
+  return `${rating.toFixed(1)} (${count})`;
 }
 
 function jakartaCalendarDate(offset = 0) {
@@ -273,37 +288,65 @@ function handleProtectedError(error, trigger) {
   showToast(error.message ?? 'Terjadi kesalahan.');
 }
 
-function productQuery() {
+function productQuery(cursor = null) {
   const params = new URLSearchParams();
   if (state.query) params.set('q', state.query);
   if (!['Semua', 'Terbaru', 'Terlaris'].includes(state.filter)) params.set('category', state.filter);
   const effectiveSort = state.filter === 'Terbaru' ? 'newest' : state.filter === 'Terlaris' ? 'popular' : state.sort;
   params.set('sort', effectiveSort);
+  params.set('per_page', '8');
+  if (state.favoritesOnly) params.set('favorites', '1');
+  if (cursor) params.set('cursor', cursor);
   return params.toString();
 }
 
-async function fetchProducts({ scroll = false } = {}) {
+async function fetchProducts({ scroll = false, append = false } = {}) {
+  if (append && (!state.hasMoreProducts || !state.nextProductCursor)) return;
   state.productRequest?.abort();
   state.productRequest = new AbortController();
   setBusy(elements.productGrid, true);
-  elements.resultCount.textContent = 'Memuat produk…';
-  elements.productGrid.replaceChildren(node('p', { className: 'loading-message', text: 'Menyiapkan koleksi untukmu…' }));
-  elements.emptyState.hidden = true;
-  elements.loadMore.hidden = true;
+  elements.loadMore.disabled = true;
+  if (!append) {
+    state.nextProductCursor = null;
+    state.hasMoreProducts = false;
+    elements.resultCount.textContent = 'Memuat produk…';
+    elements.productGrid.replaceChildren(node('p', { className: 'loading-message', text: 'Menyiapkan koleksi untukmu…' }));
+    elements.emptyState.hidden = true;
+    elements.loadMore.hidden = true;
+  }
 
   try {
-    const payload = await api(`/api/products?${productQuery()}`, { signal: state.productRequest.signal });
-    state.products = productList(payload);
+    const payload = await api(`/api/products?${productQuery(append ? state.nextProductCursor : null)}`, { signal: state.productRequest.signal });
+    const page = productList(payload);
+    if (!append) state.favorites.clear();
+    page.forEach((product) => {
+      const id = productId(product);
+      if (valueOf(product, ['is_favorite'], false)) state.favorites.add(id);
+      else state.favorites.delete(id);
+    });
+    if (append) {
+      const products = new Map(state.products.map((product) => [productId(product), product]));
+      page.forEach((product) => products.set(productId(product), product));
+      state.products = [...products.values()];
+    } else {
+      state.products = page;
+    }
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.nextProductCursor = valueOf(pagination, ['next_cursor'], null);
+    state.hasMoreProducts = Boolean(valueOf(pagination, ['has_more'], false));
     renderProducts();
     if (scroll) $('#produk')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     if (error?.name === 'AbortError') return;
-    state.products = [];
-    elements.productGrid.replaceChildren(node('p', { className: 'loading-message inline-error', text: error.message }));
-    elements.resultCount.textContent = 'Produk gagal dimuat';
+    if (!append) {
+      state.products = [];
+      elements.productGrid.replaceChildren(node('p', { className: 'loading-message inline-error', text: error.message }));
+      elements.resultCount.textContent = 'Produk gagal dimuat';
+    }
     showToast(error.message);
   } finally {
     setBusy(elements.productGrid, false);
+    elements.loadMore.disabled = false;
   }
 }
 
@@ -340,7 +383,7 @@ function productCard(product) {
   const meta = node('div', { className: 'product-card__meta' });
   meta.append(node('span', { className: 'meta-pill', text: valueOf(product, ['type'], 'Sewa') }));
   meta.append(node('span', { className: 'meta-pill', text: valueOf(product, ['size'], 'All size') }));
-  meta.append(node('span', { text: `★ ${valueOf(product, ['rating'], 'Baru')}` }));
+  meta.append(node('span', { text: `★ ${productRatingLabel(product)}` }));
   body.append(meta);
   const seller = sellerName(product);
   body.append(node('div', { className: 'seller' }, [
@@ -364,18 +407,19 @@ function productCard(product) {
 
 function renderProducts() {
   const filtered = displayedProducts();
-  const visible = filtered.slice(0, state.visible);
-  elements.productGrid.replaceChildren(...visible.map(productCard));
-  elements.resultCount.textContent = state.favoritesOnly ? `${filtered.length} favorit ditampilkan` : `${filtered.length} produk`;
+  elements.productGrid.replaceChildren(...filtered.map(productCard));
+  const noun = state.favoritesOnly ? 'favorit' : 'produk';
+  elements.resultCount.textContent = state.hasMoreProducts
+    ? `${filtered.length} ${noun} dimuat`
+    : `${filtered.length} ${noun}`;
   elements.emptyState.hidden = filtered.length > 0;
   elements.productGrid.hidden = filtered.length === 0;
-  elements.loadMore.hidden = filtered.length === 0 || filtered.length <= state.visible;
+  elements.loadMore.hidden = filtered.length === 0 || !state.hasMoreProducts;
 }
 
 function setFilter(filter) {
   state.filter = filter;
   state.favoritesOnly = false;
-  state.visible = 8;
   $$('[data-filter]').forEach((control) => control.classList.toggle('active', control.dataset.filter === filter));
   fetchProducts({ scroll: true });
 }
@@ -383,7 +427,6 @@ function setFilter(filter) {
 function submitSearch(value) {
   state.query = String(value).trim();
   state.favoritesOnly = false;
-  state.visible = 12;
   $('#search-input').value = state.query;
   $('#mobile-search-input').value = state.query;
   fetchProducts({ scroll: true });
@@ -419,7 +462,7 @@ function openProduct(id, trigger) {
   info.append(node('p', { className: 'product-description', text: valueOf(product, ['description'], 'Kostum terawat dan siap dipakai untuk event berikutnya. Checkout demo mencatat pesanan dan memperbarui stok tanpa memproses pembayaran.') }));
   info.append(node('div', { className: 'modal-meta' }, [
     node('span', {}, [node('strong', { text: valueOf(product, ['size'], 'All size') }), node('br'), document.createTextNode('Ukuran')]),
-    node('span', {}, [node('strong', { text: `★ ${valueOf(product, ['rating'], 'Baru')}` }), node('br'), document.createTextNode('Rating')]),
+    node('span', {}, [node('strong', { text: `★ ${productRatingLabel(product)}` }), node('br'), document.createTextNode('Rating terverifikasi')]),
     node('span', {}, [node('strong', { text: valueOf(product, ['type'], 'Sewa') }), node('br'), document.createTextNode('Tipe')]),
   ]));
   const add = button(stock === 0 ? 'Stok habis' : 'Tambah ke keranjang', 'button button--primary button--full', { 'data-modal-add': id });
@@ -513,27 +556,6 @@ function reconcileCartProduct(product, id = productId(product)) {
   renderCart();
 }
 
-function favoriteIds(payload) {
-  const list = Array.isArray(payload) ? payload : valueOf(payload, ['data', 'favorites', 'items'], []);
-  return Array.isArray(list)
-    ? list.map((favorite) => String(typeof favorite === 'object' ? valueOf(favorite, ['product_id'], valueOf(favorite?.product, ['id'], valueOf(favorite, ['id'], ''))) : favorite)).filter(Boolean)
-    : [];
-}
-
-async function loadFavorites() {
-  if (!state.user) {
-    state.favorites.clear();
-    renderProducts();
-    return;
-  }
-  try {
-    state.favorites = new Set(favoriteIds(await api('/api/favorites')));
-    renderProducts();
-  } catch (error) {
-    handleProtectedError(error);
-  }
-}
-
 async function toggleFavorite(id, trigger) {
   if (!requireAuthentication(trigger)) return;
   const key = String(id);
@@ -588,7 +610,6 @@ async function refreshSession() {
   }
   updateAuthUi();
   prefillCheckoutHandoff();
-  if (state.user) await loadFavorites();
 }
 
 function prefillCheckoutHandoff() {
@@ -627,7 +648,7 @@ async function submitAuth(form) {
     if (!state.user) state.user = normalizedUser(await api('/api/me'));
     updateAuthUi();
     prefillCheckoutHandoff();
-    await loadFavorites();
+    await fetchProducts();
     form.reset();
     closeLayer();
     showToast(state.authMode === 'register' ? 'Akun berhasil dibuat.' : 'Berhasil masuk.');
@@ -644,10 +665,53 @@ function listMessage(message) {
   return node('p', { className: 'list-message', text: message });
 }
 
-function renderMyProducts(payload) {
-  const products = productList(payload);
-  state.ownedProducts = new Map(products.map((product) => [productId(product), product]));
+function renderTimeline(payload) {
+  const entries = Array.isArray(payload) ? payload : valueOf(payload, ['data', 'timeline'], []);
+  if (!Array.isArray(entries) || !entries.length) {
+    return node('p', { className: 'list-message', text: 'Belum ada riwayat aktivitas.' });
+  }
+
+  const timeline = node('ol', { className: 'activity-timeline' });
+  entries.forEach((entry) => {
+    const metadata = valueOf(entry, ['metadata'], null);
+    const meta = metadata && typeof metadata === 'object' ? metadata : {};
+    const summary = [];
+    const fromStatus = valueOf(entry, ['from_status'], '');
+    const toStatus = valueOf(entry, ['to_status'], '');
+    if (fromStatus || toStatus) {
+      summary.push(fromStatus ? fromStatus + ' → ' + (toStatus || fromStatus) : toStatus);
+    }
+    const metaBits = [];
+    if (typeof meta.item_count === 'number') metaBits.push(meta.item_count + ' item');
+    if (typeof meta.sale_count === 'number') metaBits.push(meta.sale_count + ' beli');
+    if (typeof meta.rental_count === 'number') metaBits.push(meta.rental_count + ' sewa');
+    if (typeof meta.total_amount === 'number') metaBits.push(currency.format(meta.total_amount));
+    if (metaBits.length) summary.push(metaBits.join(' · '));
+    const when = valueOf(entry, ['occurred_at'], '');
+    const date = when ? new Date(when) : null;
+    const timestamp = date && !Number.isNaN(date.valueOf()) ? date.toLocaleString('id-ID') : '';
+
+    timeline.append(node('li', { className: 'activity-timeline__item' }, [
+      node('div', { className: 'activity-timeline__header' }, [
+        node('strong', { text: valueOf(entry, ['event_label'], valueOf(entry, ['event_type'], 'Aktivitas')) }),
+        node('span', { className: 'activity-timeline__actor', text: valueOf(entry, ['actor_label'], 'Sistem') }),
+      ]),
+      node('small', { text: timestamp || 'Waktu tidak tersedia' }),
+      summary.length ? node('p', { text: summary.join(' · ') }) : node('p', { text: ' ' }),
+    ]));
+  });
+
+  return node('section', { className: 'activity-timeline-wrap', attrs: { 'aria-label': 'Riwayat aktivitas' } }, [
+    node('h4', { text: 'Riwayat aktivitas' }),
+    timeline,
+  ]);
+}
+
+function renderMyProducts() {
+  const products = [...state.ownedProducts.values()];
   const target = $('#my-products-list');
+  $('#my-products-count').textContent = state.hasMoreOwnedProducts ? `${products.length} dimuat` : String(products.length);
+  $('#load-more-my-products').hidden = !state.hasMoreOwnedProducts;
   if (!products.length) {
     target.replaceChildren(listMessage('Belum ada produk di tokomu.'));
     return;
@@ -671,14 +735,36 @@ function renderMyProducts(payload) {
   }));
 }
 
+async function loadOwnedProducts({ append = false } = {}) {
+  if (append && (!state.hasMoreOwnedProducts || !state.ownedProductsCursor)) return;
+  const button = $('#load-more-my-products');
+  button.disabled = true;
+  try {
+    const params = new URLSearchParams({ per_page: '5' });
+    if (append) params.set('cursor', state.ownedProductsCursor);
+    const payload = await api('/api/my-products?' + params.toString());
+    const products = productList(payload);
+    if (!append) state.ownedProducts.clear();
+    products.forEach((product) => state.ownedProducts.set(productId(product), product));
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.ownedProductsCursor = valueOf(pagination, ['next_cursor'], null);
+    state.hasMoreOwnedProducts = Boolean(valueOf(pagination, ['has_more'], false));
+    renderMyProducts();
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function orderItems(order) {
   const items = valueOf(order, ['items', 'order_items'], []);
   return Array.isArray(items) ? items : [];
 }
 
-function renderOrders(payload) {
-  const orders = Array.isArray(payload) ? payload : valueOf(payload, ['data', 'orders'], []);
+function renderOrders() {
+  const orders = state.orders;
   const target = $('#orders-list');
+  $('#orders-count').textContent = state.hasMoreOrders ? `${orders.length} dimuat` : String(orders.length);
+  $('#load-more-orders').hidden = !state.hasMoreOrders;
   if (!Array.isArray(orders) || !orders.length) {
     target.replaceChildren(listMessage('Belum ada riwayat pesanan.'));
     return;
@@ -697,10 +783,30 @@ function renderOrders(payload) {
     card.append(node('small', { text: fulfillmentStatusLabel(orderStatus) + (validDate ? ' · ' + validDate : '') }));
     const items = orderItems(order);
     if (items.length) {
-      card.append(node('div', { className: 'order-items' }, items.map((item) => node('span', {
-        text: productName(item) + ' × ' + valueOf(item, ['quantity'], 1) + ' — ' + currency.format(productPrice(item))
-          + (valueOf(item, ['fulfillment_status'], '') ? ' · ' + fulfillmentStatusLabel(valueOf(item, ['fulfillment_status'])) : ''),
-      }))));
+      card.append(node('div', { className: 'order-items' }, items.map((item) => {
+        const row = node('div', { className: 'order-item-review-row' });
+        row.append(node('span', {
+          text: productName(item) + ' × ' + valueOf(item, ['quantity'], 1) + ' — ' + currency.format(productPrice(item))
+            + (valueOf(item, ['fulfillment_status'], '') ? ' · ' + fulfillmentStatusLabel(valueOf(item, ['fulfillment_status'])) : ''),
+        }));
+        const review = valueOf(item, ['review'], null);
+        if (review) {
+          row.append(node('small', { className: 'review-complete', text: `Dinilai ★ ${valueOf(review, ['rating'], '—')}` }));
+        } else if (valueOf(item, ['can_review'], false)) {
+          const label = node('label', { className: 'review-field', text: 'Nilai produk' });
+          const select = node('select', { attrs: { 'data-review-rating': valueOf(item, ['id'], ''), 'aria-label': `Rating untuk ${productName(item)}` } });
+          [5, 4, 3, 2, 1].forEach((rating) => select.append(node('option', { text: `${rating} bintang`, attrs: { value: rating } })));
+          label.append(select);
+          row.append(node('div', { className: 'review-action' }, [
+            label,
+            button('Kirim penilaian', 'text-link', {
+              'data-review-order': valueOf(order, ['id'], ''),
+              'data-review-item': valueOf(item, ['id'], ''),
+            }),
+          ]));
+        }
+        return row;
+      })));
     }
     card.append(button('Lihat detail penyerahan', 'text-link', {
       'data-order-detail': valueOf(order, ['id'], ''),
@@ -746,7 +852,9 @@ async function loadOrderDetail(id, trigger) {
     const detail = await api('/api/orders/' + encodeURIComponent(id));
     const card = trigger.closest('.profile-card');
     card?.querySelector('.handoff-detail')?.remove();
+    card?.querySelector('.activity-timeline-wrap')?.remove();
     card?.append(handoffDetails(detail.handoff));
+    card?.append(renderTimeline(detail.timeline));
   } catch (error) {
     handleProtectedError(error, trigger);
   } finally {
@@ -778,10 +886,12 @@ function fulfillmentActionLabel(status) {
   }[status] ?? status;
 }
 
-function renderIncomingFulfillments(payload) {
-  const fulfillments = Array.isArray(payload) ? payload : valueOf(payload, ['data', 'fulfillments'], []);
-  state.incomingFulfillments = Array.isArray(fulfillments) ? fulfillments : [];
+function renderIncomingFulfillments() {
   const target = $('#incoming-orders-list');
+  $('#incoming-orders-count').textContent = state.hasMoreIncomingFulfillments
+    ? `${state.incomingFulfillments.length} dimuat`
+    : String(state.incomingFulfillments.length);
+  $('#load-more-incoming-orders').hidden = !state.hasMoreIncomingFulfillments;
   if (!state.incomingFulfillments.length) {
     target.replaceChildren(listMessage('Belum ada pesanan masuk.'));
     return;
@@ -817,13 +927,59 @@ function renderIncomingFulfillments(payload) {
   }));
 }
 
+function mergeHistory(current, next) {
+  const records = new Map(current.map((record) => [String(valueOf(record, ['id'], '')), record]));
+  next.forEach((record) => records.set(String(valueOf(record, ['id'], '')), record));
+  return [...records.values()];
+}
+
+async function loadOrders({ append = false } = {}) {
+  if (append && (!state.hasMoreOrders || !state.ordersCursor)) return;
+  const button = $('#load-more-orders');
+  button.disabled = true;
+  try {
+    const params = new URLSearchParams({ per_page: '5' });
+    if (append) params.set('cursor', state.ordersCursor);
+    const payload = await api('/api/orders?' + params.toString());
+    const orders = valueOf(payload, ['data'], []);
+    state.orders = append ? mergeHistory(state.orders, orders) : orders;
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.ordersCursor = valueOf(pagination, ['next_cursor'], null);
+    state.hasMoreOrders = Boolean(valueOf(pagination, ['has_more'], false));
+    renderOrders();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadIncomingFulfillments({ append = false } = {}) {
+  if (append && (!state.hasMoreIncomingFulfillments || !state.incomingFulfillmentsCursor)) return;
+  const button = $('#load-more-incoming-orders');
+  button.disabled = true;
+  try {
+    const params = new URLSearchParams({ per_page: '5' });
+    if (append) params.set('cursor', state.incomingFulfillmentsCursor);
+    const payload = await api('/api/seller/fulfillments?' + params.toString());
+    const fulfillments = valueOf(payload, ['data'], []);
+    state.incomingFulfillments = append ? mergeHistory(state.incomingFulfillments, fulfillments) : fulfillments;
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.incomingFulfillmentsCursor = valueOf(pagination, ['next_cursor'], null);
+    state.hasMoreIncomingFulfillments = Boolean(valueOf(pagination, ['has_more'], false));
+    renderIncomingFulfillments();
+  } finally {
+    button.disabled = false;
+  }
+}
+
 async function loadFulfillmentDetail(id, trigger) {
   trigger.disabled = true;
   try {
     const detail = await api('/api/seller/fulfillments/' + encodeURIComponent(id));
     const card = trigger.closest('.profile-card');
     card?.querySelector('.handoff-detail')?.remove();
+    card?.querySelector('.activity-timeline-wrap')?.remove();
     card?.append(handoffDetails(detail.handoff, true));
+    card?.append(renderTimeline(detail.timeline));
   } catch (error) {
     handleProtectedError(error, trigger);
   } finally {
@@ -835,13 +991,10 @@ async function loadProfileData() {
   $('#my-products-list').replaceChildren(listMessage('Memuat produk…'));
   $('#incoming-orders-list').replaceChildren(listMessage('Memuat pesanan masuk…'));
   $('#orders-list').replaceChildren(listMessage('Memuat pesanan…'));
-  const results = await Promise.allSettled([api('/api/my-products'), api('/api/seller/fulfillments'), api('/api/orders')]);
-  if (results[0].status === 'fulfilled') renderMyProducts(results[0].value);
-  else $('#my-products-list').replaceChildren(listMessage(results[0].reason?.message ?? 'Produk gagal dimuat.'));
-  if (results[1].status === 'fulfilled') renderIncomingFulfillments(results[1].value);
-  else $('#incoming-orders-list').replaceChildren(listMessage(results[1].reason?.message ?? 'Pesanan masuk gagal dimuat.'));
-  if (results[2].status === 'fulfilled') renderOrders(results[2].value);
-  else $('#orders-list').replaceChildren(listMessage(results[2].reason?.message ?? 'Pesanan gagal dimuat.'));
+  const results = await Promise.allSettled([loadOwnedProducts(), loadIncomingFulfillments(), loadOrders()]);
+  if (results[0].status === 'rejected') $('#my-products-list').replaceChildren(listMessage(results[0].reason?.message ?? 'Produk gagal dimuat.'));
+  if (results[1].status === 'rejected') $('#incoming-orders-list').replaceChildren(listMessage(results[1].reason?.message ?? 'Pesanan masuk gagal dimuat.'));
+  if (results[2].status === 'rejected') $('#orders-list').replaceChildren(listMessage(results[2].reason?.message ?? 'Pesanan gagal dimuat.'));
   const unauthorized = results.find((result) => result.status === 'rejected' && result.reason?.status === 401);
   if (unauthorized) handleProtectedError(unauthorized.reason);
 }
@@ -859,10 +1012,96 @@ async function updateFulfillmentStatus(id, status, trigger) {
   }
 }
 
+async function submitProductReview(orderId, itemId, trigger) {
+  const select = trigger.closest('.review-action')?.querySelector('[data-review-rating]');
+  if (!select) return;
+  trigger.disabled = true;
+  select.disabled = true;
+  try {
+    await api('/api/orders/' + encodeURIComponent(orderId) + '/items/' + encodeURIComponent(itemId) + '/review', {
+      method: 'POST',
+      body: { rating: Number(select.value) },
+    });
+    showToast('Terima kasih atas penilaianmu.');
+    await Promise.all([loadProfileData(), fetchProducts()]);
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+    select.disabled = false;
+  }
+}
+
+function fillAccountSettings() {
+  $('#profile-name-input').value = String(valueOf(state.user, ['name'], ''));
+  $('#profile-email-input').value = String(valueOf(state.user, ['email'], ''));
+}
+
+async function submitIdentity(form) {
+  const errorBox = $('#profile-identity-error');
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  const submit = $('button[type="submit"]', form);
+  const fields = new FormData(form);
+  submit.disabled = true;
+  try {
+    const response = await api('/api/me', {
+      method: 'PATCH',
+      body: {
+        name: fields.get('name'),
+        email: fields.get('email'),
+        current_password: fields.get('current_password'),
+      },
+    });
+    state.user = normalizedUser(response);
+    if (!state.user) state.user = normalizedUser(await api('/api/me'));
+    $('#profile-name').textContent = String(valueOf(state.user, ['name'], 'Cosplayer'));
+    $('#profile-email').textContent = String(valueOf(state.user, ['email'], ''));
+    fillAccountSettings();
+    form.elements.current_password.value = '';
+    showToast('Profil berhasil diperbarui.');
+    await Promise.all([loadProfileData(), fetchProducts()]);
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
+async function submitPassword(form) {
+  const errorBox = $('#profile-password-error');
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  const submit = $('button[type="submit"]', form);
+  const fields = new FormData(form);
+  submit.disabled = true;
+  try {
+    await api('/api/me/password', {
+      method: 'PATCH',
+      body: {
+        current_password: fields.get('current_password'),
+        password: fields.get('password'),
+        password_confirmation: fields.get('password_confirmation'),
+      },
+    });
+    form.reset();
+    showToast('Kata sandi berhasil diperbarui.');
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  } finally {
+    submit.disabled = false;
+  }
+}
+
 function openProfile(trigger) {
   if (!requireAuthentication(trigger)) return;
   $('#profile-name').textContent = String(valueOf(state.user, ['name'], 'Cosplayer'));
   $('#profile-email').textContent = String(valueOf(state.user, ['email'], ''));
+  fillAccountSettings();
+  $('#profile-identity-error').hidden = true;
+  $('#profile-password-error').hidden = true;
   openLayer(elements.profileDrawer, trigger);
   loadProfileData();
 }
@@ -882,7 +1121,7 @@ async function logout(trigger) {
     state.favorites.clear();
     state.favoritesOnly = false;
     updateAuthUi();
-    renderProducts();
+    await fetchProducts();
     closeLayer(false);
     showToast('Berhasil keluar.');
   } catch (error) {
@@ -1036,11 +1275,11 @@ $('#search-form').addEventListener('submit', (event) => { event.preventDefault()
 $('#mobile-search-form').addEventListener('submit', (event) => { event.preventDefault(); submitSearch($('#mobile-search-input').value); });
 $('#search-input').addEventListener('search', (event) => { if (!event.target.value) submitSearch(''); });
 $('#mobile-search-input').addEventListener('search', (event) => { if (!event.target.value) submitSearch(''); });
-$('#sort-select').addEventListener('change', (event) => { state.sort = event.target.value; state.visible = 8; fetchProducts({ scroll: true }); });
+$('#sort-select').addEventListener('change', (event) => { state.sort = event.target.value; fetchProducts({ scroll: true }); });
 $$('[data-filter]').forEach((control) => control.addEventListener('click', () => setFilter(control.dataset.filter)));
 $$('[data-filter-trigger]').forEach((control) => control.addEventListener('click', () => setFilter(control.dataset.filterTrigger)));
 $('#reset-search').addEventListener('click', () => { state.query = ''; state.filter = 'Semua'; submitSearch(''); });
-elements.loadMore.addEventListener('click', () => { state.visible += 4; renderProducts(); });
+elements.loadMore.addEventListener('click', () => fetchProducts({ append: true }));
 
 elements.productGrid.addEventListener('click', (event) => {
   const favorite = event.target.closest('[data-favorite]');
@@ -1082,6 +1321,11 @@ $('#cart-items').addEventListener('change', (event) => {
 });
 
 $('#orders-list').addEventListener('click', async (event) => {
+  const review = event.target.closest('[data-review-order]');
+  if (review) {
+    submitProductReview(review.dataset.reviewOrder, review.dataset.reviewItem, review);
+    return;
+  }
   const detail = event.target.closest('[data-order-detail]');
   if (detail) { loadOrderDetail(detail.dataset.orderDetail, detail); return; }
   const cancel = event.target.closest('[data-cancel-order]');
@@ -1120,7 +1364,12 @@ $('.mobile-account-action').addEventListener('click', (event) => state.user ? op
 $$('[data-switch-auth]').forEach((control) => control.addEventListener('click', () => setAuthMode(control.dataset.switchAuth)));
 $('#auth-form').addEventListener('submit', (event) => { event.preventDefault(); submitAuth(event.currentTarget); });
 $('#logout-button').addEventListener('click', (event) => logout(event.currentTarget));
+$('#profile-identity-form').addEventListener('submit', (event) => { event.preventDefault(); submitIdentity(event.currentTarget); });
+$('#profile-password-form').addEventListener('submit', (event) => { event.preventDefault(); submitPassword(event.currentTarget); });
 $('#refresh-profile').addEventListener('click', loadProfileData);
+$('#load-more-my-products').addEventListener('click', () => loadOwnedProducts({ append: true }).catch((error) => handleProtectedError(error)));
+$('#load-more-incoming-orders').addEventListener('click', () => loadIncomingFulfillments({ append: true }).catch((error) => handleProtectedError(error)));
+$('#load-more-orders').addEventListener('click', () => loadOrders({ append: true }).catch((error) => handleProtectedError(error)));
 $('#add-product-button').addEventListener('click', (event) => {
   const trigger = visibleAccountTrigger() ?? event.currentTarget;
   closeLayer(false);
@@ -1153,7 +1402,7 @@ $('#mobile-favorites-button').addEventListener('click', (event) => {
   state.favoritesOnly = !state.favoritesOnly;
   event.currentTarget.classList.toggle('active', state.favoritesOnly);
   event.currentTarget.setAttribute('aria-pressed', String(state.favoritesOnly));
-  renderProducts();
+  fetchProducts();
   $('#produk')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
@@ -1171,4 +1420,4 @@ document.addEventListener('keydown', (event) => {
 
 setAuthMode('login');
 renderCart();
-Promise.allSettled([fetchProducts(), refreshSession()]);
+refreshSession().then(fetchProducts);

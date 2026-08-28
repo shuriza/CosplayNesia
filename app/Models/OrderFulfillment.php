@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -64,6 +66,11 @@ class OrderFulfillment extends Model
         return $this->hasMany(OrderItem::class, 'fulfillment_id');
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(OrderActivity::class, 'fulfillment_id')->orderBy('occurred_at')->orderBy('id');
+    }
+
     public function scopeForSeller(Builder $query, User|int $seller): Builder
     {
         $sellerId = $seller instanceof User ? $seller->id : $seller;
@@ -74,5 +81,35 @@ class OrderFulfillment extends Model
     public function isTerminal(): bool
     {
         return in_array($this->status, [self::STATUS_COMPLETED, self::STATUS_CANCELLED], true);
+    }
+
+    public function availableTransitions(?CarbonInterface $today = null): array
+    {
+        return match ($this->status) {
+            self::STATUS_RECEIVED => [self::STATUS_ACCEPTED, self::STATUS_CANCELLED],
+            self::STATUS_ACCEPTED => [self::STATUS_READY, self::STATUS_CANCELLED],
+            self::STATUS_READY => $this->canComplete($today) ? [self::STATUS_COMPLETED] : [],
+            default => [],
+        };
+    }
+
+    public function canTransitionTo(string $target, ?CarbonInterface $today = null): bool
+    {
+        return in_array($target, $this->availableTransitions($today), true);
+    }
+
+    public function canComplete(?CarbonInterface $today = null): bool
+    {
+        $today ??= Carbon::today(config('app.timezone'));
+        $items = $this->relationLoaded('items')
+            ? $this->items
+            : $this->items()->with('rentalReservation')->get();
+
+        return $items->every(function (OrderItem $item) use ($today): bool {
+            $reservation = $item->rentalReservation;
+
+            return $reservation?->status !== RentalReservation::STATUS_RESERVED
+                || $reservation->end_date->lte($today);
+        });
     }
 }

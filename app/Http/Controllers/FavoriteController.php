@@ -8,11 +8,6 @@ use Illuminate\Http\Request;
 
 class FavoriteController extends Controller
 {
-    public function index(Request $request): JsonResponse
-    {
-        return response()->json($request->user()->favoriteProducts()->pluck('products.id'));
-    }
-
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate(['product_id' => ['required', 'integer', 'exists:products,id']]);

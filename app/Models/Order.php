@@ -55,6 +55,11 @@ class Order extends Model
         return $this->hasMany(OrderFulfillment::class);
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(OrderActivity::class)->orderBy('occurred_at')->orderBy('id');
+    }
+
     public function refreshAggregateStatus(): string
     {
         $statuses = $this->relationLoaded('fulfillments')

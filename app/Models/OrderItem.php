@@ -42,8 +42,23 @@ class OrderItem extends Model
         return $this->hasOne(RentalReservation::class);
     }
 
+    public function review(): HasOne
+    {
+        return $this->hasOne(ProductReview::class);
+    }
+
     public function fulfillment(): BelongsTo
     {
         return $this->belongsTo(OrderFulfillment::class, 'fulfillment_id');
+    }
+
+    public function isFulfilledForReview(): bool
+    {
+        if ($this->fulfillment?->status !== OrderFulfillment::STATUS_COMPLETED) {
+            return false;
+        }
+
+        return $this->product_type !== Product::TYPE_RENTAL
+            || $this->rentalReservation?->status === RentalReservation::STATUS_COMPLETED;
     }
 }

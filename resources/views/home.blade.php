@@ -185,9 +185,30 @@
         <div class="profile-scroll">
             <div class="profile-info"><div class="profile-avatar" aria-hidden="true">C</div><div><strong id="profile-name">Cosplayer</strong><span id="profile-email"></span></div></div>
             <div class="profile-actions"><button type="button" class="button button--primary" id="add-product-button">Tambah produk</button><button type="button" class="button button--outline" id="logout-button">Keluar</button></div>
-            <section class="profile-section" aria-labelledby="my-products-title"><div class="profile-section__heading"><h3 id="my-products-title">Toko Saya</h3><button type="button" class="text-link" id="refresh-profile">Muat ulang</button></div><div class="profile-list" id="my-products-list" aria-live="polite"></div></section>
-            <section class="profile-section" aria-labelledby="incoming-orders-title"><div class="profile-section__heading"><h3 id="incoming-orders-title">Pesanan Masuk</h3></div><div class="profile-list" id="incoming-orders-list" aria-live="polite"></div></section>
-            <section class="profile-section" aria-labelledby="orders-title"><h3 id="orders-title">Riwayat Pesanan</h3><div class="profile-list" id="orders-list" aria-live="polite"></div></section>
+            <section class="profile-section account-settings" aria-labelledby="account-settings-title">
+                <h3 id="account-settings-title">Pengaturan Akun</h3>
+                <form class="account-form" id="profile-identity-form" novalidate>
+                    <fieldset><legend>Identitas</legend>
+                        <label>Nama lengkap<input id="profile-name-input" name="name" type="text" required minlength="2" maxlength="80" autocomplete="name"></label>
+                        <label>Email<input id="profile-email-input" name="email" type="email" required maxlength="255" autocomplete="email"></label>
+                        <label>Kata sandi saat ini<input name="current_password" type="password" required autocomplete="current-password"></label>
+                    </fieldset>
+                    <p class="form-error" id="profile-identity-error" role="alert" hidden></p>
+                    <button type="submit" class="button button--outline">Simpan profil</button>
+                </form>
+                <form class="account-form" id="profile-password-form" novalidate>
+                    <fieldset><legend>Ubah kata sandi</legend>
+                        <label>Kata sandi saat ini<input name="current_password" type="password" required autocomplete="current-password"></label>
+                        <label>Kata sandi baru<input name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+                        <label>Konfirmasi kata sandi baru<input name="password_confirmation" type="password" required minlength="8" autocomplete="new-password"></label>
+                    </fieldset>
+                    <p class="form-error" id="profile-password-error" role="alert" hidden></p>
+                    <button type="submit" class="button button--outline">Ubah kata sandi</button>
+                </form>
+            </section>
+            <section class="profile-section" aria-labelledby="my-products-title"><div class="profile-section__heading"><div><h3 id="my-products-title">Toko Saya</h3><span id="my-products-count" class="profile-section__count" aria-live="polite"></span></div><button type="button" class="text-link" id="refresh-profile">Muat ulang</button></div><div class="profile-list" id="my-products-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-my-products" hidden>Muat lebih banyak produk</button></section>
+            <section class="profile-section" aria-labelledby="incoming-orders-title"><div class="profile-section__heading"><h3 id="incoming-orders-title">Pesanan Masuk</h3><span id="incoming-orders-count" class="profile-section__count" aria-live="polite"></span></div><div class="profile-list" id="incoming-orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-incoming-orders" hidden>Muat lebih banyak pesanan masuk</button></section>
+            <section class="profile-section" aria-labelledby="orders-title"><div class="profile-section__heading"><h3 id="orders-title">Riwayat Pesanan</h3><span id="orders-count" class="profile-section__count" aria-live="polite"></span></div><div class="profile-list" id="orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-orders" hidden>Muat lebih banyak riwayat</button></section>
         </div>
     </aside>
 

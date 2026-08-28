@@ -43,4 +43,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(OrderFulfillment::class, 'seller_id');
     }
+
+    public function productReviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
 }

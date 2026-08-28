@@ -5,9 +5,11 @@ namespace App\Services;
 use App\Exceptions\FulfillmentTransitionNotAllowedException;
 use App\Exceptions\IdempotencyConflictException;
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\OwnedProductCheckoutException;
 use App\Exceptions\RentalCancellationNotAllowedException;
 use App\Exceptions\RentalUnavailableException;
 use App\Models\Order;
+use App\Models\OrderActivity;
 use App\Models\OrderFulfillment;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -48,6 +50,11 @@ class CheckoutService
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
+
+            if ($products->contains(fn (Product $product): bool => $product->seller_id === $lockedUser->id)) {
+                throw new OwnedProductCheckoutException;
+            }
+
             $snapshots = [];
             $total = 0;
 
@@ -112,6 +119,7 @@ class CheckoutService
             ]);
 
             $fulfillments = [];
+            $lines = [];
             foreach ($snapshots as $snapshot) {
                 if ($snapshot['seller_id'] === null) {
                     continue;
@@ -139,8 +147,10 @@ class CheckoutService
                     'rental_start_date' => $snapshot['rental_start_date'],
                     'rental_end_date' => $snapshot['rental_end_date'],
                 ]);
+
+                $reservation = null;
                 if ($snapshot['product_type'] === Product::TYPE_RENTAL) {
-                    RentalReservation::query()->create([
+                    $reservation = RentalReservation::query()->create([
                         'order_id' => $order->id,
                         'order_item_id' => $item->id,
                         'product_id' => $snapshot['product_id'],
@@ -150,10 +160,18 @@ class CheckoutService
                         'status' => RentalReservation::STATUS_RESERVED,
                     ]);
                 }
+
+                $lines[] = [
+                    'snapshot' => $snapshot,
+                    'item_id' => $item->id,
+                    'fulfillment_id' => $fulfillment?->id,
+                    'reservation_id' => $reservation?->id,
+                ];
             }
 
             $order->load('fulfillments');
             $order->syncAggregateStatus();
+            $this->recordCheckoutActivities($order, $lines, $fulfillments);
 
             $created = $this->loadOrder($order->fresh());
             $created->wasRecentlyCreated = true;
@@ -175,6 +193,11 @@ class CheckoutService
             $items = $lockedFulfillment->items()->orderBy('id')->lockForUpdate()->get();
             $products = $this->lockedProducts($items);
             $reservations = $this->lockedReservations($items);
+            $items->each(fn (OrderItem $item) => $item->setRelation(
+                'rentalReservation',
+                $reservations->get($item->id),
+            ));
+            $lockedFulfillment->setRelation('items', $items);
 
             if ($target === $lockedFulfillment->status) {
                 return $lockedFulfillment->fresh(['items.rentalReservation', 'order.user']);
@@ -182,28 +205,44 @@ class CheckoutService
             if (! in_array($target, OrderFulfillment::statuses(), true)) {
                 throw new FulfillmentTransitionNotAllowedException;
             }
-            if (! $this->canTransition($lockedFulfillment->status, $target)) {
+            $today = Carbon::today(config('app.timezone'));
+            if ($target === OrderFulfillment::STATUS_COMPLETED && ! $lockedFulfillment->canComplete($today)) {
+                throw new FulfillmentTransitionNotAllowedException('Sewa belum berakhir.');
+            }
+            if (! $lockedFulfillment->canTransitionTo($target, $today)) {
                 throw new FulfillmentTransitionNotAllowedException;
             }
 
+            $timestamp = now();
+            $fromStatus = $lockedFulfillment->status;
             if ($target === OrderFulfillment::STATUS_COMPLETED) {
-                $today = Carbon::today(config('app.timezone'));
                 foreach ($items as $item) {
                     $reservation = $reservations->get($item->id);
                     if ($reservation?->status === RentalReservation::STATUS_RESERVED) {
-                        if ($reservation->end_date->gt($today)) {
-                            throw new FulfillmentTransitionNotAllowedException('Sewa belum berakhir.');
-                        }
                         $reservation->update(['status' => RentalReservation::STATUS_COMPLETED]);
+                        $this->recordActivity([
+                            'order_id' => $order->id,
+                            'fulfillment_id' => $lockedFulfillment->id,
+                            'order_item_id' => $item->id,
+                            'rental_reservation_id' => $reservation->id,
+                            'actor_id' => $user->id,
+                            'actor_role' => OrderActivity::ROLE_SELLER,
+                            'event_type' => 'rental.completed',
+                            'from_status' => RentalReservation::STATUS_RESERVED,
+                            'to_status' => RentalReservation::STATUS_COMPLETED,
+                            'metadata' => $this->safeLineMetadata($item),
+                            'event_key' => "rental:{$reservation->id}:completed",
+                            'occurred_at' => $timestamp,
+                            'created_at' => $timestamp,
+                        ]);
                     }
                 }
             }
 
             if ($target === OrderFulfillment::STATUS_CANCELLED) {
-                $this->cancelItems($items, $products, $reservations);
+                $this->cancelItems($order, $lockedFulfillment, $items, $products, $reservations, $user->id, OrderActivity::ROLE_SELLER, $timestamp);
             }
 
-            $timestamp = now();
             $attributes = ['status' => $target, 'status_changed_at' => $timestamp];
             if ($target === OrderFulfillment::STATUS_ACCEPTED) {
                 $attributes['accepted_at'] = $timestamp;
@@ -215,6 +254,19 @@ class CheckoutService
                 $attributes['cancelled_at'] = $timestamp;
             }
             $lockedFulfillment->update($attributes);
+            $this->recordActivity([
+                'order_id' => $order->id,
+                'fulfillment_id' => $lockedFulfillment->id,
+                'actor_id' => $user->id,
+                'actor_role' => OrderActivity::ROLE_SELLER,
+                'event_type' => "fulfillment.{$target}",
+                'from_status' => $fromStatus,
+                'to_status' => $target,
+                'metadata' => $this->fulfillmentMetadata($items),
+                'event_key' => "fulfillment:{$lockedFulfillment->id}:{$target}",
+                'occurred_at' => $timestamp,
+                'created_at' => $timestamp,
+            ]);
 
             $order->load('fulfillments');
             $order->syncAggregateStatus();
@@ -246,7 +298,6 @@ class CheckoutService
             if (! $lockedItem) {
                 abort(404);
             }
-            $products = $this->lockedProducts($lockedItems);
             $reservations = $this->lockedReservations($lockedItems);
             $reservation = $reservations->get($lockedItem->id);
             if (! $reservation) {
@@ -257,15 +308,46 @@ class CheckoutService
                 throw new RentalCancellationNotAllowedException;
             }
 
+            $timestamp = now();
             $reservation->update(['status' => RentalReservation::STATUS_CANCELLED]);
+            $this->recordActivity([
+                'order_id' => $lockedOrder->id,
+                'fulfillment_id' => $fulfillment?->id,
+                'order_item_id' => $lockedItem->id,
+                'rental_reservation_id' => $reservation->id,
+                'actor_id' => $user->id,
+                'actor_role' => OrderActivity::ROLE_BUYER,
+                'event_type' => 'rental.cancelled',
+                'from_status' => RentalReservation::STATUS_RESERVED,
+                'to_status' => RentalReservation::STATUS_CANCELLED,
+                'metadata' => $this->safeLineMetadata($lockedItem),
+                'event_key' => "rental:{$reservation->id}:cancelled",
+                'occurred_at' => $timestamp,
+                'created_at' => $timestamp,
+            ]);
+
             if ($fulfillment && ! $fulfillment->isTerminal()) {
                 $remaining = $lockedItems->contains(fn (OrderItem $line): bool => $line->product_type !== Product::TYPE_RENTAL
                     || $reservations->get($line->id)?->status !== RentalReservation::STATUS_CANCELLED);
                 if (! $remaining) {
+                    $fromStatus = $fulfillment->status;
                     $fulfillment->update([
                         'status' => OrderFulfillment::STATUS_CANCELLED,
-                        'status_changed_at' => now(),
-                        'cancelled_at' => now(),
+                        'status_changed_at' => $timestamp,
+                        'cancelled_at' => $timestamp,
+                    ]);
+                    $this->recordActivity([
+                        'order_id' => $lockedOrder->id,
+                        'fulfillment_id' => $fulfillment->id,
+                        'actor_id' => $user->id,
+                        'actor_role' => OrderActivity::ROLE_BUYER,
+                        'event_type' => 'fulfillment.cancelled',
+                        'from_status' => $fromStatus,
+                        'to_status' => OrderFulfillment::STATUS_CANCELLED,
+                        'metadata' => $this->fulfillmentMetadata($lockedItems),
+                        'event_key' => "fulfillment:{$fulfillment->id}:cancelled",
+                        'occurred_at' => $timestamp,
+                        'created_at' => $timestamp,
                     ]);
                 }
             }
@@ -276,12 +358,27 @@ class CheckoutService
         }, 3);
     }
 
-    private function cancelItems($items, $products, $reservations): void
+    private function cancelItems(Order $order, ?OrderFulfillment $fulfillment, $items, $products, $reservations, int $actorId, string $actorRole, Carbon $timestamp): void
     {
         foreach ($items as $item) {
             $reservation = $reservations->get($item->id);
             if ($reservation?->status === RentalReservation::STATUS_RESERVED) {
                 $reservation->update(['status' => RentalReservation::STATUS_CANCELLED]);
+                $this->recordActivity([
+                    'order_id' => $order->id,
+                    'fulfillment_id' => $fulfillment?->id,
+                    'order_item_id' => $item->id,
+                    'rental_reservation_id' => $reservation->id,
+                    'actor_id' => $actorId,
+                    'actor_role' => $actorRole,
+                    'event_type' => 'rental.cancelled',
+                    'from_status' => RentalReservation::STATUS_RESERVED,
+                    'to_status' => RentalReservation::STATUS_CANCELLED,
+                    'metadata' => $this->safeLineMetadata($item),
+                    'event_key' => "rental:{$reservation->id}:cancelled",
+                    'occurred_at' => $timestamp,
+                    'created_at' => $timestamp,
+                ]);
             }
             if ($item->product_type !== Product::TYPE_SALE || $item->stock_released_at !== null) {
                 continue;
@@ -293,6 +390,143 @@ class CheckoutService
             $product->increment('stock', $item->quantity);
             $item->update(['stock_released_at' => now()]);
         }
+    }
+
+    private function recordCheckoutActivities(Order $order, array $lines, array $fulfillments): void
+    {
+        $timestamp = now();
+        $rentalCount = 0;
+        foreach ($lines as $line) {
+            if ($line['snapshot']['product_type'] === Product::TYPE_RENTAL) {
+                $rentalCount++;
+            }
+        }
+
+        $this->recordActivity([
+            'order_id' => $order->id,
+            'actor_id' => $order->user_id,
+            'actor_role' => OrderActivity::ROLE_BUYER,
+            'event_type' => 'checkout.created',
+            'to_status' => $order->status,
+            'metadata' => [
+                'item_count' => count($lines),
+                'fulfillment_count' => count($fulfillments),
+                'rental_count' => $rentalCount,
+                'total_amount' => $order->total_amount,
+            ],
+            'event_key' => "order:{$order->id}:checkout.created",
+            'occurred_at' => $timestamp,
+            'created_at' => $timestamp,
+        ]);
+
+        $grouped = [];
+        foreach ($lines as $line) {
+            $snapshot = $line['snapshot'];
+            if ($snapshot['seller_id'] === null) {
+                continue;
+            }
+            $grouped[$line['fulfillment_id']][] = $line;
+        }
+
+        foreach ($fulfillments as $fulfillment) {
+            $group = $grouped[$fulfillment->id] ?? [];
+            $this->recordActivity([
+                'order_id' => $order->id,
+                'fulfillment_id' => $fulfillment->id,
+                'actor_id' => $order->user_id,
+                'actor_role' => OrderActivity::ROLE_BUYER,
+                'event_type' => 'fulfillment.received',
+                'to_status' => OrderFulfillment::STATUS_RECEIVED,
+                'metadata' => $this->fulfillmentGroupMetadata($group),
+                'event_key' => "fulfillment:{$fulfillment->id}:received",
+                'occurred_at' => $timestamp,
+                'created_at' => $timestamp,
+            ]);
+        }
+
+        foreach ($lines as $line) {
+            $snapshot = $line['snapshot'];
+            if ($snapshot['product_type'] !== Product::TYPE_RENTAL || $line['reservation_id'] === null) {
+                continue;
+            }
+
+            $this->recordActivity([
+                'order_id' => $order->id,
+                'fulfillment_id' => $line['fulfillment_id'],
+                'order_item_id' => $line['item_id'],
+                'rental_reservation_id' => $line['reservation_id'],
+                'actor_id' => $order->user_id,
+                'actor_role' => OrderActivity::ROLE_BUYER,
+                'event_type' => 'rental.reserved',
+                'to_status' => RentalReservation::STATUS_RESERVED,
+                'metadata' => $this->safeLineMetadataFromSnapshot($snapshot),
+                'event_key' => "rental:{$line['reservation_id']}:reserved",
+                'occurred_at' => $timestamp,
+                'created_at' => $timestamp,
+            ]);
+        }
+    }
+
+    private function recordActivity(array $attributes): void
+    {
+        if (array_key_exists('metadata', $attributes) && is_array($attributes['metadata'])) {
+            $attributes['metadata'] = json_encode($attributes['metadata'], JSON_THROW_ON_ERROR);
+        }
+
+        OrderActivity::query()->insertOrIgnore([$attributes]);
+    }
+
+    private function fulfillmentMetadata($items): array
+    {
+        return [
+            'item_count' => $items->count(),
+            'sale_count' => $items->where('product_type', Product::TYPE_SALE)->count(),
+            'rental_count' => $items->where('product_type', Product::TYPE_RENTAL)->count(),
+        ];
+    }
+
+    private function fulfillmentGroupMetadata(array $group): array
+    {
+        $saleCount = 0;
+        $rentalCount = 0;
+        foreach ($group as $line) {
+            $type = $line['snapshot']['product_type'] ?? null;
+            if ($type === Product::TYPE_SALE) {
+                $saleCount++;
+            } elseif ($type === Product::TYPE_RENTAL) {
+                $rentalCount++;
+            }
+        }
+
+        return [
+            'item_count' => count($group),
+            'sale_count' => $saleCount,
+            'rental_count' => $rentalCount,
+        ];
+    }
+
+    private function safeLineMetadata($item): array
+    {
+        return [
+            'product_id' => (int) $item->product_id,
+            'product_name' => $item->product_name,
+            'product_type' => $item->product_type,
+            'quantity' => (int) $item->quantity,
+            'rental_start_date' => $item->rental_start_date?->toDateString(),
+            'rental_end_date' => $item->rental_end_date?->toDateString(),
+        ];
+    }
+
+    private function safeLineMetadataFromSnapshot(array $snapshot): array
+    {
+        return [
+            'product_id' => (int) $snapshot['product_id'],
+            'product_name' => $snapshot['product_name'],
+            'product_type' => $snapshot['product_type'],
+            'quantity' => (int) $snapshot['quantity'],
+            'rental_start_date' => $snapshot['rental_start_date'],
+            'rental_end_date' => $snapshot['rental_end_date'],
+        ];
     }
 
     private function lockedProducts($items)
@@ -307,16 +541,6 @@ class CheckoutService
         $ids = $items->pluck('id')->sort()->values();
 
         return RentalReservation::query()->whereIn('order_item_id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('order_item_id');
-    }
-
-    private function canTransition(string $current, string $target): bool
-    {
-        return match ($current) {
-            OrderFulfillment::STATUS_RECEIVED => in_array($target, [OrderFulfillment::STATUS_ACCEPTED, OrderFulfillment::STATUS_CANCELLED], true),
-            OrderFulfillment::STATUS_ACCEPTED => in_array($target, [OrderFulfillment::STATUS_READY, OrderFulfillment::STATUS_CANCELLED], true),
-            OrderFulfillment::STATUS_READY => $target === OrderFulfillment::STATUS_COMPLETED,
-            default => false,
-        };
     }
 
     private function loadOrder(Order $order): Order

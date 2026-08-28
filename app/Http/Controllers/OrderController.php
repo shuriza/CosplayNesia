@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\RentalCancellationNotAllowedException;
 use App\Models\Order;
+use App\Models\OrderActivity;
 use App\Models\OrderItem;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
@@ -13,23 +14,34 @@ class OrderController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $orders = $request->user()->orders()
-            ->with(['items.rentalReservation', 'items.fulfillment', 'fulfillments'])
+        $filters = $request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
+        ]);
+        $query = $request->user()->orders()
+            ->with(['items.rentalReservation', 'items.fulfillment', 'items.review', 'fulfillments'])
             ->latest()
-            ->get()
-            ->map(fn (Order $order): array => $this->payload($order, false))
-            ->values();
+            ->latest('id');
+        $orders = $query->cursorPaginate((int) ($filters['per_page'] ?? 5));
 
-        return response()->json($orders);
+        return response()->json([
+            'data' => collect($orders->items())
+                ->map(fn (Order $order): array => $this->payload($order, false))
+                ->values(),
+            'pagination' => [
+                'next_cursor' => $orders->nextCursor()?->encode(),
+                'has_more' => $orders->hasMorePages(),
+                'per_page' => $orders->perPage(),
+            ],
+        ]);
     }
 
     public function show(Request $request, Order $order): JsonResponse
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
-        $order->load(['items.rentalReservation', 'items.fulfillment', 'fulfillments.items.rentalReservation']);
+        $order->load(['activities', 'items.rentalReservation', 'items.fulfillment', 'items.review', 'fulfillments.items.rentalReservation']);
 
-        return response()->json($this->payload($order, true));
+        return response()->json($this->payload($order, true, $request->user()->id));
     }
 
     public function cancelRental(
@@ -52,7 +64,7 @@ class OrderController extends Controller
         ]);
     }
 
-    private function payload(Order $order, bool $detail): array
+    private function payload(Order $order, bool $detail, ?int $viewerId = null): array
     {
         $payload = [
             'id' => $order->id,
@@ -79,6 +91,7 @@ class OrderController extends Controller
                 'postal_code' => $order->postal_code,
                 'handoff_note' => $order->handoff_note,
             ];
+            $payload['timeline'] = $order->activities->map(fn (OrderActivity $activity): array => $this->timelinePayload($activity, $viewerId))->values();
         }
 
         return $payload;
@@ -99,6 +112,13 @@ class OrderController extends Controller
             'rental_end_date' => $item->rental_end_date?->toDateString(),
             'rental_status' => $item->rentalReservation?->status,
             'fulfillment_status' => $item->fulfillment?->status,
+            'review' => $item->review ? [
+                'rating' => $item->review->rating,
+                'created_at' => $item->review->created_at,
+            ] : null,
+            'can_review' => $item->product_id !== null
+                && $item->isFulfilledForReview()
+                && $item->review === null,
         ];
     }
 }

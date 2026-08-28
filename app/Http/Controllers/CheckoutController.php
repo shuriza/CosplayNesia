@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\IdempotencyConflictException;
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\OwnedProductCheckoutException;
 use App\Exceptions\RentalUnavailableException;
 use App\Http\Requests\CheckoutRequest;
 use App\Services\CheckoutService;
@@ -34,7 +35,7 @@ class CheckoutController extends Controller
                     'handoff_note' => $validated['handoff_note'] ?? null,
                 ],
             );
-        } catch (InsufficientStockException|RentalUnavailableException $exception) {
+        } catch (InsufficientStockException|OwnedProductCheckoutException|RentalUnavailableException $exception) {
             return response()->json(['message' => $exception->getMessage()], 409);
         } catch (IdempotencyConflictException $exception) {
             return response()->json(['message' => $exception->getMessage()], 409);

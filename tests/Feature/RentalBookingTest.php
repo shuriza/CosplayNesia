@@ -24,7 +24,7 @@ class RentalBookingTest extends TestCase
     {
         $rental = Product::factory()->create(['type' => 'Sewa']);
         $sale = Product::factory()->create(['type' => 'Beli']);
-        $user = User::factory()->create();
+        $user = $this->user();
         $this->actingAs($user)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $rental->id, 'quantity' => 1]]]))->assertUnprocessable()->assertJsonValidationErrors(['items.0.start_date', 'items.0.end_date']);
         $this->actingAs($user)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $sale->id, 'quantity' => 1, ...$this->dates()]]]))->assertUnprocessable()->assertJsonValidationErrors('items.0.start_date');
         $tooLong = $this->dates(1, 31);
@@ -35,7 +35,7 @@ class RentalBookingTest extends TestCase
     {
         $rental = Product::factory()->create(['name' => 'Sewa Costume', 'type' => 'Sewa', 'price' => 90000]);
         $sale = Product::factory()->create(['name' => 'Beli Wig', 'type' => 'Beli', 'price' => 50000, 'stock' => 4]);
-        $user = User::factory()->create();
+        $user = $this->user();
         $dates = $this->dates();
         $response = $this->actingAs($user)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $rental->id, 'quantity' => 1, ...$dates], ['id' => $sale->id, 'quantity' => 2]]]))->assertCreated();
         $items = $response->json('order.items');
@@ -54,11 +54,11 @@ class RentalBookingTest extends TestCase
     {
         $product = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 2]);
         $first = $this->dates(2, 2);
-        $this->actingAs(User::factory()->create())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 2, ...$first]]]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 2, ...$first]]]))->assertCreated();
         $overlap = ['start_date' => $first['end_date'], 'end_date' => Carbon::parse($first['end_date'])->addDay()->toDateString()];
-        $this->actingAs(User::factory()->create())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$overlap]]]))->assertConflict();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$overlap]]]))->assertConflict();
         $adjacent = ['start_date' => Carbon::parse($first['end_date'])->addDay()->toDateString(), 'end_date' => Carbon::parse($first['end_date'])->addDays(2)->toDateString()];
-        $this->actingAs(User::factory()->create())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 2, ...$adjacent]]]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 2, ...$adjacent]]]))->assertCreated();
     }
 
     public function test_rental_conflict_rolls_back_mixed_checkout(): void
@@ -66,8 +66,8 @@ class RentalBookingTest extends TestCase
         $rental = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 1]);
         $sale = Product::factory()->create(['type' => Product::TYPE_SALE, 'stock' => 3]);
         $dates = $this->dates(3, 2);
-        $this->actingAs(User::factory()->create())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $rental->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
-        $this->actingAs(User::factory()->create())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $sale->id, 'quantity' => 1], ['id' => $rental->id, 'quantity' => 1, ...$dates]]]))->assertConflict();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $rental->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $sale->id, 'quantity' => 1], ['id' => $rental->id, 'quantity' => 1, ...$dates]]]))->assertConflict();
         $this->assertSame(3, $sale->fresh()->stock);
         $this->assertDatabaseCount('orders', 1);
     }
@@ -75,7 +75,7 @@ class RentalBookingTest extends TestCase
     public function test_inactive_rental_is_rejected_by_checkout_and_availability(): void
     {
         $product = Product::factory()->create(['type' => 'Sewa', 'is_active' => false]);
-        $user = User::factory()->create();
+        $user = $this->user();
         $this->actingAs($user)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$this->dates()]]]))->assertUnprocessable()->assertJsonValidationErrors('items.0.id');
         $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($this->dates()))->assertNotFound();
     }
@@ -85,14 +85,52 @@ class RentalBookingTest extends TestCase
         $product = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 2]);
         $dates = $this->dates();
         $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 0, 'available_quantity' => 2]);
-        $this->actingAs(User::factory()->create())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
         $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 1, 'available_quantity' => 1]);
+    }
+
+    public function test_rental_stock_cannot_drop_below_peak_reserved_capacity(): void
+    {
+        $seller = $this->user();
+        $product = Product::factory()->for($seller, 'owner')->create([
+            'type' => Product::TYPE_RENTAL,
+            'stock' => 5,
+        ]);
+        $first = $this->dates(2, 3);
+        $overlap = $this->dates(3, 3);
+        $disjoint = $this->dates(10, 2);
+
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'quantity' => 2, ...$first]],
+        ]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'quantity' => 1, ...$overlap]],
+        ]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'quantity' => 2, ...$disjoint]],
+        ]))->assertCreated();
+
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['stock' => 3])
+            ->assertOk()
+            ->assertJsonPath('stock', 3);
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_RENTAL])
+            ->assertOk()
+            ->assertJsonPath('type', Product::TYPE_RENTAL);
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['stock' => 2])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('stock');
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('type');
+
+        $this->assertSame(3, $product->fresh()->stock);
+        $this->assertSame(Product::TYPE_RENTAL, $product->fresh()->type);
     }
 
     public function test_idempotency_replays_and_rejects_different_payloads(): void
     {
         $product = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 2]);
-        $user = User::factory()->create();
+        $user = $this->user();
         $payload = $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$this->dates()]]]);
         $first = $this->actingAs($user)->withHeader('Idempotency-Key', 'rental-key')->postJson('/api/checkout', $payload)->assertCreated();
         $this->actingAs($user)->withHeader('Idempotency-Key', 'rental-key')->postJson('/api/checkout', $payload)->assertOk()->assertJsonPath('order_id', $first->json('order_id'));
@@ -103,28 +141,33 @@ class RentalBookingTest extends TestCase
 
     public function test_buyer_only_cancellation_releases_dates_and_history_survives_product_deletion(): void
     {
-        $seller = User::factory()->create();
-        $buyer = User::factory()->create();
+        $seller = $this->user();
+        $buyer = $this->user();
         $product = Product::factory()->for($seller, 'owner')->create(['type' => Product::TYPE_RENTAL]);
         $dates = $this->dates(3, 2);
         $created = $this->actingAs($buyer)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
         $itemId = $created->json('order.items.0.id');
         $orderId = $created->json('order_id');
-        $this->actingAs(User::factory()->create())->deleteJson("/api/orders/{$orderId}/items/{$itemId}/rental")->assertNotFound();
+        $this->actingAs($this->user())->deleteJson("/api/orders/{$orderId}/items/{$itemId}/rental")->assertNotFound();
         $this->actingAs($buyer)->deleteJson("/api/orders/{$orderId}/items/{$itemId}/rental")->assertOk();
         $this->assertDatabaseHas('rental_reservations', ['order_id' => $orderId, 'status' => RentalReservation::STATUS_CANCELLED]);
         $name = $product->name;
         $product->delete();
-        $this->actingAs($buyer)->getJson('/api/orders')->assertOk()->assertJsonPath('0.items.0.name', $name);
+        $this->actingAs($buyer)->getJson('/api/orders')->assertOk()->assertJsonPath('data.0.items.0.name', $name);
     }
 
     public function test_same_day_rental_cancellation_is_rejected_by_policy(): void
     {
         $product = Product::factory()->create(['type' => Product::TYPE_RENTAL]);
-        $buyer = User::factory()->create();
+        $buyer = $this->user();
         $dates = $this->dates(0, 2);
         $created = $this->actingAs($buyer)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
         $this->actingAs($buyer)->deleteJson("/api/orders/{$created->json('order_id')}/items/{$created->json('order.items.0.id')}/rental")->assertConflict();
         $this->assertDatabaseHas('rental_reservations', ['order_id' => $created->json('order_id'), 'status' => RentalReservation::STATUS_RESERVED]);
+    }
+
+    private function user(array $attributes = []): User
+    {
+        return User::factory()->create($attributes);
     }
 }

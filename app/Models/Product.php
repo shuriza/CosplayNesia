@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Product extends Model
 {
@@ -19,7 +20,7 @@ class Product extends Model
 
     protected $fillable = [
         'seller_id', 'name', 'series', 'category', 'price', 'type', 'size',
-        'seller', 'city', 'rating', 'popular', 'newest', 'badge', 'image', 'stock', 'is_active',
+        'seller', 'city', 'popular', 'badge', 'image', 'stock', 'is_active',
     ];
 
     protected function casts(): array
@@ -28,9 +29,10 @@ class Product extends Model
             'price' => 'integer',
             'stock' => 'integer',
             'popular' => 'integer',
-            'newest' => 'integer',
             'rating' => 'float',
+            'review_count' => 'integer',
             'is_active' => 'boolean',
+            'is_favorite' => 'boolean',
         ];
     }
 
@@ -54,9 +56,31 @@ class Product extends Model
         return $this->hasMany(RentalReservation::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(ProductReview::class);
+    }
+
+    public function scopeWithReviewSummary(Builder $query): Builder
+    {
+        return $query
+            ->withCount(['reviews as review_count'])
+            ->withAvg('reviews as rating', 'rating');
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         return $query->when($term, function (Builder $query, string $term): void {
+            if (mb_strlen($term) >= 3 && DB::connection($query->getModel()->getConnectionName())->getDriverName() === 'sqlite') {
+                $phrase = '"'.str_replace('"', '""', $term).'"';
+                $query->whereRaw(
+                    'products.id in (select product_id from product_search where product_search match ?)',
+                    [$phrase],
+                );
+
+                return;
+            }
+
             $query->where(function (Builder $query) use ($term): void {
                 $query->where('name', 'like', "%{$term}%")
                     ->orWhere('series', 'like', "%{$term}%")

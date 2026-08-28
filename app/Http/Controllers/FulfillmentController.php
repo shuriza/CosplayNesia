@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\FulfillmentTransitionNotAllowedException;
 use App\Http\Requests\UpdateFulfillmentStatusRequest;
+use App\Models\OrderActivity;
 use App\Models\OrderFulfillment;
 use App\Services\CheckoutService;
 use Illuminate\Http\JsonResponse;
@@ -16,26 +17,35 @@ class FulfillmentController extends Controller
     {
         $filters = $request->validate([
             'status' => ['nullable', 'string', Rule::in(OrderFulfillment::statuses())],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
         ]);
-        $fulfillments = OrderFulfillment::query()
+        $query = OrderFulfillment::query()
             ->forSeller($request->user())
             ->with(['order.user:id,name', 'items.rentalReservation'])
             ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
             ->latest()
-            ->get()
-            ->map(fn (OrderFulfillment $fulfillment): array => $this->payload($fulfillment, false))
-            ->values();
+            ->latest('id');
+        $fulfillments = $query->cursorPaginate((int) ($filters['per_page'] ?? 5));
 
-        return response()->json($fulfillments);
+        return response()->json([
+            'data' => collect($fulfillments->items())
+                ->map(fn (OrderFulfillment $fulfillment): array => $this->payload($fulfillment, false))
+                ->values(),
+            'pagination' => [
+                'next_cursor' => $fulfillments->nextCursor()?->encode(),
+                'has_more' => $fulfillments->hasMorePages(),
+                'per_page' => $fulfillments->perPage(),
+            ],
+        ]);
     }
 
     public function show(Request $request, OrderFulfillment $fulfillment): JsonResponse
     {
         abort_unless($fulfillment->seller_id === $request->user()->id, 403);
 
-        $fulfillment->load(['order', 'items.rentalReservation']);
+        $fulfillment->load(['activities', 'order', 'items.rentalReservation']);
 
-        return response()->json($this->payload($fulfillment, true));
+        return response()->json($this->payload($fulfillment, true, $request->user()->id));
     }
 
     public function updateStatus(
@@ -59,7 +69,7 @@ class FulfillmentController extends Controller
         ]);
     }
 
-    private function payload(OrderFulfillment $fulfillment, bool $detail): array
+    private function payload(OrderFulfillment $fulfillment, bool $detail, ?int $viewerId = null): array
     {
         $items = $fulfillment->items;
 
@@ -83,7 +93,7 @@ class FulfillmentController extends Controller
                 'rental_end_date' => $item->rental_end_date?->toDateString(),
                 'rental_status' => $item->rentalReservation?->status,
             ])->values(),
-            'available_transitions' => $this->availableTransitions($fulfillment),
+            'available_transitions' => $fulfillment->availableTransitions(),
         ];
 
         if (! $detail) {
@@ -101,18 +111,9 @@ class FulfillmentController extends Controller
                 'postal_code' => $fulfillment->order?->postal_code,
                 'handoff_note' => $fulfillment->order?->handoff_note,
             ];
+            $payload['timeline'] = $fulfillment->activities->map(fn (OrderActivity $activity): array => $this->timelinePayload($activity, $viewerId, true))->values();
         }
 
         return $payload;
-    }
-
-    private function availableTransitions(OrderFulfillment $fulfillment): array
-    {
-        return match ($fulfillment->status) {
-            OrderFulfillment::STATUS_RECEIVED => [OrderFulfillment::STATUS_ACCEPTED, OrderFulfillment::STATUS_CANCELLED],
-            OrderFulfillment::STATUS_ACCEPTED => [OrderFulfillment::STATUS_READY, OrderFulfillment::STATUS_CANCELLED],
-            OrderFulfillment::STATUS_READY => [OrderFulfillment::STATUS_COMPLETED],
-            default => [],
-        };
     }
 }
