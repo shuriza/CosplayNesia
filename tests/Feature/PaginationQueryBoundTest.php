@@ -59,6 +59,7 @@ class PaginationQueryBoundTest extends TestCase
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/my-products');
         $this->assertQueryCountIsPageSizeInvariant($buyer, '/api/orders');
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/seller/fulfillments');
+        $this->assertQueryCountIsPageSizeInvariant($buyer, "/api/products/{$products->first()->id}/reviews");
     }
 
     private function assertQueryCountIsPageSizeInvariant(User $user, string $path): void

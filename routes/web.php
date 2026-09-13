@@ -8,6 +8,7 @@ use App\Http\Controllers\FulfillmentController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\ProductReviewFeedController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
@@ -15,6 +16,7 @@ Route::view('/', 'home')->name('home');
 Route::prefix('api')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}/availability', [AvailabilityController::class, 'show']);
+    Route::get('/products/{product}/reviews', [ProductReviewFeedController::class, 'index']);
     Route::get('/me', [AuthController::class, 'show'])->middleware('auth.session');
 
     Route::middleware('guest')->prefix('auth')->group(function (): void {

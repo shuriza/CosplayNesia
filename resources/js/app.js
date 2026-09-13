@@ -35,6 +35,7 @@ const state = {
   ownedProducts: new Map(),
   ownedProductsCursor: null,
   hasMoreOwnedProducts: false,
+  reviewFeed: { productId: null, entries: [], cursor: null, hasMore: false, summary: {} },
   incomingFulfillments: [],
   incomingFulfillmentsCursor: null,
   hasMoreIncomingFulfillments: false,
@@ -469,8 +470,103 @@ function openProduct(id, trigger) {
   add.disabled = stock === 0;
   info.append(add);
   layout.append(info);
-  content.replaceChildren(layout);
+  const reviews = node('section', { className: 'review-feed', attrs: { id: 'review-feed', 'aria-label': 'Ulasan pembeli terverifikasi', 'aria-busy': 'true' } }, [
+    listMessage('Memuat ulasan…'),
+  ]);
+  content.replaceChildren(layout, reviews);
   openLayer(elements.productModal, trigger);
+  loadProductReviews(id);
+}
+
+function reviewDateLabel(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf())
+    ? ''
+    : date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function reviewSummary(summary) {
+  const count = Number(valueOf(summary, ['review_count'], 0));
+  const rating = Number(valueOf(summary, ['rating'], NaN));
+  const heading = node('div', { className: 'review-feed__summary' }, [
+    node('strong', { text: count && Number.isFinite(rating) ? `★ ${rating.toFixed(1)}` : '★ —' }),
+    node('span', { text: count === 1 ? '1 ulasan terverifikasi' : `${count} ulasan terverifikasi` }),
+  ]);
+  const distribution = valueOf(summary, ['distribution'], {});
+  const bars = node('ul', { className: 'review-distribution' });
+  [5, 4, 3, 2, 1].forEach((star) => {
+    const total = Number(valueOf(distribution, [String(star)], 0)) || 0;
+    const share = count > 0 ? Math.round((total / count) * 100) : 0;
+    bars.append(node('li', {}, [
+      node('span', { className: 'review-distribution__star', text: `${star}★` }),
+      node('span', { className: 'review-distribution__track' }, [
+        node('span', { className: 'review-distribution__fill', attrs: { style: `width:${share}%` } }),
+      ]),
+      node('span', { className: 'review-distribution__count', text: String(total) }),
+    ]));
+  });
+
+  return node('div', { className: 'review-feed__head' }, [heading, count > 0 ? bars : null]);
+}
+
+function renderReviewFeed() {
+  const container = $('#review-feed');
+  if (!container) return;
+  const { entries, hasMore } = state.reviewFeed;
+  const children = [
+    node('h3', { text: 'Ulasan pembeli terverifikasi' }),
+    reviewSummary(state.reviewFeed.summary),
+  ];
+
+  if (!entries.length) {
+    children.push(listMessage('Belum ada ulasan untuk produk ini.'));
+  } else {
+    children.push(node('ul', { className: 'review-list' }, entries.map((entry) => node('li', { className: 'review-list__item' }, [
+      node('div', { className: 'review-list__header' }, [
+        node('strong', { text: valueOf(entry, ['reviewer_label'], 'Cosplayer') }),
+        node('span', { className: 'review-list__rating', text: `★ ${valueOf(entry, ['rating'], '—')}` }),
+      ]),
+      node('small', { text: reviewDateLabel(valueOf(entry, ['created_at'], '')) }),
+      valueOf(entry, ['body'], '') ? node('p', { text: valueOf(entry, ['body']) }) : null,
+    ]))));
+  }
+
+  if (hasMore) {
+    children.push(button('Muat ulasan lainnya', 'button button--outline review-feed__more', { 'data-load-reviews': state.reviewFeed.productId }));
+  }
+
+  container.replaceChildren(...children.filter(Boolean));
+  container.setAttribute('aria-busy', 'false');
+}
+
+async function loadProductReviews(id, { append = false } = {}) {
+  const key = String(id);
+  if (append && (!state.reviewFeed.hasMore || !state.reviewFeed.cursor || state.reviewFeed.productId !== key)) return;
+  if (!append) state.reviewFeed = { productId: key, entries: [], cursor: null, hasMore: false, summary: {} };
+  const trigger = $('[data-load-reviews]');
+  if (trigger) trigger.disabled = true;
+  try {
+    const params = new URLSearchParams();
+    if (append) params.set('cursor', state.reviewFeed.cursor);
+    const payload = await api('/api/products/' + encodeURIComponent(key) + '/reviews?' + params.toString());
+    if (state.reviewFeed.productId !== key) return;
+    const page = valueOf(payload, ['data'], []);
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.reviewFeed.entries = append ? [...state.reviewFeed.entries, ...page] : page;
+    state.reviewFeed.summary = valueOf(payload, ['summary'], {});
+    state.reviewFeed.cursor = valueOf(pagination, ['next_cursor'], null);
+    state.reviewFeed.hasMore = Boolean(valueOf(pagination, ['has_more'], false));
+    renderReviewFeed();
+  } catch {
+    const container = $('#review-feed');
+    if (container && state.reviewFeed.productId === key) {
+      container.replaceChildren(listMessage('Ulasan tidak dapat dimuat saat ini.'));
+      container.setAttribute('aria-busy', 'false');
+    }
+  } finally {
+    if (trigger) trigger.disabled = false;
+  }
 }
 
 function addToCart(id) {
@@ -792,13 +888,27 @@ function renderOrders() {
         const review = valueOf(item, ['review'], null);
         if (review) {
           row.append(node('small', { className: 'review-complete', text: `Dinilai ★ ${valueOf(review, ['rating'], '—')}` }));
+          if (valueOf(review, ['body'], '')) {
+            row.append(node('p', { className: 'review-complete__body', text: valueOf(review, ['body']) }));
+          }
         } else if (valueOf(item, ['can_review'], false)) {
           const label = node('label', { className: 'review-field', text: 'Nilai produk' });
           const select = node('select', { attrs: { 'data-review-rating': valueOf(item, ['id'], ''), 'aria-label': `Rating untuk ${productName(item)}` } });
           [5, 4, 3, 2, 1].forEach((rating) => select.append(node('option', { text: `${rating} bintang`, attrs: { value: rating } })));
           label.append(select);
+          const bodyLabel = node('label', { className: 'review-field review-field--body', text: 'Ulasan (opsional)' });
+          bodyLabel.append(node('textarea', {
+            attrs: {
+              'data-review-body': valueOf(item, ['id'], ''),
+              maxlength: 500,
+              rows: 2,
+              placeholder: 'Ceritakan pengalamanmu memakai kostum ini.',
+              'aria-label': `Ulasan untuk ${productName(item)}`,
+            },
+          }));
           row.append(node('div', { className: 'review-action' }, [
             label,
+            bodyLabel,
             button('Kirim penilaian', 'text-link', {
               'data-review-order': valueOf(order, ['id'], ''),
               'data-review-item': valueOf(item, ['id'], ''),
@@ -1013,14 +1123,18 @@ async function updateFulfillmentStatus(id, status, trigger) {
 }
 
 async function submitProductReview(orderId, itemId, trigger) {
-  const select = trigger.closest('.review-action')?.querySelector('[data-review-rating]');
+  const action = trigger.closest('.review-action');
+  const select = action?.querySelector('[data-review-rating]');
   if (!select) return;
+  const bodyField = action.querySelector('[data-review-body]');
+  const body = bodyField ? bodyField.value.trim() : '';
   trigger.disabled = true;
   select.disabled = true;
+  if (bodyField) bodyField.disabled = true;
   try {
     await api('/api/orders/' + encodeURIComponent(orderId) + '/items/' + encodeURIComponent(itemId) + '/review', {
       method: 'POST',
-      body: { rating: Number(select.value) },
+      body: { rating: Number(select.value), body: body || null },
     });
     showToast('Terima kasih atas penilaianmu.');
     await Promise.all([loadProfileData(), fetchProducts()]);
@@ -1029,6 +1143,7 @@ async function submitProductReview(orderId, itemId, trigger) {
   } finally {
     trigger.disabled = false;
     select.disabled = false;
+    if (bodyField) bodyField.disabled = false;
   }
 }
 
@@ -1291,6 +1406,8 @@ elements.productGrid.addEventListener('click', (event) => {
 });
 
 $('#modal-content').addEventListener('click', (event) => {
+  const more = event.target.closest('[data-load-reviews]');
+  if (more) { loadProductReviews(more.dataset.loadReviews, { append: true }); return; }
   const add = event.target.closest('[data-modal-add]');
   if (!add) return;
   addToCart(add.dataset.modalAdd);

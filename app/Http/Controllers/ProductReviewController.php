@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductReviewRequest;
 use App\Models\Order;
 use App\Models\OrderFulfillment;
 use App\Models\OrderItem;
@@ -10,22 +11,20 @@ use App\Models\ProductReview;
 use App\Models\RentalReservation;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ProductReviewController extends Controller
 {
-    public function store(Request $request, Order $order, OrderItem $item): JsonResponse
+    public function store(StoreProductReviewRequest $request, Order $order, OrderItem $item): JsonResponse
     {
         abort_unless($order->user_id === $request->user()->id, 403);
         abort_unless($item->order_id === $order->id, 404);
 
-        $validated = $request->validate([
-            'rating' => ['required', 'integer', 'between:1,5'],
-        ]);
+        $rating = (int) $request->validated('rating');
+        $body = $request->reviewBody();
 
         try {
-            $review = DB::transaction(function () use ($request, $order, $item, $validated): ProductReview {
+            $review = DB::transaction(function () use ($request, $order, $item, $rating, $body): ProductReview {
                 $lockedOrder = Order::query()
                     ->whereKey($order->id)
                     ->where('user_id', $request->user()->id)
@@ -63,7 +62,8 @@ class ProductReviewController extends Controller
                 return $lockedItem->review()->create([
                     'product_id' => $product->id,
                     'user_id' => $request->user()->id,
-                    'rating' => $validated['rating'],
+                    'rating' => $rating,
+                    'body' => $body,
                 ]);
             }, 3);
         } catch (QueryException $exception) {

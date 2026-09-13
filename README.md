@@ -73,16 +73,20 @@ php artisan migrate:fresh --seed
 - Snapshot nama produk, harga, tipe, penjual, tanggal rental, penerima, kontak, alamat, dan catatan tetap terbaca setelah listing berubah atau dihapus
 - Rating katalog hanya berasal dari ulasan pembeli terverifikasi pada item pesanan yang benar-benar selesai
 - Ulasan dibatasi satu per item; rental yang dibatalkan tidak dapat diulas dan ulasan selesai tetap tersimpan setelah produk dihapus
+- Pembeli dapat menulis ulasan teks opsional maksimal 500 karakter; teks kosong disimpan sebagai `null`
+- Detail produk menampilkan feed ulasan publik dengan cursor pagination, distribusi bintang 1–5, dan identitas pengulas yang dimask menjadi nama depan plus inisial
+- Feed ulasan hanya tersedia untuk listing aktif; listing nonaktif dan produk terhapus mengembalikan 404 tanpa menghilangkan ulasan yang sudah tersimpan
 
 ### Kualitas
 
 - Index khusus untuk cursor pagination dan pencarian katalog
 - Query list dijaga bounded terhadap ukuran halaman
-- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, fulfillment, timeline, handoff, ulasan, dan isolasi data
+- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, fulfillment, timeline, handoff, ulasan, feed ulasan publik, dan isolasi data
 
 ## Struktur Utama
 
 - `app/Http/Controllers` menangani endpoint JSON dan autentikasi
+- `app/Http/Controllers/ProductReviewFeedController.php` melayani feed ulasan publik per produk
 - `app/Http/Requests` memvalidasi seluruh input mutasi
 - `app/Services/CheckoutService.php` menangani checkout, rental, fulfillment, dan pencatatan timeline secara atomik
 - `app/Models` berisi model dan relasi Eloquent
@@ -99,6 +103,8 @@ Checkout membuat pesanan demo dan status induknya menjadi `processing` saat memi
 Item dari listing dengan pemilik akun dikelompokkan menjadi satu fulfillment per penjual. Penjual mengelola alur `received` → `accepted` → `ready` → `completed`, atau membatalkan dari `received`/`accepted`. Produk demo tanpa `seller_id` tetap dapat dibeli dan tampil di riwayat pembeli, tetapi tidak masuk inbox penjual. Status pesanan induk merupakan agregat fulfillment dan tiap penjual hanya melihat fulfillment miliknya.
 
 Pembeli dapat membatalkan reservasi miliknya sebelum tanggal mulai; tanggal tersebut kembali tersedia. Riwayat pesanan menyimpan snapshot nama, tipe, harga, tanggal, dan data handoff sehingga tetap terbaca setelah listing dihapus. Data handoff checkout menormalisasi nomor Indonesia ke format `+62...`; daftar pesanan hanya memuat ringkasan, sedangkan detail pembeli memuat data lengkap miliknya. Detail fulfillment penjual hanya memuat penerima, telepon, alamat, catatan, dan item penjual tersebut; email penerima serta identitas akun pembeli tidak dibagikan.
+
+Feed ulasan publik `GET /api/products/{product}/reviews` tidak membutuhkan autentikasi dan hanya melayani listing aktif. Feed memuat rating, teks ulasan, tanggal, serta label pengulas berupa nama depan dan inisial nama terakhir sehingga identitas penuh pembeli tidak tersebar; email dan akun pembeli tidak pernah disertakan. Ringkasan feed berisi rata-rata rating, jumlah ulasan, dan distribusi lengkap bintang 1–5 yang dihitung dalam satu query grouped.
 
 Belum ada payment gateway, layanan pengiriman, notifikasi, atau deployment produksi. Seller transition, pembatalan rental, ulasan, dan mutasi stok memakai transaksi serta penguncian berurutan untuk menjaga invariant. SQLite dan retry transaksi ditujukan untuk demo lokal, bukan beban tulis bersamaan; validasi contention produksi harus menggunakan database terkelola yang mendukung row locking.
 

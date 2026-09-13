@@ -68,6 +68,31 @@ class Product extends Model
             ->withAvg('reviews as rating', 'rating');
     }
 
+    /**
+     * Rating distribution for every star bucket, resolved in one grouped query so the public
+     * review feed never issues five separate counts.
+     *
+     * @return array<int, int>
+     */
+    public function ratingDistribution(): array
+    {
+        $buckets = array_fill_keys(range(1, 5), 0);
+        $counts = ProductReview::query()
+            ->where('product_id', $this->id)
+            ->selectRaw('rating, count(*) as total')
+            ->groupBy('rating')
+            ->pluck('total', 'rating');
+
+        foreach ($counts as $rating => $total) {
+            $bucket = (int) $rating;
+            if (isset($buckets[$bucket])) {
+                $buckets[$bucket] = (int) $total;
+            }
+        }
+
+        return $buckets;
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         return $query->when($term, function (Builder $query, string $term): void {
