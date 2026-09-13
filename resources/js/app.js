@@ -49,6 +49,7 @@ const state = {
   hasMoreNotifications: false,
   notificationsUnreadOnly: false,
   unreadNotifications: 0,
+  threads: new Map(),
   orders: [],
   ordersCursor: null,
   hasMoreOrders: false,
@@ -962,6 +963,15 @@ function renderOrders() {
       'data-order-detail': valueOf(order, ['id'], ''),
       'aria-label': 'Lihat detail penyerahan pesanan ' + valueOf(order, ['id'], ''),
     }));
+    const threads = valueOf(order, ['fulfillments'], []);
+    (Array.isArray(threads) ? threads : []).forEach((fulfillment) => {
+      const unread = Number(valueOf(fulfillment, ['unread_messages'], 0)) || 0;
+      card.append(button(
+        unread > 0 ? `Percakapan ${valueOf(fulfillment, ['seller_name'], 'penjual')} (${unread} baru)` : `Percakapan ${valueOf(fulfillment, ['seller_name'], 'penjual')}`,
+        unread > 0 ? 'text-link has-unread-messages' : 'text-link',
+        { 'data-thread-open': valueOf(fulfillment, ['id'], '') },
+      ));
+    });
     items.filter((item) => valueOf(item, ['product_type'], '') === 'Sewa').forEach((item) => {
       const start = valueOf(item, ['rental_start_date'], '—');
       const end = valueOf(item, ['rental_end_date'], '—');
@@ -1066,6 +1076,12 @@ function renderIncomingFulfillments() {
       'data-fulfillment-detail': valueOf(fulfillment, ['id'], ''),
       'aria-label': 'Lihat detail penyerahan pesanan ' + valueOf(fulfillment, ['order_id'], ''),
     }));
+    const unreadMessages = Number(valueOf(fulfillment, ['unread_messages'], 0)) || 0;
+    card.append(button(
+      unreadMessages > 0 ? `Percakapan pembeli (${unreadMessages} baru)` : 'Percakapan pembeli',
+      unreadMessages > 0 ? 'text-link has-unread-messages' : 'text-link',
+      { 'data-thread-open': valueOf(fulfillment, ['id'], '') },
+    ));
     const transitions = Array.isArray(fulfillment.available_transitions) ? fulfillment.available_transitions : [];
     if (transitions.length) {
       card.append(node('div', { className: 'profile-card__actions' }, transitions.map((nextStatus) => button(
@@ -1322,6 +1338,120 @@ function openNotifications(trigger) {
   $('#notification-list').replaceChildren(listMessage('Memuat notifikasi…'));
   openLayer(elements.notificationDrawer, trigger);
   loadNotifications().catch((error) => handleProtectedError(error));
+}
+
+function messageTimestamp(value) {
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.valueOf()) ? '' : date.toLocaleString('id-ID');
+}
+
+function renderThread(id, container) {
+  const thread = state.threads.get(String(id));
+  if (!thread || !container) return;
+  const wrap = node('section', { className: 'message-thread', attrs: { 'aria-label': 'Percakapan pesanan' } });
+  wrap.append(node('h4', { text: 'Percakapan' }));
+
+  if (!thread.messages.length) {
+    wrap.append(listMessage('Belum ada pesan. Mulai percakapan dengan pihak lain.'));
+  } else {
+    const list = node('ol', { className: 'message-list' });
+    // The API returns newest-first for cursor stability; a conversation reads oldest-first.
+    [...thread.messages].reverse().forEach((entry) => {
+      const mine = Boolean(valueOf(entry, ['is_mine'], false));
+      list.append(node('li', { className: `message-bubble${mine ? ' message-bubble--mine' : ''}` }, [
+        node('div', { className: 'message-bubble__meta' }, [
+          node('strong', { text: mine ? 'Anda' : valueOf(entry, ['sender_label'], 'Pihak lain') }),
+          node('small', { text: messageTimestamp(valueOf(entry, ['created_at'], '')) }),
+        ]),
+        node('p', { text: valueOf(entry, ['body'], '') }),
+      ]));
+    });
+    wrap.append(list);
+  }
+
+  if (thread.hasMore) {
+    wrap.append(button('Muat pesan lama', 'text-link', { 'data-thread-more': id }));
+  }
+
+  if (thread.canSend) {
+    const label = node('label', { className: 'review-field review-field--body', text: 'Tulis pesan' });
+    label.append(node('textarea', {
+      attrs: {
+        'data-thread-body': id,
+        maxlength: 1000,
+        rows: 2,
+        placeholder: 'Contoh: apakah bisa diambil langsung hari Sabtu?',
+        'aria-label': 'Tulis pesan untuk pesanan ini',
+      },
+    }));
+    wrap.append(node('div', { className: 'review-action' }, [
+      label,
+      button('Kirim pesan', 'text-link', { 'data-thread-send': id }),
+    ]));
+  } else {
+    wrap.append(node('p', { className: 'list-message', text: 'Pesanan dibatalkan, percakapan ditutup.' }));
+  }
+
+  container.querySelector('.message-thread')?.remove();
+  container.append(wrap);
+}
+
+async function loadThread(id, container, { append = false } = {}) {
+  const key = String(id);
+  const existing = state.threads.get(key);
+  if (append && (!existing?.hasMore || !existing?.cursor)) return;
+  const params = new URLSearchParams({ per_page: '10' });
+  if (append) params.set('cursor', existing.cursor);
+  const payload = await api('/api/fulfillments/' + encodeURIComponent(key) + '/messages?' + params.toString());
+  const page = valueOf(payload, ['data'], []);
+  const pagination = valueOf(payload, ['pagination'], {});
+  state.threads.set(key, {
+    messages: append ? [...(existing?.messages ?? []), ...page] : page,
+    cursor: valueOf(pagination, ['next_cursor'], null),
+    hasMore: Boolean(valueOf(pagination, ['has_more'], false)),
+    canSend: Boolean(valueOf(payload, ['can_send'], false)),
+    viewerRole: valueOf(payload, ['viewer_role'], ''),
+  });
+  renderThread(key, container);
+}
+
+async function openThread(id, trigger) {
+  const card = trigger.closest('.profile-card');
+  if (!card) return;
+  trigger.disabled = true;
+  try {
+    await loadThread(id, card);
+    // Opening a thread is an explicit read, so the badge must not linger.
+    await api('/api/fulfillments/' + encodeURIComponent(id) + '/messages/read', { method: 'PATCH' });
+    refreshUnreadCount();
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+  }
+}
+
+async function sendThreadMessage(id, trigger) {
+  const card = trigger.closest('.profile-card');
+  const field = card?.querySelector('[data-thread-body]');
+  const body = field ? field.value.trim() : '';
+  if (!body) {
+    showToast('Tulis pesan sebelum mengirim.');
+    return;
+  }
+  trigger.disabled = true;
+  field.disabled = true;
+  try {
+    await api('/api/fulfillments/' + encodeURIComponent(id) + '/messages', { method: 'POST', body: { body } });
+    showToast('Pesan terkirim.');
+    await loadThread(id, card);
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+    if (field) field.disabled = false;
+  }
 }
 
 async function loadFulfillmentDetail(id, trigger) {
@@ -1684,6 +1814,12 @@ $('#cart-items').addEventListener('change', (event) => {
 });
 
 $('#orders-list').addEventListener('click', async (event) => {
+  const thread = event.target.closest('[data-thread-open]');
+  if (thread) { openThread(thread.dataset.threadOpen, thread); return; }
+  const send = event.target.closest('[data-thread-send]');
+  if (send) { sendThreadMessage(send.dataset.threadSend, send); return; }
+  const more = event.target.closest('[data-thread-more]');
+  if (more) { loadThread(more.dataset.threadMore, more.closest('.profile-card'), { append: true }).catch((error) => handleProtectedError(error, more)); return; }
   const review = event.target.closest('[data-review-order]');
   if (review) {
     submitProductReview(review.dataset.reviewOrder, review.dataset.reviewItem, review);
@@ -1706,6 +1842,12 @@ $('#orders-list').addEventListener('click', async (event) => {
 });
 
 $('#incoming-orders-list').addEventListener('click', (event) => {
+  const thread = event.target.closest('[data-thread-open]');
+  if (thread) { openThread(thread.dataset.threadOpen, thread); return; }
+  const send = event.target.closest('[data-thread-send]');
+  if (send) { sendThreadMessage(send.dataset.threadSend, send); return; }
+  const more = event.target.closest('[data-thread-more]');
+  if (more) { loadThread(more.dataset.threadMore, more.closest('.profile-card'), { append: true }).catch((error) => handleProtectedError(error, more)); return; }
   const detail = event.target.closest('[data-fulfillment-detail]');
   if (detail) { loadFulfillmentDetail(detail.dataset.fulfillmentDetail, detail); return; }
   const action = event.target.closest('[data-fulfillment-id]');

@@ -27,6 +27,7 @@ class OrderFulfillment extends Model
     protected $fillable = [
         'order_id', 'seller_id', 'seller_name', 'status', 'status_changed_at',
         'accepted_at', 'ready_at', 'completed_at', 'cancelled_at',
+        'buyer_read_message_id', 'seller_read_message_id',
     ];
 
     protected function casts(): array
@@ -37,6 +38,8 @@ class OrderFulfillment extends Model
             'ready_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'buyer_read_message_id' => 'integer',
+            'seller_read_message_id' => 'integer',
         ];
     }
 
@@ -69,6 +72,44 @@ class OrderFulfillment extends Model
     public function activities(): HasMany
     {
         return $this->hasMany(OrderActivity::class, 'fulfillment_id')->orderBy('occurred_at')->orderBy('id');
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(FulfillmentMessage::class, 'fulfillment_id');
+    }
+
+    public function readMarkerColumn(string $role): string
+    {
+        return $role === FulfillmentMessage::ROLE_BUYER ? 'buyer_read_message_id' : 'seller_read_message_id';
+    }
+
+    /**
+     * Unread means "written by the other side after my last read". A null marker makes every
+     * counterpart message unread, which is the correct state for a thread never opened.
+     */
+    public function unreadCountFor(string $role): int
+    {
+        $marker = (int) ($this->{$this->readMarkerColumn($role)} ?? 0);
+
+        return $this->messages()
+            ->where('sender_role', FulfillmentMessage::counterpartRole($role))
+            ->where('id', '>', $marker)
+            ->count();
+    }
+
+    /**
+     * List-safe variant of unreadCountFor: one correlated subquery for the whole page instead of
+     * a count per row, so paginated payloads stay page-size invariant.
+     */
+    public function scopeWithUnreadMessageCount(Builder $query, string $role): Builder
+    {
+        $marker = 'order_fulfillments.'.(new self)->readMarkerColumn($role);
+
+        return $query->withCount(['messages as unread_messages' => function ($messages) use ($role, $marker): void {
+            $messages->where('sender_role', FulfillmentMessage::counterpartRole($role))
+                ->whereRaw("fulfillment_messages.id > coalesce({$marker}, 0)");
+        }]);
     }
 
     public function scopeForSeller(Builder $query, User|int $seller): Builder

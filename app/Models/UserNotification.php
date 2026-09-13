@@ -29,6 +29,8 @@ class UserNotification extends Model
 
     public const TYPE_REVIEW_REPLIED = 'review.replied';
 
+    public const TYPE_MESSAGE_RECEIVED = 'message.received';
+
     protected $table = 'user_notifications';
 
     protected $fillable = [

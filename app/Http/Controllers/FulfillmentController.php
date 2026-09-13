@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\FulfillmentTransitionNotAllowedException;
 use App\Http\Requests\UpdateFulfillmentStatusRequest;
+use App\Models\FulfillmentMessage;
 use App\Models\OrderActivity;
 use App\Models\OrderFulfillment;
 use App\Services\CheckoutService;
@@ -22,6 +23,7 @@ class FulfillmentController extends Controller
         $query = OrderFulfillment::query()
             ->forSeller($request->user())
             ->with(['order.user:id,name', 'items.rentalReservation'])
+            ->withUnreadMessageCount(FulfillmentMessage::ROLE_SELLER)
             ->when($filters['status'] ?? null, fn ($query, string $status) => $query->where('status', $status))
             ->latest()
             ->latest('id');
@@ -94,6 +96,8 @@ class FulfillmentController extends Controller
                 'rental_status' => $item->rentalReservation?->status,
             ])->values(),
             'available_transitions' => $fulfillment->availableTransitions(),
+            'unread_messages' => (int) ($fulfillment->unread_messages
+                ?? $fulfillment->unreadCountFor(FulfillmentMessage::ROLE_SELLER)),
         ];
 
         if (! $detail) {

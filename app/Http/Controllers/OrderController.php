@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\RentalCancellationNotAllowedException;
+use App\Models\FulfillmentMessage;
 use App\Models\Order;
 use App\Models\OrderActivity;
 use App\Models\OrderItem;
@@ -18,7 +19,10 @@ class OrderController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],
         ]);
         $query = $request->user()->orders()
-            ->with(['items.rentalReservation', 'items.fulfillment', 'items.review', 'fulfillments'])
+            ->with([
+                'items.rentalReservation', 'items.fulfillment', 'items.review',
+                'fulfillments' => fn ($fulfillments) => $fulfillments->withUnreadMessageCount(FulfillmentMessage::ROLE_BUYER),
+            ])
             ->latest()
             ->latest('id');
         $orders = $query->cursorPaginate((int) ($filters['per_page'] ?? 5));
@@ -39,7 +43,11 @@ class OrderController extends Controller
     {
         abort_unless($order->user_id === $request->user()->id, 403);
 
-        $order->load(['activities', 'items.rentalReservation', 'items.fulfillment', 'items.review', 'fulfillments.items.rentalReservation']);
+        $order->load([
+            'activities', 'items.rentalReservation', 'items.fulfillment', 'items.review',
+            'fulfillments' => fn ($fulfillments) => $fulfillments->withUnreadMessageCount(FulfillmentMessage::ROLE_BUYER),
+            'fulfillments.items.rentalReservation',
+        ]);
 
         return response()->json($this->payload($order, true, $request->user()->id));
     }
@@ -76,6 +84,8 @@ class OrderController extends Controller
                 'id' => $fulfillment->id,
                 'seller_name' => $fulfillment->seller_name,
                 'status' => $fulfillment->status,
+                'unread_messages' => (int) ($fulfillment->unread_messages
+                    ?? $fulfillment->unreadCountFor(FulfillmentMessage::ROLE_BUYER)),
             ])->values(),
         ];
 

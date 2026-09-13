@@ -82,6 +82,7 @@ class NotificationController extends Controller
             UserNotification::TYPE_RENTAL_CANCELLED => 'Reservasi sewa dibatalkan',
             UserNotification::TYPE_REVIEW_RECEIVED => 'Ulasan baru untuk produkmu',
             UserNotification::TYPE_REVIEW_REPLIED => 'Penjual membalas ulasanmu',
+            UserNotification::TYPE_MESSAGE_RECEIVED => 'Pesan baru pada pesanan',
         ][$notification->type] ?? $notification->type;
     }
 }

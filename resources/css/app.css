@@ -201,6 +201,21 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
 }
 .notification-card .profile-card__actions { margin-top: 9px; }
 
+.has-unread-messages { font-weight: 800; }
+.has-unread-messages::before { content: "●"; margin-right: 5px; color: #e34460; font-size: 9px; vertical-align: middle; }
+.message-thread { margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--line); }
+.message-thread h4 { margin: 0 0 10px; color: var(--ink); font: 700 12px "Plus Jakarta Sans", sans-serif; }
+.message-list { display: grid; gap: 8px; margin: 0 0 10px; padding: 0; list-style: none; }
+.message-bubble {
+  max-width: 88%; padding: 9px 11px; background: white;
+  border: 1px solid var(--line); border-radius: 10px 10px 10px 3px;
+}
+.message-bubble--mine { justify-self: end; background: var(--primary-soft); border-color: var(--primary); border-radius: 10px 10px 3px 10px; }
+.message-bubble__meta { display: flex; align-items: baseline; justify-content: space-between; gap: 9px; }
+.message-bubble__meta strong { color: var(--ink); font-size: 11px; }
+.message-bubble__meta small { color: var(--muted); font-size: 9px; }
+.message-bubble p { margin: 4px 0 0; color: var(--ink); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+
 .activity-timeline-wrap {
   margin-top: 11px;
   padding-top: 11px;

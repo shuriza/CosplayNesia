@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\FulfillmentMessage;
 use App\Models\Order;
 use App\Models\OrderFulfillment;
 use App\Models\OrderItem;
@@ -65,6 +66,13 @@ class PaginationQueryBoundTest extends TestCase
                 'event_key' => "notify:fulfillment:{$fulfillment->id}:placed",
                 'created_at' => now(),
             ]);
+            FulfillmentMessage::create([
+                'fulfillment_id' => $fulfillment->id,
+                'sender_id' => $buyer->id,
+                'sender_role' => FulfillmentMessage::ROLE_BUYER,
+                'body' => 'Halo.',
+                'created_at' => now(),
+            ]);
         });
 
         $this->assertQueryCountIsPageSizeInvariant($buyer, '/api/products');
@@ -74,6 +82,10 @@ class PaginationQueryBoundTest extends TestCase
         $this->assertQueryCountIsPageSizeInvariant($buyer, "/api/products/{$products->first()->id}/reviews");
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/seller/reviews');
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/notifications');
+        $this->assertQueryCountIsPageSizeInvariant(
+            $seller,
+            '/api/fulfillments/'.OrderFulfillment::query()->where('seller_id', $seller->id)->value('id').'/messages',
+        );
     }
 
     private function assertQueryCountIsPageSizeInvariant(User $user, string $path): void

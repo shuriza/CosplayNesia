@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FulfillmentController;
+use App\Http\Controllers\FulfillmentMessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
@@ -55,5 +56,10 @@ Route::prefix('api')->group(function (): void {
         Route::get('/seller/reviews', [SellerReviewController::class, 'index']);
         Route::patch('/seller/reviews/{review}/reply', [SellerReviewController::class, 'update']);
         Route::delete('/seller/reviews/{review}/reply', [SellerReviewController::class, 'destroy']);
+
+        // Shared by both parties: participation is resolved per fulfillment, not per URL prefix.
+        Route::get('/fulfillments/{fulfillment}/messages', [FulfillmentMessageController::class, 'index']);
+        Route::post('/fulfillments/{fulfillment}/messages', [FulfillmentMessageController::class, 'store']);
+        Route::patch('/fulfillments/{fulfillment}/messages/read', [FulfillmentMessageController::class, 'markRead']);
     });
 });

@@ -88,6 +88,15 @@ php artisan migrate:fresh --seed
 - Setiap notifikasi idempotent lewat `event_key` unik sehingga retry transaksi dan replay status sama tidak menduplikasi baris
 - Tandai satu notifikasi atau semua sekaligus; menandai ulang tidak mengubah waktu baca pertama
 
+### Percakapan pesanan
+
+- Thread pesan per fulfillment antara pembeli dan penjual yang terikat pada pesanan tersebut
+- Hanya dua pihak itu yang dapat membaca dan menulis; penjual lain pada pesanan yang sama tetap 403
+- Pesan bersifat append-only sehingga tidak ada pihak yang dapat mengubah atau menghapus isi percakapan
+- Penanda baca per sisi memakai id pesan, bukan timestamp, sehingga pesan dalam detik yang sama tidak terlewat
+- Badge jumlah pesan belum dibaca muncul pada riwayat pesanan pembeli dan inbox penjual
+- Setiap pesan memicu notifikasi ke pihak lawan saja; pesanan yang dibatalkan menutup percakapan tanpa menghapus riwayat
+
 ### Kualitas
 
 - Index khusus untuk cursor pagination dan pencarian katalog
@@ -100,7 +109,9 @@ php artisan migrate:fresh --seed
 - `app/Http/Controllers/ProductReviewFeedController.php` melayani feed ulasan publik per produk
 - `app/Http/Controllers/SellerReviewController.php` melayani inbox ulasan penjual dan mutasi balasan
 - `app/Http/Controllers/NotificationController.php` melayani inbox notifikasi dan status baca
+- `app/Http/Controllers/FulfillmentMessageController.php` melayani percakapan pesanan
 - `app/Services/NotificationRecorder.php` satu-satunya jalur tulis notifikasi, idempotent dan menolak self-notify
+- `app/Services/MessageThread.php` memutuskan peran peserta, mengunci thread, dan mengirim fan-out pesan
 - `app/Http/Requests` memvalidasi seluruh input mutasi
 - `app/Services/CheckoutService.php` menangani checkout, rental, fulfillment, dan pencatatan timeline secara atomik
 - `app/Models` berisi model dan relasi Eloquent
@@ -123,6 +134,8 @@ Feed ulasan publik `GET /api/products/{product}/reviews` tidak membutuhkan auten
 Inbox ulasan penjual `GET /api/seller/reviews` hanya memuat ulasan pada produk milik penjual tersebut, memakai snapshot `seller_id` yang diambil saat ulasan dibuat sehingga akses tetap ada setelah listing dihapus. Balasan ditulis lewat `PATCH /api/seller/reviews/{review}/reply` dan dihapus lewat `DELETE`; kepemilikan diperiksa ulang terhadap baris yang sudah dilock agar transfer listing bersamaan tidak meloloskan penjual lama. Balasan tidak pernah mengubah rating atau teks pembeli, dan label pengulas pada inbox tetap dimask seperti pada feed publik.
 
 Notifikasi ditulis pada tabel `user_notifications` yang sengaja dipisah dari tabel `notifications` milik Laravel agar tidak menimpa relasi trait `Notifiable`. Semua penulisan lewat `NotificationRecorder` di dalam transaksi mutasi yang sama, memakai `insertOrIgnore` terhadap `event_key` unik sehingga aman terhadap retry. Balasan ulasan hanya memberi tahu pembeli saat balasan pertama muncul; penyuntingan berikutnya tidak mengirim notifikasi lagi. Endpoint `GET /api/notifications` mengembalikan `unread_count` bersama halaman cursor, sedangkan `PATCH /api/notifications/{id}/read` dan `PATCH /api/notifications/read-all` mengubah status baca tanpa menyentuh isi notifikasi.
+
+Percakapan pesanan memakai satu thread per fulfillment pada `GET|POST /api/fulfillments/{fulfillment}/messages`. Peran peserta diputuskan per fulfillment, bukan per prefix URL: penjual pemilik fulfillment dan pembeli pemilik pesanan induk. Peserta lain menerima 403, termasuk penjual pada fulfillment lain di pesanan yang sama. `sender_role` disimpan sebagai snapshot agar percakapan tetap terbaca setelah akun pengirim dihapus, dan label pihak lawan selalu berupa peran, bukan nama akun. Penanda baca disimpan sebagai id pesan terakhir yang dibaca tiap sisi karena `created_at` hanya berpresisi detik. Mengirim pesan otomatis menandai thread terbaca bagi pengirim. Fulfillment yang dibatalkan menolak pesan baru dengan 409 tetapi tetap menampilkan riwayat.
 
 Belum ada payment gateway, layanan pengiriman, atau deployment produksi. Notifikasi bersifat in-app saja; belum ada pengiriman email, push, maupun realtime broadcast. Seller transition, pembatalan rental, ulasan, dan mutasi stok memakai transaksi serta penguncian berurutan untuk menjaga invariant. SQLite dan retry transaksi ditujukan untuk demo lokal, bukan beban tulis bersamaan; validasi contention produksi harus menggunakan database terkelola yang mendukung row locking.
 
