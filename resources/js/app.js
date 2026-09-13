@@ -12,6 +12,7 @@ const elements = {
   authModal: $('#auth-modal'),
   profileDrawer: $('#profile-drawer'),
   addProductDrawer: $('#add-product-drawer'),
+  notificationDrawer: $('#notification-drawer'),
   toast: $('#toast'),
 };
 
@@ -43,6 +44,11 @@ const state = {
   sellerReviewsCursor: null,
   hasMoreSellerReviews: false,
   sellerReviewsUnanswered: false,
+  notifications: [],
+  notificationsCursor: null,
+  hasMoreNotifications: false,
+  notificationsUnreadOnly: false,
+  unreadNotifications: 0,
   orders: [],
   ordersCursor: null,
   hasMoreOrders: false,
@@ -714,6 +720,17 @@ async function refreshSession() {
   }
   updateAuthUi();
   prefillCheckoutHandoff();
+  if (state.user) refreshUnreadCount();
+}
+
+async function refreshUnreadCount() {
+  try {
+    const payload = await api('/api/notifications?per_page=1');
+    state.unreadNotifications = Number(valueOf(payload, ['unread_count'], 0)) || 0;
+    updateNotificationBadge();
+  } catch {
+    // A failed badge refresh must never block the catalog; the drawer reports errors itself.
+  }
 }
 
 function prefillCheckoutHandoff() {
@@ -728,6 +745,14 @@ function updateAuthUi() {
   const authenticated = Boolean(state.user);
   $$('.auth-action').forEach((control) => { control.hidden = authenticated; });
   $$('.profile-action').forEach((control) => { control.hidden = !authenticated; });
+  $('#notification-button').hidden = !authenticated;
+  if (!authenticated) {
+    state.notifications = [];
+    state.notificationsCursor = null;
+    state.hasMoreNotifications = false;
+    state.unreadNotifications = 0;
+  }
+  updateNotificationBadge();
   $('.mobile-account-label').textContent = authenticated ? 'Profil' : 'Akun';
 }
 
@@ -752,6 +777,7 @@ async function submitAuth(form) {
     if (!state.user) state.user = normalizedUser(await api('/api/me'));
     updateAuthUi();
     prefillCheckoutHandoff();
+    refreshUnreadCount();
     await fetchProducts();
     form.reset();
     closeLayer();
@@ -1185,6 +1211,119 @@ async function submitReviewReply(id, trigger, remove = false) {
   }
 }
 
+function notificationSummary(entry) {
+  const payload = valueOf(entry, ['payload'], null);
+  const meta = payload && typeof payload === 'object' ? payload : {};
+  const parts = [];
+  if (valueOf(meta, ['product_name'], '')) parts.push(valueOf(meta, ['product_name']));
+  if (valueOf(meta, ['seller_name'], '')) parts.push(valueOf(meta, ['seller_name']));
+  const rating = valueOf(meta, ['rating'], null);
+  if (rating !== null) parts.push(`★ ${rating}`);
+  const itemCount = valueOf(meta, ['item_count'], null);
+  if (itemCount !== null) parts.push(`${itemCount} item`);
+  const subtotal = valueOf(meta, ['subtotal'], null);
+  if (subtotal !== null) parts.push(currency.format(Number(subtotal) || 0));
+  const orderId = valueOf(entry, ['order_id'], null);
+  if (orderId !== null) parts.push(`Pesanan #${orderId}`);
+  return parts.join(' · ');
+}
+
+function updateNotificationBadge() {
+  const count = Number(state.unreadNotifications) || 0;
+  const badge = $('#notification-count');
+  const trigger = $('#notification-button');
+  badge.textContent = String(count);
+  badge.hidden = count === 0;
+  trigger.setAttribute('aria-label', `Buka notifikasi, ${count} belum dibaca`);
+  trigger.classList.toggle('has-unread', count > 0);
+}
+
+function renderNotifications() {
+  const target = $('#notification-list');
+  const entries = state.notifications;
+  $('#load-more-notifications').hidden = !state.hasMoreNotifications;
+  updateNotificationBadge();
+  if (!entries.length) {
+    target.replaceChildren(listMessage(state.notificationsUnreadOnly
+      ? 'Tidak ada notifikasi belum dibaca.'
+      : 'Belum ada notifikasi.'));
+    return;
+  }
+
+  target.replaceChildren(...entries.map((entry) => {
+    const unread = Boolean(valueOf(entry, ['is_unread'], false));
+    const card = node('article', { className: `profile-card notification-card${unread ? ' notification-card--unread' : ''}` });
+    card.append(node('div', { className: 'profile-card__row profile-card__heading' }, [
+      node('strong', { text: valueOf(entry, ['title'], 'Notifikasi') }),
+      unread ? node('span', { className: 'notification-dot', text: 'Baru' }) : null,
+    ]));
+    const summary = notificationSummary(entry);
+    if (summary) card.append(node('small', { text: summary }));
+    card.append(node('small', { text: reviewDateLabel(valueOf(entry, ['created_at'], '')) }));
+    if (unread) {
+      card.append(node('div', { className: 'profile-card__actions' }, [
+        button('Tandai dibaca', 'text-link', { 'data-read-notification': valueOf(entry, ['id'], '') }),
+      ]));
+    }
+    return card;
+  }));
+}
+
+async function loadNotifications({ append = false } = {}) {
+  if (append && (!state.hasMoreNotifications || !state.notificationsCursor)) return;
+  const button = $('#load-more-notifications');
+  button.disabled = true;
+  try {
+    const params = new URLSearchParams({ per_page: '8' });
+    if (state.notificationsUnreadOnly) params.set('unread', '1');
+    if (append) params.set('cursor', state.notificationsCursor);
+    const payload = await api('/api/notifications?' + params.toString());
+    const entries = valueOf(payload, ['data'], []);
+    state.notifications = append ? mergeHistory(state.notifications, entries) : entries;
+    state.unreadNotifications = Number(valueOf(payload, ['unread_count'], 0)) || 0;
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.notificationsCursor = valueOf(pagination, ['next_cursor'], null);
+    state.hasMoreNotifications = Boolean(valueOf(pagination, ['has_more'], false));
+    renderNotifications();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function markNotificationRead(id, trigger) {
+  trigger.disabled = true;
+  try {
+    const response = await api('/api/notifications/' + encodeURIComponent(id) + '/read', { method: 'PATCH' });
+    state.unreadNotifications = Number(valueOf(response, ['unread_count'], 0)) || 0;
+    await loadNotifications();
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+  }
+}
+
+async function markAllNotificationsRead(trigger) {
+  trigger.disabled = true;
+  try {
+    const response = await api('/api/notifications/read-all', { method: 'PATCH' });
+    showToast(messageFrom(response, 'Semua notifikasi ditandai dibaca.'));
+    state.unreadNotifications = 0;
+    await loadNotifications();
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+  }
+}
+
+function openNotifications(trigger) {
+  if (!requireAuthentication(trigger)) return;
+  $('#notification-list').replaceChildren(listMessage('Memuat notifikasi…'));
+  openLayer(elements.notificationDrawer, trigger);
+  loadNotifications().catch((error) => handleProtectedError(error));
+}
+
 async function loadFulfillmentDetail(id, trigger) {
   trigger.disabled = true;
   try {
@@ -1213,6 +1352,7 @@ async function loadProfileData() {
   if (results[3].status === 'rejected') $('#orders-list').replaceChildren(listMessage(results[3].reason?.message ?? 'Pesanan gagal dimuat.'));
   const unauthorized = results.find((result) => result.status === 'rejected' && result.reason?.status === 401);
   if (unauthorized) handleProtectedError(unauthorized.reason);
+  refreshUnreadCount();
 }
 
 async function updateFulfillmentStatus(id, status, trigger) {
@@ -1584,6 +1724,18 @@ $('#seller-reviews-unanswered').addEventListener('change', (event) => {
   state.sellerReviewsUnanswered = event.target.checked;
   loadSellerReviews().catch((error) => handleProtectedError(error));
 });
+
+$('#notification-button').addEventListener('click', (event) => openNotifications(event.currentTarget));
+$('#notification-list').addEventListener('click', (event) => {
+  const read = event.target.closest('[data-read-notification]');
+  if (read) markNotificationRead(read.dataset.readNotification, read);
+});
+$('#notification-unread-only').addEventListener('change', (event) => {
+  state.notificationsUnreadOnly = event.target.checked;
+  loadNotifications().catch((error) => handleProtectedError(error));
+});
+$('#mark-all-notifications').addEventListener('click', (event) => markAllNotificationsRead(event.currentTarget));
+$('#load-more-notifications').addEventListener('click', () => loadNotifications({ append: true }).catch((error) => handleProtectedError(error)));
 
 $('#load-more-seller-reviews').addEventListener('click', () => loadSellerReviews({ append: true }).catch((error) => handleProtectedError(error)));
 

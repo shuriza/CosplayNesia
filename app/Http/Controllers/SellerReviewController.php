@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateReviewReplyRequest;
 use App\Models\ProductReview;
+use App\Models\UserNotification;
+use App\Services\NotificationRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,12 +36,31 @@ class SellerReviewController extends Controller
         ]);
     }
 
-    public function update(UpdateReviewReplyRequest $request, ProductReview $review): JsonResponse
-    {
-        $updated = $this->mutate($request->user()->id, $review->id, [
+    public function update(
+        UpdateReviewReplyRequest $request,
+        ProductReview $review,
+        NotificationRecorder $notifications,
+    ): JsonResponse {
+        [$updated, $previousReply] = $this->mutate($request->user()->id, $review->id, [
             'seller_reply' => $request->validated('reply'),
             'seller_replied_at' => now(),
         ]);
+
+        // The buyer is told once, when a reply first appears. Later edits are silent so a seller
+        // polishing wording cannot repeatedly ping the buyer.
+        if ($previousReply === null) {
+            $notifications->record([
+                'recipient_id' => $updated->user_id,
+                'actor_id' => $request->user()->id,
+                'product_review_id' => $updated->id,
+                'type' => UserNotification::TYPE_REVIEW_REPLIED,
+                'payload' => [
+                    'product_name' => $updated->orderItem?->product_name,
+                    'rating' => $updated->rating,
+                ],
+                'event_key' => "notify:review:{$updated->id}:replied",
+            ]);
+        }
 
         return response()->json([
             'message' => 'Balasan tersimpan.',
@@ -49,7 +70,7 @@ class SellerReviewController extends Controller
 
     public function destroy(Request $request, ProductReview $review): JsonResponse
     {
-        $updated = $this->mutate($request->user()->id, $review->id, [
+        [$updated] = $this->mutate($request->user()->id, $review->id, [
             'seller_reply' => null,
             'seller_replied_at' => null,
         ]);
@@ -63,19 +84,22 @@ class SellerReviewController extends Controller
     /**
      * Ownership is re-checked against the locked row so a concurrent listing transfer cannot
      * let a stale seller_id win the write.
+     *
+     * @return array{0: ProductReview, 1: ?string} the refreshed review and its previous reply
      */
-    private function mutate(int $sellerId, int $reviewId, array $attributes): ProductReview
+    private function mutate(int $sellerId, int $reviewId, array $attributes): array
     {
-        return DB::transaction(function () use ($sellerId, $reviewId, $attributes): ProductReview {
+        return DB::transaction(function () use ($sellerId, $reviewId, $attributes): array {
             $locked = ProductReview::query()
                 ->whereKey($reviewId)
                 ->lockForUpdate()
                 ->firstOrFail();
             abort_unless($locked->seller_id === $sellerId, 403);
 
+            $previousReply = $locked->seller_reply;
             $locked->update($attributes);
 
-            return $locked->fresh(['user:id,name', 'orderItem:id,product_name']);
+            return [$locked->fresh(['user:id,name', 'orderItem:id,product_name']), $previousReply];
         }, 3);
     }
 

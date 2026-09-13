@@ -9,14 +9,20 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductReview;
 use App\Models\RentalReservation;
+use App\Models\UserNotification;
+use App\Services\NotificationRecorder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class ProductReviewController extends Controller
 {
-    public function store(StoreProductReviewRequest $request, Order $order, OrderItem $item): JsonResponse
-    {
+    public function store(
+        StoreProductReviewRequest $request,
+        Order $order,
+        OrderItem $item,
+        NotificationRecorder $notifications,
+    ): JsonResponse {
         abort_unless($order->user_id === $request->user()->id, 403);
         abort_unless($item->order_id === $order->id, 404);
 
@@ -24,7 +30,7 @@ class ProductReviewController extends Controller
         $body = $request->reviewBody();
 
         try {
-            $review = DB::transaction(function () use ($request, $order, $item, $rating, $body): ProductReview {
+            $review = DB::transaction(function () use ($request, $order, $item, $rating, $body, $notifications): ProductReview {
                 $lockedOrder = Order::query()
                     ->whereKey($order->id)
                     ->where('user_id', $request->user()->id)
@@ -59,13 +65,30 @@ class ProductReviewController extends Controller
                     abort(409, 'Produk tidak lagi tersedia untuk dinilai.');
                 }
 
-                return $lockedItem->review()->create([
+                $created = $lockedItem->review()->create([
                     'product_id' => $product->id,
                     'seller_id' => $product->seller_id,
                     'user_id' => $request->user()->id,
                     'rating' => $rating,
                     'body' => $body,
                 ]);
+
+                $notifications->record([
+                    'recipient_id' => $product->seller_id,
+                    'actor_id' => $request->user()->id,
+                    'order_id' => $lockedOrder->id,
+                    'fulfillment_id' => $lockedItem->fulfillment_id,
+                    'product_review_id' => $created->id,
+                    'type' => UserNotification::TYPE_REVIEW_RECEIVED,
+                    'payload' => [
+                        'product_name' => $lockedItem->product_name,
+                        'rating' => $rating,
+                        'has_body' => $body !== null,
+                    ],
+                    'event_key' => "notify:review:{$created->id}:received",
+                ]);
+
+                return $created;
             }, 3);
         } catch (QueryException $exception) {
             if (in_array((string) $exception->getCode(), ['23000', '23505'], true)) {

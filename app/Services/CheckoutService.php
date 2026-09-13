@@ -15,11 +15,14 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RentalReservation;
 use App\Models\User;
+use App\Models\UserNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CheckoutService
 {
+    public function __construct(private readonly NotificationRecorder $notifications) {}
+
     public function create(User $user, array $items, ?string $idempotencyKey = null, ?array $handoff = null): Order
     {
         $handoffSnapshot = $this->handoffSnapshot($handoff);
@@ -267,6 +270,19 @@ class CheckoutService
                 'occurred_at' => $timestamp,
                 'created_at' => $timestamp,
             ]);
+            $this->notifications->record([
+                'recipient_id' => $order->user_id,
+                'actor_id' => $user->id,
+                'order_id' => $order->id,
+                'fulfillment_id' => $lockedFulfillment->id,
+                'type' => "fulfillment.{$target}",
+                'payload' => $this->fulfillmentMetadata($items) + [
+                    'seller_name' => $lockedFulfillment->seller_name,
+                    'from_status' => $fromStatus,
+                ],
+                'event_key' => "notify:fulfillment:{$lockedFulfillment->id}:{$target}",
+                'created_at' => $timestamp,
+            ]);
 
             $order->load('fulfillments');
             $order->syncAggregateStatus();
@@ -325,6 +341,18 @@ class CheckoutService
                 'occurred_at' => $timestamp,
                 'created_at' => $timestamp,
             ]);
+            if ($fulfillment !== null) {
+                $this->notifications->record([
+                    'recipient_id' => $fulfillment->seller_id,
+                    'actor_id' => $user->id,
+                    'order_id' => $lockedOrder->id,
+                    'fulfillment_id' => $fulfillment->id,
+                    'type' => UserNotification::TYPE_RENTAL_CANCELLED,
+                    'payload' => $this->safeLineMetadata($lockedItem),
+                    'event_key' => "notify:rental:{$reservation->id}:cancelled",
+                    'created_at' => $timestamp,
+                ]);
+            }
 
             if ($fulfillment && ! $fulfillment->isTerminal()) {
                 $remaining = $lockedItems->contains(fn (OrderItem $line): bool => $line->product_type !== Product::TYPE_RENTAL
@@ -442,6 +470,18 @@ class CheckoutService
                 'occurred_at' => $timestamp,
                 'created_at' => $timestamp,
             ]);
+            $this->notifications->record([
+                'recipient_id' => $fulfillment->seller_id,
+                'actor_id' => $order->user_id,
+                'order_id' => $order->id,
+                'fulfillment_id' => $fulfillment->id,
+                'type' => UserNotification::TYPE_ORDER_PLACED,
+                'payload' => $this->fulfillmentGroupMetadata($group) + [
+                    'subtotal' => $this->groupSubtotal($group),
+                ],
+                'event_key' => "notify:fulfillment:{$fulfillment->id}:placed",
+                'created_at' => $timestamp,
+            ]);
         }
 
         foreach ($lines as $line) {
@@ -515,6 +555,17 @@ class CheckoutService
             'rental_start_date' => $item->rental_start_date?->toDateString(),
             'rental_end_date' => $item->rental_end_date?->toDateString(),
         ];
+    }
+
+    private function groupSubtotal(array $group): int
+    {
+        $subtotal = 0;
+        foreach ($group as $line) {
+            $snapshot = $line['snapshot'];
+            $subtotal += (int) $snapshot['unit_price'] * (int) $snapshot['quantity'];
+        }
+
+        return $subtotal;
     }
 
     private function safeLineMetadataFromSnapshot(array $snapshot): array

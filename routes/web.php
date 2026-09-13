@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FulfillmentController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
@@ -34,6 +35,11 @@ Route::prefix('api')->group(function (): void {
         Route::patch('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
         Route::get('/my-products', [ProductController::class, 'owned']);
+
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead'])
+            ->whereNumber('notification');
 
         Route::post('/favorites', [FavoriteController::class, 'store']);
         Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy']);

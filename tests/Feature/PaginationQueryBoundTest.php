@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductReview;
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
@@ -54,6 +55,16 @@ class PaginationQueryBoundTest extends TestCase
                 'user_id' => $buyer->id,
                 'rating' => 5,
             ]);
+            UserNotification::create([
+                'recipient_id' => $seller->id,
+                'actor_id' => $buyer->id,
+                'order_id' => $order->id,
+                'fulfillment_id' => $fulfillment->id,
+                'type' => UserNotification::TYPE_ORDER_PLACED,
+                'payload' => ['item_count' => 1],
+                'event_key' => "notify:fulfillment:{$fulfillment->id}:placed",
+                'created_at' => now(),
+            ]);
         });
 
         $this->assertQueryCountIsPageSizeInvariant($buyer, '/api/products');
@@ -62,6 +73,7 @@ class PaginationQueryBoundTest extends TestCase
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/seller/fulfillments');
         $this->assertQueryCountIsPageSizeInvariant($buyer, "/api/products/{$products->first()->id}/reviews");
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/seller/reviews');
+        $this->assertQueryCountIsPageSizeInvariant($seller, '/api/notifications');
     }
 
     private function assertQueryCountIsPageSizeInvariant(User $user, string $path): void

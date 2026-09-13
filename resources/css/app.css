@@ -187,6 +187,20 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
 .seller-review__replied { color: var(--primary-dark); font-weight: 700; }
 .review-action .danger-action { color: #a82038; }
 
+.notification-action { position: relative; }
+.notification-action.has-unread svg { color: var(--primary-dark); }
+.notification-count { background: #e34460; }
+.notification-drawer { background: white; padding: 26px; }
+.notification-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.notification-list { margin-top: 16px; overflow-y: auto; }
+.notification-card { border-left: 3px solid transparent; }
+.notification-card--unread { background: var(--primary-soft); border-left-color: var(--primary); }
+.notification-dot {
+  flex: 0 0 auto; padding: 3px 8px; color: white; background: var(--primary);
+  border-radius: 999px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+}
+.notification-card .profile-card__actions { margin-top: 9px; }
+
 .activity-timeline-wrap {
   margin-top: 11px;
   padding-top: 11px;

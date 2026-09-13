@@ -39,6 +39,10 @@
                 </button>
                 <button type="button" class="button button--ghost auth-action" data-auth-mode="login">Masuk</button>
                 <button type="button" class="button button--primary auth-action" data-auth-mode="register">Daftar</button>
+                <button type="button" class="icon-button notification-action" id="notification-button" aria-label="Buka notifikasi, 0 belum dibaca" hidden>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+                    <span class="cart-count notification-count" id="notification-count" hidden aria-hidden="true">0</span>
+                </button>
                 <button type="button" class="button button--ghost profile-action" hidden>Profil</button>
             </nav>
         </div>
@@ -151,6 +155,16 @@
     </nav>
 
     <div class="overlay" id="overlay" hidden></div>
+
+    <aside class="cart-drawer notification-drawer" id="notification-drawer" role="dialog" aria-modal="true" aria-labelledby="notification-title" aria-hidden="true" inert>
+        <div class="drawer-header"><div><span class="section-kicker">Aktivitas terbaru</span><h2 id="notification-title">Notifikasi</h2></div><button type="button" class="close-button" data-close-layer aria-label="Tutup notifikasi">×</button></div>
+        <div class="notification-toolbar">
+            <label class="review-filter"><input type="checkbox" id="notification-unread-only"><span>Hanya belum dibaca</span></label>
+            <button type="button" class="text-link" id="mark-all-notifications">Tandai semua dibaca</button>
+        </div>
+        <div class="profile-list notification-list" id="notification-list" aria-live="polite"></div>
+        <button type="button" class="button button--outline profile-load-more" id="load-more-notifications" hidden>Muat lebih banyak notifikasi</button>
+    </aside>
 
     <aside class="cart-drawer" id="cart-drawer" role="dialog" aria-modal="true" aria-labelledby="cart-title" aria-hidden="true" inert>
         <div class="drawer-header"><div><span class="section-kicker">Pesananmu</span><h2 id="cart-title">Keranjang</h2></div><button type="button" class="close-button" data-close-layer aria-label="Tutup keranjang">×</button></div>
