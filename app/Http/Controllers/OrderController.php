@@ -115,6 +115,8 @@ class OrderController extends Controller
             'review' => $item->review ? [
                 'rating' => $item->review->rating,
                 'body' => $item->review->body,
+                'seller_reply' => $item->review->seller_reply,
+                'seller_replied_at' => $item->review->seller_replied_at,
                 'created_at' => $item->review->created_at,
             ] : null,
             'can_review' => $item->product_id !== null

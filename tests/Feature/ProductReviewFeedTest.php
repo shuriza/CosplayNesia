@@ -37,7 +37,7 @@ class ProductReviewFeedTest extends TestCase
         $this->assertSame('Kualitas jahitan rapi dan wig tidak kusut.', $entries[1]['body']);
         $this->assertNull($entries[0]['body']);
         $this->assertSame(
-            ['id', 'rating', 'body', 'reviewer_label', 'created_at'],
+            ['id', 'rating', 'body', 'reviewer_label', 'seller_reply', 'seller_replied_at', 'created_at'],
             array_keys($entries[0]),
         );
     }

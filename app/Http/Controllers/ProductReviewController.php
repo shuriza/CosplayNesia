@@ -61,6 +61,7 @@ class ProductReviewController extends Controller
 
                 return $lockedItem->review()->create([
                     'product_id' => $product->id,
+                    'seller_id' => $product->seller_id,
                     'user_id' => $request->user()->id,
                     'rating' => $rating,
                     'body' => $body,

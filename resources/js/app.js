@@ -39,6 +39,10 @@ const state = {
   incomingFulfillments: [],
   incomingFulfillmentsCursor: null,
   hasMoreIncomingFulfillments: false,
+  sellerReviews: [],
+  sellerReviewsCursor: null,
+  hasMoreSellerReviews: false,
+  sellerReviewsUnanswered: false,
   orders: [],
   ordersCursor: null,
   hasMoreOrders: false,
@@ -529,6 +533,10 @@ function renderReviewFeed() {
       ]),
       node('small', { text: reviewDateLabel(valueOf(entry, ['created_at'], '')) }),
       valueOf(entry, ['body'], '') ? node('p', { text: valueOf(entry, ['body']) }) : null,
+      valueOf(entry, ['seller_reply'], '') ? node('div', { className: 'review-list__reply' }, [
+        node('strong', { text: 'Balasan penjual' }),
+        node('p', { text: valueOf(entry, ['seller_reply']) }),
+      ]) : null,
     ]))));
   }
 
@@ -891,6 +899,12 @@ function renderOrders() {
           if (valueOf(review, ['body'], '')) {
             row.append(node('p', { className: 'review-complete__body', text: valueOf(review, ['body']) }));
           }
+          if (valueOf(review, ['seller_reply'], '')) {
+            row.append(node('div', { className: 'review-list__reply' }, [
+              node('strong', { text: 'Balasan penjual' }),
+              node('p', { text: valueOf(review, ['seller_reply']) }),
+            ]));
+          }
         } else if (valueOf(item, ['can_review'], false)) {
           const label = node('label', { className: 'review-field', text: 'Nilai produk' });
           const select = node('select', { attrs: { 'data-review-rating': valueOf(item, ['id'], ''), 'aria-label': `Rating untuk ${productName(item)}` } });
@@ -1081,6 +1095,96 @@ async function loadIncomingFulfillments({ append = false } = {}) {
   }
 }
 
+function renderSellerReviews() {
+  const target = $('#seller-reviews-list');
+  const reviews = state.sellerReviews;
+  $('#seller-reviews-count').textContent = state.hasMoreSellerReviews ? `${reviews.length} dimuat` : String(reviews.length);
+  $('#load-more-seller-reviews').hidden = !state.hasMoreSellerReviews;
+  if (!reviews.length) {
+    target.replaceChildren(listMessage(state.sellerReviewsUnanswered
+      ? 'Semua ulasan sudah dibalas.'
+      : 'Belum ada ulasan untuk produkmu.'));
+    return;
+  }
+
+  target.replaceChildren(...reviews.map((review) => {
+    const id = valueOf(review, ['id'], '');
+    const reply = valueOf(review, ['seller_reply'], '');
+    const card = node('article', { className: 'profile-card' });
+    card.append(node('div', { className: 'profile-card__row profile-card__heading' }, [
+      node('strong', { text: valueOf(review, ['product_name'], 'Produk') }),
+      node('span', { className: 'fulfillment-status', text: `★ ${valueOf(review, ['rating'], '—')}` }),
+    ]));
+    card.append(node('small', {
+      text: valueOf(review, ['reviewer_label'], 'Cosplayer') + ' · ' + reviewDateLabel(valueOf(review, ['created_at'], '')),
+    }));
+    if (valueOf(review, ['body'], '')) card.append(node('p', { className: 'seller-review__body', text: valueOf(review, ['body']) }));
+
+    const label = node('label', { className: 'review-field review-field--body', text: reply ? 'Balasanmu' : 'Balas ulasan' });
+    label.append(node('textarea', {
+      attrs: {
+        'data-reply-body': id,
+        maxlength: 500,
+        rows: 2,
+        placeholder: 'Tanggapi ulasan pembeli secara sopan.',
+        'aria-label': `Balasan untuk ulasan ${valueOf(review, ['product_name'], 'produk')}`,
+      },
+      text: reply,
+    }));
+    const actions = node('div', { className: 'review-action' }, [
+      label,
+      button(reply ? 'Perbarui balasan' : 'Kirim balasan', 'text-link', { 'data-reply-review': id }),
+      reply ? button('Hapus balasan', 'text-link danger-action', { 'data-delete-reply': id }) : null,
+    ]);
+    card.append(actions);
+    if (reply) {
+      card.append(node('small', { className: 'seller-review__replied', text: 'Dibalas ' + reviewDateLabel(valueOf(review, ['seller_replied_at'], '')) }));
+    }
+    return card;
+  }));
+}
+
+async function loadSellerReviews({ append = false } = {}) {
+  if (append && (!state.hasMoreSellerReviews || !state.sellerReviewsCursor)) return;
+  const button = $('#load-more-seller-reviews');
+  button.disabled = true;
+  try {
+    const params = new URLSearchParams({ per_page: '5' });
+    if (state.sellerReviewsUnanswered) params.set('unanswered', '1');
+    if (append) params.set('cursor', state.sellerReviewsCursor);
+    const payload = await api('/api/seller/reviews?' + params.toString());
+    const reviews = valueOf(payload, ['data'], []);
+    state.sellerReviews = append ? mergeHistory(state.sellerReviews, reviews) : reviews;
+    const pagination = valueOf(payload, ['pagination'], {});
+    state.sellerReviewsCursor = valueOf(pagination, ['next_cursor'], null);
+    state.hasMoreSellerReviews = Boolean(valueOf(pagination, ['has_more'], false));
+    renderSellerReviews();
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function submitReviewReply(id, trigger, remove = false) {
+  const card = trigger.closest('.profile-card');
+  const field = card?.querySelector('[data-reply-body]');
+  if (!remove && !field?.value.trim()) {
+    showToast('Tulis balasan sebelum mengirim.');
+    return;
+  }
+  trigger.disabled = true;
+  try {
+    await api('/api/seller/reviews/' + encodeURIComponent(id) + '/reply', remove
+      ? { method: 'DELETE' }
+      : { method: 'PATCH', body: { reply: field.value.trim() } });
+    showToast(remove ? 'Balasan dihapus.' : 'Balasan tersimpan.');
+    await loadSellerReviews();
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+  }
+}
+
 async function loadFulfillmentDetail(id, trigger) {
   trigger.disabled = true;
   try {
@@ -1100,11 +1204,13 @@ async function loadFulfillmentDetail(id, trigger) {
 async function loadProfileData() {
   $('#my-products-list').replaceChildren(listMessage('Memuat produk…'));
   $('#incoming-orders-list').replaceChildren(listMessage('Memuat pesanan masuk…'));
+  $('#seller-reviews-list').replaceChildren(listMessage('Memuat ulasan…'));
   $('#orders-list').replaceChildren(listMessage('Memuat pesanan…'));
-  const results = await Promise.allSettled([loadOwnedProducts(), loadIncomingFulfillments(), loadOrders()]);
+  const results = await Promise.allSettled([loadOwnedProducts(), loadIncomingFulfillments(), loadSellerReviews(), loadOrders()]);
   if (results[0].status === 'rejected') $('#my-products-list').replaceChildren(listMessage(results[0].reason?.message ?? 'Produk gagal dimuat.'));
   if (results[1].status === 'rejected') $('#incoming-orders-list').replaceChildren(listMessage(results[1].reason?.message ?? 'Pesanan masuk gagal dimuat.'));
-  if (results[2].status === 'rejected') $('#orders-list').replaceChildren(listMessage(results[2].reason?.message ?? 'Pesanan gagal dimuat.'));
+  if (results[2].status === 'rejected') $('#seller-reviews-list').replaceChildren(listMessage(results[2].reason?.message ?? 'Ulasan gagal dimuat.'));
+  if (results[3].status === 'rejected') $('#orders-list').replaceChildren(listMessage(results[3].reason?.message ?? 'Pesanan gagal dimuat.'));
   const unauthorized = results.find((result) => result.status === 'rejected' && result.reason?.status === 401);
   if (unauthorized) handleProtectedError(unauthorized.reason);
 }
@@ -1466,6 +1572,20 @@ $('#incoming-orders-list').addEventListener('click', (event) => {
   if (!action) return;
   updateFulfillmentStatus(action.dataset.fulfillmentId, action.dataset.nextFulfillmentStatus, action);
 });
+
+$('#seller-reviews-list').addEventListener('click', (event) => {
+  const remove = event.target.closest('[data-delete-reply]');
+  if (remove) { submitReviewReply(remove.dataset.deleteReply, remove, true); return; }
+  const reply = event.target.closest('[data-reply-review]');
+  if (reply) submitReviewReply(reply.dataset.replyReview, reply);
+});
+
+$('#seller-reviews-unanswered').addEventListener('change', (event) => {
+  state.sellerReviewsUnanswered = event.target.checked;
+  loadSellerReviews().catch((error) => handleProtectedError(error));
+});
+
+$('#load-more-seller-reviews').addEventListener('click', () => loadSellerReviews({ append: true }).catch((error) => handleProtectedError(error)));
 
 $('#cart-button').addEventListener('click', (event) => openLayer(elements.cartDrawer, event.currentTarget));
 $('#mobile-cart-button').addEventListener('click', (event) => openLayer(elements.cartDrawer, event.currentTarget));

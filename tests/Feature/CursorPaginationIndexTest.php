@@ -57,6 +57,11 @@ class CursorPaginationIndexTest extends TestCase
             [1],
             'reviews_product_cursor_index',
         );
+        $this->assertIndexedPlan(
+            'SELECT * FROM product_reviews WHERE seller_id = ? ORDER BY created_at DESC, id DESC LIMIT 5',
+            [1],
+            'reviews_seller_cursor_index',
+        );
     }
 
     public function test_long_catalog_search_uses_fts_virtual_index_instead_of_scanning_products(): void

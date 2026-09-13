@@ -35,6 +35,8 @@ class ProductReviewFeedController extends Controller
                     'rating' => $review->rating,
                     'body' => $review->body,
                     'reviewer_label' => $review->reviewerLabel(),
+                    'seller_reply' => $review->seller_reply,
+                    'seller_replied_at' => $review->seller_replied_at,
                     'created_at' => $review->created_at,
                 ])
                 ->values(),

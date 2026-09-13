@@ -76,6 +76,9 @@ php artisan migrate:fresh --seed
 - Pembeli dapat menulis ulasan teks opsional maksimal 500 karakter; teks kosong disimpan sebagai `null`
 - Detail produk menampilkan feed ulasan publik dengan cursor pagination, distribusi bintang 1–5, dan identitas pengulas yang dimask menjadi nama depan plus inisial
 - Feed ulasan hanya tersedia untuk listing aktif; listing nonaktif dan produk terhapus mengembalikan 404 tanpa menghilangkan ulasan yang sudah tersimpan
+- Penjual memiliki inbox ulasan tersendiri dengan cursor pagination dan filter "belum dibalas"
+- Penjual dapat menulis, memperbarui, dan menghapus satu balasan per ulasan tanpa mengubah rating atau teks pembeli
+- Balasan penjual tampil pada feed publik dan pada riwayat pesanan pembeli
 
 ### Kualitas
 
@@ -87,6 +90,7 @@ php artisan migrate:fresh --seed
 
 - `app/Http/Controllers` menangani endpoint JSON dan autentikasi
 - `app/Http/Controllers/ProductReviewFeedController.php` melayani feed ulasan publik per produk
+- `app/Http/Controllers/SellerReviewController.php` melayani inbox ulasan penjual dan mutasi balasan
 - `app/Http/Requests` memvalidasi seluruh input mutasi
 - `app/Services/CheckoutService.php` menangani checkout, rental, fulfillment, dan pencatatan timeline secara atomik
 - `app/Models` berisi model dan relasi Eloquent
@@ -105,6 +109,8 @@ Item dari listing dengan pemilik akun dikelompokkan menjadi satu fulfillment per
 Pembeli dapat membatalkan reservasi miliknya sebelum tanggal mulai; tanggal tersebut kembali tersedia. Riwayat pesanan menyimpan snapshot nama, tipe, harga, tanggal, dan data handoff sehingga tetap terbaca setelah listing dihapus. Data handoff checkout menormalisasi nomor Indonesia ke format `+62...`; daftar pesanan hanya memuat ringkasan, sedangkan detail pembeli memuat data lengkap miliknya. Detail fulfillment penjual hanya memuat penerima, telepon, alamat, catatan, dan item penjual tersebut; email penerima serta identitas akun pembeli tidak dibagikan.
 
 Feed ulasan publik `GET /api/products/{product}/reviews` tidak membutuhkan autentikasi dan hanya melayani listing aktif. Feed memuat rating, teks ulasan, tanggal, serta label pengulas berupa nama depan dan inisial nama terakhir sehingga identitas penuh pembeli tidak tersebar; email dan akun pembeli tidak pernah disertakan. Ringkasan feed berisi rata-rata rating, jumlah ulasan, dan distribusi lengkap bintang 1–5 yang dihitung dalam satu query grouped.
+
+Inbox ulasan penjual `GET /api/seller/reviews` hanya memuat ulasan pada produk milik penjual tersebut, memakai snapshot `seller_id` yang diambil saat ulasan dibuat sehingga akses tetap ada setelah listing dihapus. Balasan ditulis lewat `PATCH /api/seller/reviews/{review}/reply` dan dihapus lewat `DELETE`; kepemilikan diperiksa ulang terhadap baris yang sudah dilock agar transfer listing bersamaan tidak meloloskan penjual lama. Balasan tidak pernah mengubah rating atau teks pembeli, dan label pengulas pada inbox tetap dimask seperti pada feed publik.
 
 Belum ada payment gateway, layanan pengiriman, notifikasi, atau deployment produksi. Seller transition, pembatalan rental, ulasan, dan mutasi stok memakai transaksi serta penguncian berurutan untuk menjaga invariant. SQLite dan retry transaksi ditujukan untuk demo lokal, bukan beban tulis bersamaan; validasi contention produksi harus menggunakan database terkelola yang mendukung row locking.
 

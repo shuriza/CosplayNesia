@@ -175,6 +175,17 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
 .review-list__item small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
 .review-list__item p { margin: 7px 0 0; color: var(--ink); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
 .review-feed__more { width: 100%; margin-top: 11px; }
+.review-list__reply {
+  margin-top: 9px; padding: 9px 11px; background: var(--primary-soft);
+  border-left: 3px solid var(--primary); border-radius: 0 8px 8px 0;
+}
+.review-list__reply strong { color: var(--primary-dark); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; }
+.review-list__reply p { margin: 4px 0 0; color: var(--ink); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.review-filter { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.review-filter input { width: 15px; height: 15px; margin: 0; }
+.seller-review__body { margin: 8px 0 0; color: var(--ink); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+.seller-review__replied { color: var(--primary-dark); font-weight: 700; }
+.review-action .danger-action { color: #a82038; }
 
 .activity-timeline-wrap {
   margin-top: 11px;

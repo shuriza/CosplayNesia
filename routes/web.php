@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductReviewFeedController;
+use App\Http\Controllers\SellerReviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
@@ -45,5 +46,8 @@ Route::prefix('api')->group(function (): void {
         Route::get('/seller/fulfillments', [FulfillmentController::class, 'index']);
         Route::get('/seller/fulfillments/{fulfillment}', [FulfillmentController::class, 'show']);
         Route::patch('/seller/fulfillments/{fulfillment}/status', [FulfillmentController::class, 'updateStatus']);
+        Route::get('/seller/reviews', [SellerReviewController::class, 'index']);
+        Route::patch('/seller/reviews/{review}/reply', [SellerReviewController::class, 'update']);
+        Route::delete('/seller/reviews/{review}/reply', [SellerReviewController::class, 'destroy']);
     });
 });

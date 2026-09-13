@@ -13,11 +13,19 @@ class ProductReview extends Model
 
     public const MAX_BODY_LENGTH = 500;
 
-    protected $fillable = ['order_item_id', 'product_id', 'user_id', 'rating', 'body'];
+    public const MAX_REPLY_LENGTH = 500;
+
+    protected $fillable = [
+        'order_item_id', 'product_id', 'user_id', 'seller_id', 'rating', 'body',
+        'seller_reply', 'seller_replied_at',
+    ];
 
     protected function casts(): array
     {
-        return ['rating' => 'integer'];
+        return [
+            'rating' => 'integer',
+            'seller_replied_at' => 'datetime',
+        ];
     }
 
     public function orderItem(): BelongsTo
@@ -35,12 +43,27 @@ class ProductReview extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_id');
+    }
+
     public function scopeForPublicFeed(Builder $query, Product|int $product): Builder
     {
         $productId = $product instanceof Product ? $product->id : $product;
 
         return $query->where('product_id', $productId)
             ->with('user:id,name')
+            ->latest()
+            ->latest('id');
+    }
+
+    public function scopeForSellerInbox(Builder $query, User|int $seller): Builder
+    {
+        $sellerId = $seller instanceof User ? $seller->id : $seller;
+
+        return $query->where('seller_id', $sellerId)
+            ->with(['user:id,name', 'orderItem:id,product_name'])
             ->latest()
             ->latest('id');
     }

@@ -50,6 +50,7 @@ class PaginationQueryBoundTest extends TestCase
             ProductReview::create([
                 'order_item_id' => $item->id,
                 'product_id' => $product->id,
+                'seller_id' => $seller->id,
                 'user_id' => $buyer->id,
                 'rating' => 5,
             ]);
@@ -60,6 +61,7 @@ class PaginationQueryBoundTest extends TestCase
         $this->assertQueryCountIsPageSizeInvariant($buyer, '/api/orders');
         $this->assertQueryCountIsPageSizeInvariant($seller, '/api/seller/fulfillments');
         $this->assertQueryCountIsPageSizeInvariant($buyer, "/api/products/{$products->first()->id}/reviews");
+        $this->assertQueryCountIsPageSizeInvariant($seller, '/api/seller/reviews');
     }
 
     private function assertQueryCountIsPageSizeInvariant(User $user, string $path): void
