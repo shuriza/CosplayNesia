@@ -16,6 +16,7 @@
 .opencode-jce/
 .opencode-context.md
 .playwright-mcp/
+/tmp/chrome-smoke-profile/
 .DS_Store
 Thumbs.db
 .vscode/
