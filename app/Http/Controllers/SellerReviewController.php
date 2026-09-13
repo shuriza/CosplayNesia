@@ -46,8 +46,10 @@ class SellerReviewController extends Controller
             'seller_replied_at' => now(),
         ]);
 
-        // The buyer is told once, when a reply first appears. Later edits are silent so a seller
-        // polishing wording cannot repeatedly ping the buyer.
+        // A buyer is notified at most once per review, ever. Two guards enforce that:
+        // this check skips edits to an existing reply, and the event_key below is stable per
+        // review so even a delete-then-re-reply cycle cannot ping the buyer a second time.
+        // That closes the obvious griefing vector of repeatedly removing and re-adding a reply.
         if ($previousReply === null) {
             $notifications->record([
                 'recipient_id' => $updated->user_id,

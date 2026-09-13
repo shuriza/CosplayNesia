@@ -138,6 +138,15 @@ class NotificationTest extends TestCase
             ->where('recipient_id', $buyer->id)
             ->where('type', UserNotification::TYPE_REVIEW_REPLIED)
             ->count());
+
+        // Deleting and re-adding a reply must not ping the buyer again: the stable event_key
+        // makes a repeated remove/re-add cycle useless as a notification griefing vector.
+        $this->actingAs($seller)->deleteJson("/api/seller/reviews/{$reviewId}/reply")->assertOk();
+        $this->actingAs($seller)->patchJson("/api/seller/reviews/{$reviewId}/reply", ['reply' => 'Balasan baru.'])->assertOk();
+        $this->assertSame(1, UserNotification::query()
+            ->where('recipient_id', $buyer->id)
+            ->where('type', UserNotification::TYPE_REVIEW_REPLIED)
+            ->count());
     }
 
     public function test_feed_is_recipient_scoped_cursor_paginated_and_filterable(): void
