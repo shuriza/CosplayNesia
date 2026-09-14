@@ -12,6 +12,7 @@ const elements = {
   authModal: $('#auth-modal'),
   profileDrawer: $('#profile-drawer'),
   addProductDrawer: $('#add-product-drawer'),
+  rentalBlockDrawer: $('#rental-block-drawer'),
   notificationDrawer: $('#notification-drawer'),
   toast: $('#toast'),
 };
@@ -54,6 +55,21 @@ const state = {
   ordersCursor: null,
   hasMoreOrders: false,
   editingProductId: null,
+  rentalCalendar: {
+    productId: null,
+    product: null,
+    startDate: '',
+    endDate: '',
+    days: [],
+    blocks: [],
+    nextCursor: null,
+    hasMore: false,
+    loading: false,
+    loadingMore: false,
+    request: null,
+    loadMoreRequest: null,
+    version: 0,
+  },
 };
 
 let csrfToken = $('meta[name="csrf-token"]')?.content ?? '';
@@ -261,6 +277,7 @@ function openLayer(layer, trigger = document.activeElement) {
 function closeLayer(restoreFocus = true) {
   const layer = state.activeLayer;
   if (!layer) return;
+  if (layer === elements.rentalBlockDrawer) resetRentalCalendarState({ resetForms: true });
   layer.classList.remove('open');
   layer.setAttribute('aria-hidden', 'true');
   layer.setAttribute('inert', '');
@@ -292,6 +309,7 @@ function handleProtectedError(error, trigger) {
     state.user = null;
     $('#checkout-handoff-form')?.reset();
     state.favorites.clear();
+    resetRentalCalendarState({ resetForms: true });
     updateAuthUi();
     closeLayer(false);
     requireAuthentication(trigger);
@@ -752,6 +770,7 @@ function updateAuthUi() {
     state.notificationsCursor = null;
     state.hasMoreNotifications = false;
     state.unreadNotifications = 0;
+    resetRentalCalendarState({ resetForms: true });
   }
   updateNotificationBadge();
   $('.mobile-account-label').textContent = authenticated ? 'Profil' : 'Akun';
@@ -857,11 +876,15 @@ function renderMyProducts() {
       node('span', { className: `listing-status ${active ? '' : 'listing-status--inactive'}`.trim(), text: active ? 'Aktif' : 'Nonaktif' }),
     ]));
     card.append(node('small', { text: `${valueOf(product, ['category'], 'Cosplay')} · ${currency.format(productPrice(product))} · Stok ${valueOf(product, ['stock'], 0)}` }));
-    card.append(node('div', { className: 'profile-card__actions' }, [
+    const actions = [
       button('Edit', '', { 'data-edit-product': id, 'aria-label': `Edit ${name}` }),
       button(active ? 'Nonaktifkan' : 'Aktifkan', '', { 'data-toggle-product': id, 'data-next-active': String(!active), 'aria-label': `${active ? 'Nonaktifkan' : 'Aktifkan'} ${name}` }),
-      button('Hapus', 'danger-action', { 'data-delete-product': id, 'aria-label': `Hapus ${name}` }),
-    ]));
+    ];
+    if (isRentalProduct(product)) {
+      actions.push(button('Jadwal sewa', '', { 'data-open-rental-calendar': id, 'aria-label': `Kelola jadwal sewa ${name}` }));
+    }
+    actions.push(button('Hapus', 'danger-action', { 'data-delete-product': id, 'aria-label': `Hapus ${name}` }));
+    card.append(node('div', { className: 'profile-card__actions' }, actions));
     return card;
   }));
 }
@@ -883,6 +906,530 @@ async function loadOwnedProducts({ append = false } = {}) {
     renderMyProducts();
   } finally {
     button.disabled = false;
+  }
+}
+
+function isRentalProduct(product) {
+  return String(valueOf(product, ['type', 'product_type'], '')).trim().toLowerCase() === 'sewa';
+}
+
+function rentalDateOffset(value, offset = 0) {
+  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? ''));
+  if (!matched) return '';
+  const year = Number(matched[1]);
+  const month = Number(matched[2]);
+  const day = Number(matched[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return '';
+  date.setUTCDate(date.getUTCDate() + Number(offset));
+  const pad = (part) => String(part).padStart(2, '0');
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+function rentalDateSpan(startDate, endDate) {
+  const start = rentalDateOffset(startDate);
+  const end = rentalDateOffset(endDate);
+  if (!start || !end) return null;
+  const [startYear, startMonth, startDay] = start.split('-').map(Number);
+  const [endYear, endMonth, endDay] = end.split('-').map(Number);
+  return Math.round((Date.UTC(endYear, endMonth - 1, endDay) - Date.UTC(startYear, startMonth - 1, startDay)) / 86400000);
+}
+
+function rentalDateLabel(value) {
+  const normalized = rentalDateOffset(value);
+  if (!normalized) return 'Tanggal tidak valid';
+  return new Intl.DateTimeFormat('id-ID', {
+    timeZone: 'UTC',
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(`${normalized}T00:00:00Z`));
+}
+
+function rentalQuantity(value) {
+  const quantity = Number(value);
+  return Number.isFinite(quantity) ? String(quantity) : '—';
+}
+
+function rentalBlockApiPath(productId) {
+  return `/api/products/${encodeURIComponent(String(productId))}/rental-blocks`;
+}
+
+function rentalCalendarMatches({ productId, startDate, endDate, version }) {
+  const calendar = state.rentalCalendar;
+  return Boolean(state.user)
+    && calendar.version === version
+    && calendar.productId === String(productId)
+    && calendar.startDate === startDate
+    && calendar.endDate === endDate;
+}
+
+function rentalCalendarRequestMatches({ productId, startDate, endDate, version, controller, append }) {
+  const calendar = state.rentalCalendar;
+  return rentalCalendarMatches({ productId, startDate, endDate, version })
+    && (append ? calendar.loadMoreRequest === controller : calendar.request === controller);
+}
+
+function rentalBlockForms() {
+  return [$('#rental-block-window-form'), $('#rental-block-form')].filter(Boolean);
+}
+
+function setRentalBlockError(target, message = '') {
+  if (!target) return;
+  target.textContent = String(message);
+  target.hidden = !message;
+}
+
+function setRentalBlockSuccess(message = '') {
+  const target = $('#rental-block-success');
+  if (!target) return;
+  target.textContent = String(message);
+  target.hidden = !message;
+}
+
+function syncRentalBlockDateBounds(form) {
+  if (!form) return;
+  const start = form.elements.start_date;
+  const end = form.elements.end_date;
+  if (!(start instanceof HTMLInputElement) || !(end instanceof HTMLInputElement)) return;
+
+  const today = jakartaCalendarDate();
+  const selectedStart = rentalDateOffset(start.value);
+  let endMin = today;
+
+  if (selectedStart && selectedStart >= today) {
+    endMin = selectedStart;
+  }
+
+  const latest = rentalDateOffset(today, 29);
+  start.min = today;
+  end.min = endMin;
+  start.max = latest;
+  end.max = latest;
+}
+
+function rentalDateRangeError(startDate, endDate) {
+  const today = jakartaCalendarDate();
+  const span = rentalDateSpan(startDate, endDate);
+  if (!rentalDateOffset(startDate) || !rentalDateOffset(endDate)) return 'Masukkan tanggal mulai dan selesai yang valid.';
+  if (startDate < today || endDate < today) return 'Tanggal hanya dapat dipilih mulai hari ini (WIB).';
+  if (span < 0) return 'Tanggal selesai harus sama dengan atau setelah tanggal mulai.';
+  if (span > 29) return 'Periode maksimal 30 hari, termasuk tanggal mulai dan selesai.';
+  return '';
+}
+
+function renderRentalCalendarHeader() {
+  const calendar = state.rentalCalendar;
+  const product = calendar.product ?? {};
+  $('#rental-block-product-name').textContent = productName(product);
+  const stock = Number(valueOf(product, ['stock'], NaN));
+  $('#rental-block-product-stock').textContent = Number.isFinite(stock) ? `Stok total: ${stock}` : '';
+}
+
+function rentalCalendarTable(days) {
+  const table = node('table', { className: 'rental-capacity-table' });
+  table.append(node('caption', { text: 'Kapasitas sewa setiap hari pada periode yang dipilih.' }));
+  const head = node('thead');
+  head.append(node('tr', {}, [
+    node('th', { text: 'Tanggal', attrs: { scope: 'col' } }),
+    node('th', { text: 'Direservasi', attrs: { scope: 'col' } }),
+    node('th', { text: 'Diblokir', attrs: { scope: 'col' } }),
+    node('th', { text: 'Tersedia', attrs: { scope: 'col' } }),
+  ]));
+  table.append(head);
+  const body = node('tbody');
+  days.forEach((day) => {
+    const date = String(valueOf(day, ['date'], ''));
+    body.append(node('tr', {}, [
+      node('th', { attrs: { scope: 'row' } }, [node('time', { text: rentalDateLabel(date), attrs: { datetime: date || null } })]),
+      node('td', { text: rentalQuantity(valueOf(day, ['reserved_quantity'], 0)) }),
+      node('td', { text: rentalQuantity(valueOf(day, ['blocked_quantity'], 0)) }),
+      node('td', { className: 'rental-capacity-table__available', text: rentalQuantity(valueOf(day, ['available_quantity'], 0)) }),
+    ]));
+  });
+  table.append(body);
+  return node('div', { className: 'rental-capacity-table-wrap', attrs: { tabindex: '0', 'aria-label': 'Geser untuk melihat seluruh tabel kapasitas harian' } }, [table]);
+}
+
+function renderRentalCalendar() {
+  const calendar = state.rentalCalendar;
+  const target = $('#rental-block-calendar');
+  const loading = $('#rental-block-loading');
+  if (!target || !loading) return;
+
+  target.setAttribute('aria-busy', String(calendar.loading));
+  loading.textContent = calendar.loading ? 'Memuat…' : '';
+  if (!calendar.days.length) {
+    target.replaceChildren(listMessage(calendar.loading ? 'Memuat kapasitas harian…' : 'Tidak ada data kapasitas untuk periode ini.'));
+    return;
+  }
+  target.replaceChildren(rentalCalendarTable(calendar.days));
+}
+
+function rentalBlockCard(block) {
+  const id = String(valueOf(block, ['id'], ''));
+  const startDate = String(valueOf(block, ['start_date'], ''));
+  const endDate = String(valueOf(block, ['end_date'], ''));
+  const quantity = rentalQuantity(valueOf(block, ['quantity'], 0));
+  const range = startDate === endDate
+    ? rentalDateLabel(startDate)
+    : `${rentalDateLabel(startDate)} – ${rentalDateLabel(endDate)}`;
+  const card = node('article', { className: 'rental-block-card' });
+  card.append(node('div', { className: 'rental-block-card__heading' }, [
+    node('strong', { text: range }),
+    node('span', { className: 'rental-block-quantity', text: `${quantity} diblokir` }),
+  ]));
+  const reason = String(valueOf(block, ['reason'], '') ?? '').trim();
+  if (reason) card.append(node('p', { className: 'rental-block-reason', text: reason }));
+  card.append(node('div', { className: 'profile-card__actions rental-block-card__actions' }, [
+    button('Batalkan blok', 'danger-action', {
+      'data-cancel-rental-block': id,
+      'data-rental-block-product': state.rentalCalendar.productId ?? '',
+      'aria-label': `Batalkan blok ${range}`,
+    }),
+  ]));
+  return card;
+}
+
+function renderRentalBlockList() {
+  const calendar = state.rentalCalendar;
+  const target = $('#rental-block-list');
+  const more = $('#load-more-rental-blocks');
+  const count = $('#rental-block-list-count');
+  if (!target || !more || !count) return;
+
+  target.setAttribute('aria-busy', String(calendar.loading || calendar.loadingMore));
+  count.textContent = calendar.blocks.length
+    ? (calendar.hasMore ? `${calendar.blocks.length} dimuat` : `${calendar.blocks.length} blok`)
+    : '';
+  more.hidden = !calendar.hasMore;
+  more.disabled = calendar.loadingMore;
+  more.textContent = calendar.loadingMore ? 'Memuat…' : 'Muat blok lainnya';
+  if (!calendar.blocks.length) {
+    target.replaceChildren(listMessage(calendar.loading ? 'Memuat blok aktif…' : 'Tidak ada blok aktif pada periode ini.'));
+    return;
+  }
+  target.replaceChildren(...calendar.blocks.map(rentalBlockCard));
+}
+
+function clearRentalBlockPresentation() {
+  $('#rental-block-product-name').textContent = 'Produk sewa';
+  $('#rental-block-product-stock').textContent = '';
+  $('#rental-block-calendar').replaceChildren();
+  $('#rental-block-calendar').setAttribute('aria-busy', 'false');
+  $('#rental-block-list').replaceChildren();
+  $('#rental-block-list').setAttribute('aria-busy', 'false');
+  $('#rental-block-list-count').textContent = '';
+  $('#rental-block-loading').textContent = '';
+  $('#load-more-rental-blocks').hidden = true;
+  setRentalBlockError($('#rental-block-window-error'));
+  setRentalBlockError($('#rental-block-form-error'));
+  setRentalBlockError($('#rental-block-results-error'));
+  setRentalBlockSuccess();
+}
+
+function resetRentalCalendarState({ resetForms = false, clearPresentation = true } = {}) {
+  const calendar = state.rentalCalendar;
+  calendar.version += 1;
+  calendar.request?.abort();
+  calendar.loadMoreRequest?.abort();
+  Object.assign(calendar, {
+    productId: null,
+    product: null,
+    startDate: '',
+    endDate: '',
+    days: [],
+    blocks: [],
+    nextCursor: null,
+    hasMore: false,
+    loading: false,
+    loadingMore: false,
+    request: null,
+    loadMoreRequest: null,
+  });
+  if (resetForms) {
+    rentalBlockForms().forEach((form) => {
+      form.reset();
+      const submit = $('button[type="submit"]', form);
+      if (submit) submit.disabled = false;
+      setBusy(form, false);
+      syncRentalBlockDateBounds(form);
+    });
+  }
+  if (clearPresentation) clearRentalBlockPresentation();
+}
+
+function setRentalCalendarWindow(startDate, endDate) {
+  const calendar = state.rentalCalendar;
+  calendar.version += 1;
+  calendar.request?.abort();
+  calendar.loadMoreRequest?.abort();
+  Object.assign(calendar, {
+    startDate,
+    endDate,
+    days: [],
+    blocks: [],
+    nextCursor: null,
+    hasMore: false,
+    loading: false,
+    loadingMore: false,
+    request: null,
+    loadMoreRequest: null,
+  });
+}
+
+function mergeRentalBlocks(currentBlocks, receivedBlocks) {
+  const indexed = new Map(currentBlocks.map((block) => [String(valueOf(block, ['id'], '')), block]));
+  receivedBlocks.forEach((block) => indexed.set(String(valueOf(block, ['id'], '')), block));
+  return [...indexed.values()];
+}
+
+async function loadRentalCalendar({ append = false, resetBlocks = false } = {}) {
+  const calendar = state.rentalCalendar;
+  if (!calendar.productId || !calendar.startDate || !calendar.endDate || !state.user) return;
+  if (append && (!calendar.hasMore || !calendar.nextCursor || calendar.loadingMore)) return;
+
+  const productId = calendar.productId;
+  const startDate = calendar.startDate;
+  const endDate = calendar.endDate;
+  const version = calendar.version;
+  const controller = new AbortController();
+  if (append) {
+    calendar.loadMoreRequest?.abort();
+    calendar.loadMoreRequest = controller;
+    calendar.loadingMore = true;
+  } else {
+    calendar.request?.abort();
+    calendar.loadMoreRequest?.abort();
+    calendar.request = controller;
+    calendar.loading = true;
+    calendar.loadingMore = false;
+    calendar.loadMoreRequest = null;
+    if (resetBlocks) {
+      calendar.blocks = [];
+      calendar.nextCursor = null;
+      calendar.hasMore = false;
+    }
+  }
+  renderRentalCalendar();
+  renderRentalBlockList();
+
+  const params = new URLSearchParams({ start_date: startDate, end_date: endDate, per_page: '10' });
+  if (append) params.set('cursor', calendar.nextCursor);
+  try {
+    const payload = await api(`${rentalBlockApiPath(productId)}?${params.toString()}`, { signal: controller.signal });
+    if (!rentalCalendarRequestMatches({ productId, startDate, endDate, version, controller, append })) return;
+    const responseProduct = valueOf(payload, ['product'], null);
+    if (!responseProduct || String(valueOf(responseProduct, ['id'], '')) !== productId) {
+      throw new ApiError('Data jadwal tidak cocok dengan produk yang dipilih.', 0, payload);
+    }
+    const days = Array.isArray(valueOf(payload, ['days'], [])) ? valueOf(payload, ['days'], []) : [];
+    const blocks = Array.isArray(valueOf(payload, ['data'], [])) ? valueOf(payload, ['data'], []) : [];
+    const pagination = valueOf(payload, ['pagination'], {});
+    calendar.product = { ...(calendar.product ?? {}), ...responseProduct };
+    calendar.days = days;
+    calendar.blocks = append ? mergeRentalBlocks(calendar.blocks, blocks) : blocks;
+    calendar.nextCursor = valueOf(pagination, ['next_cursor'], null);
+    calendar.hasMore = Boolean(valueOf(pagination, ['has_more'], false));
+    setRentalBlockError($('#rental-block-results-error'));
+    renderRentalCalendarHeader();
+  } catch (error) {
+    if (error?.name === 'AbortError' || !rentalCalendarRequestMatches({ productId, startDate, endDate, version, controller, append })) return;
+    if (error instanceof ApiError && error.status === 401) {
+      handleProtectedError(error);
+      return;
+    }
+    setRentalBlockError($('#rental-block-results-error'), error.message ?? 'Jadwal sewa tidak dapat dimuat.');
+  } finally {
+    if (!rentalCalendarRequestMatches({ productId, startDate, endDate, version, controller, append })) return;
+    if (append) {
+      calendar.loadingMore = false;
+      calendar.loadMoreRequest = null;
+    } else {
+      calendar.loading = false;
+      calendar.request = null;
+    }
+    renderRentalCalendar();
+    renderRentalBlockList();
+  }
+}
+
+function openRentalCalendar(product, trigger = document.activeElement) {
+  if (!requireAuthentication(trigger) || !isRentalProduct(product)) return;
+  resetRentalCalendarState({ clearPresentation: false });
+  const calendar = state.rentalCalendar;
+  const productIdValue = productId(product);
+  const startDate = jakartaCalendarDate();
+  const endDate = jakartaCalendarDate(13);
+  Object.assign(calendar, {
+    productId: productIdValue,
+    product,
+    startDate,
+    endDate,
+  });
+
+  const windowForm = $('#rental-block-window-form');
+  const blockForm = $('#rental-block-form');
+  windowForm.reset();
+  blockForm.reset();
+  $('button[type="submit"]', windowForm).disabled = false;
+  $('button[type="submit"]', blockForm).disabled = false;
+  setBusy(windowForm, false);
+  setBusy(blockForm, false);
+  windowForm.elements.start_date.value = startDate;
+  windowForm.elements.end_date.value = endDate;
+  blockForm.elements.start_date.value = startDate;
+  blockForm.elements.end_date.value = endDate;
+  blockForm.elements.quantity.value = '1';
+  rentalBlockForms().forEach(syncRentalBlockDateBounds);
+  setRentalBlockError($('#rental-block-window-error'));
+  setRentalBlockError($('#rental-block-form-error'));
+  setRentalBlockError($('#rental-block-results-error'));
+  setRentalBlockSuccess();
+  renderRentalCalendarHeader();
+  renderRentalCalendar();
+  renderRentalBlockList();
+  openLayer(elements.rentalBlockDrawer, trigger);
+  loadRentalCalendar();
+}
+
+async function submitRentalCalendarWindow(form) {
+  const calendar = state.rentalCalendar;
+  const errorBox = $('#rental-block-window-error');
+  setRentalBlockError(errorBox);
+  if (!calendar.productId || !form.reportValidity()) return;
+  const fields = new FormData(form);
+  const startDate = String(fields.get('start_date') ?? '');
+  const endDate = String(fields.get('end_date') ?? '');
+  const rangeError = rentalDateRangeError(startDate, endDate);
+  if (rangeError) {
+    setRentalBlockError(errorBox, rangeError);
+    return;
+  }
+  if (calendar.startDate === startDate && calendar.endDate === endDate) {
+    const submit = $('button[type="submit"]', form);
+    submit.disabled = true;
+    setBusy(form, true);
+    try {
+      await loadRentalCalendar({ resetBlocks: true });
+    } finally {
+      if (calendar.productId) {
+        submit.disabled = false;
+        setBusy(form, false);
+      }
+    }
+    return;
+  }
+  setRentalCalendarWindow(startDate, endDate);
+  setRentalBlockError($('#rental-block-results-error'));
+  setRentalBlockSuccess();
+  renderRentalCalendar();
+  renderRentalBlockList();
+  const submit = $('button[type="submit"]', form);
+  submit.disabled = true;
+  setBusy(form, true);
+  try {
+    await loadRentalCalendar();
+  } finally {
+    if (calendar.productId && calendar.startDate === startDate && calendar.endDate === endDate) {
+      submit.disabled = false;
+      setBusy(form, false);
+    }
+  }
+}
+
+async function submitRentalBlock(form) {
+  const calendar = state.rentalCalendar;
+  const errorBox = $('#rental-block-form-error');
+  setRentalBlockError(errorBox);
+  setRentalBlockSuccess();
+  if (!calendar.productId || !form.reportValidity()) return;
+  const fields = new FormData(form);
+  const startDate = String(fields.get('start_date') ?? '');
+  const endDate = String(fields.get('end_date') ?? '');
+  const quantity = Number(fields.get('quantity'));
+  const rangeError = rentalDateRangeError(startDate, endDate);
+  if (rangeError) {
+    setRentalBlockError(errorBox, rangeError);
+    return;
+  }
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+    setRentalBlockError(errorBox, 'Jumlah yang diblokir harus berupa bilangan bulat antara 1 dan 10.000.');
+    return;
+  }
+
+  const productId = calendar.productId;
+  const requestContext = {
+    productId,
+    startDate: calendar.startDate,
+    endDate: calendar.endDate,
+    version: calendar.version,
+  };
+  const submit = $('button[type="submit"]', form);
+  submit.disabled = true;
+  setBusy(form, true);
+  try {
+    const reason = String(fields.get('reason') ?? '').trim();
+    await api(rentalBlockApiPath(productId), {
+      method: 'POST',
+      body: { start_date: startDate, end_date: endDate, quantity, reason: reason || null },
+    });
+    if (!rentalCalendarMatches(requestContext)) return;
+    form.elements.reason.value = '';
+    setRentalBlockSuccess('Blok tanggal berhasil disimpan.');
+    await loadRentalCalendar({ resetBlocks: true });
+  } catch (error) {
+    if (!rentalCalendarMatches(requestContext)) return;
+    if (error instanceof ApiError && error.status === 401) {
+      handleProtectedError(error, submit);
+      return;
+    }
+    const message = error?.status === 409
+      ? `Kapasitas tidak mencukupi untuk blok ini. ${error.message ?? ''}`.trim()
+      : (error.message ?? 'Blok tanggal tidak dapat disimpan.');
+    setRentalBlockError(errorBox, message);
+  } finally {
+    if (rentalCalendarMatches(requestContext)) {
+      submit.disabled = false;
+      setBusy(form, false);
+    }
+  }
+}
+
+async function cancelRentalBlock(id, trigger) {
+  const calendar = state.rentalCalendar;
+  const productId = calendar.productId;
+  const block = calendar.blocks.find((entry) => String(valueOf(entry, ['id'], '')) === String(id));
+  if (!productId || !block) return;
+  const startDate = String(valueOf(block, ['start_date'], ''));
+  const endDate = String(valueOf(block, ['end_date'], ''));
+  const range = startDate === endDate ? rentalDateLabel(startDate) : `${rentalDateLabel(startDate)} – ${rentalDateLabel(endDate)}`;
+  if (!window.confirm(`Batalkan blok tanggal ${range}? Kapasitas akan tersedia kembali untuk pembeli.`)) return;
+
+  const requestContext = {
+    productId,
+    startDate: calendar.startDate,
+    endDate: calendar.endDate,
+    version: calendar.version,
+  };
+  trigger.disabled = true;
+  setRentalBlockError($('#rental-block-results-error'));
+  setRentalBlockSuccess();
+  try {
+    await api(`${rentalBlockApiPath(productId)}/${encodeURIComponent(String(id))}`, { method: 'DELETE' });
+    if (!rentalCalendarMatches(requestContext)) return;
+    setRentalBlockSuccess('Blok tanggal dibatalkan.');
+    await loadRentalCalendar({ resetBlocks: true });
+  } catch (error) {
+    if (!rentalCalendarMatches(requestContext)) return;
+    if (error instanceof ApiError && error.status === 401) {
+      handleProtectedError(error, trigger);
+      return;
+    }
+    setRentalBlockError($('#rental-block-results-error'), error.message ?? 'Blok tanggal tidak dapat dibatalkan.');
+  } finally {
+    if (rentalCalendarMatches(requestContext)) trigger.disabled = false;
   }
 }
 
@@ -1611,6 +2158,7 @@ async function logout(trigger) {
     $('#checkout-handoff-form')?.reset();
     state.favorites.clear();
     state.favoritesOnly = false;
+    resetRentalCalendarState({ resetForms: true });
     updateAuthUi();
     await fetchProducts();
     closeLayer(false);
@@ -1620,6 +2168,7 @@ async function logout(trigger) {
       invalidateCheckoutKey();
       state.user = null;
       $('#checkout-handoff-form')?.reset();
+      resetRentalCalendarState({ resetForms: true });
       updateAuthUi();
       closeLayer(false);
     }
@@ -1901,6 +2450,25 @@ $('#refresh-profile').addEventListener('click', loadProfileData);
 $('#load-more-my-products').addEventListener('click', () => loadOwnedProducts({ append: true }).catch((error) => handleProtectedError(error)));
 $('#load-more-incoming-orders').addEventListener('click', () => loadIncomingFulfillments({ append: true }).catch((error) => handleProtectedError(error)));
 $('#load-more-orders').addEventListener('click', () => loadOrders({ append: true }).catch((error) => handleProtectedError(error)));
+$('#rental-block-window-form').addEventListener('submit', (event) => { event.preventDefault(); submitRentalCalendarWindow(event.currentTarget); });
+$('#rental-block-form').addEventListener('submit', (event) => { event.preventDefault(); submitRentalBlock(event.currentTarget); });
+rentalBlockForms().forEach((form) => {
+  form.addEventListener('input', (event) => {
+    if (event.target.matches('input[name="start_date"], input[name="end_date"]')) syncRentalBlockDateBounds(form);
+  });
+  form.addEventListener('change', (event) => {
+    if (!event.target.matches('input[name="start_date"], input[name="end_date"]')) return;
+    syncRentalBlockDateBounds(form);
+    setRentalBlockError(form.id === 'rental-block-window-form' ? $('#rental-block-window-error') : $('#rental-block-form-error'));
+  });
+});
+$('#load-more-rental-blocks').addEventListener('click', () => loadRentalCalendar({ append: true }));
+$('#rental-block-list').addEventListener('click', (event) => {
+  const cancel = event.target.closest('[data-cancel-rental-block]');
+  if (!cancel) return;
+  if (cancel.dataset.rentalBlockProduct !== state.rentalCalendar.productId) return;
+  cancelRentalBlock(cancel.dataset.cancelRentalBlock, cancel);
+});
 $('#add-product-button').addEventListener('click', (event) => {
   const trigger = visibleAccountTrigger() ?? event.currentTarget;
   closeLayer(false);
@@ -1910,6 +2478,13 @@ $('.seller-action').addEventListener('click', (event) => state.user ? openProduc
 $('#add-product-form').addEventListener('submit', (event) => { event.preventDefault(); submitProduct(event.currentTarget); });
 
 $('#my-products-list').addEventListener('click', (event) => {
+  const calendar = event.target.closest('[data-open-rental-calendar]');
+  if (calendar) {
+    const product = state.ownedProducts.get(String(calendar.dataset.openRentalCalendar));
+    if (!product) return;
+    openRentalCalendar(product, visibleAccountTrigger() ?? calendar);
+    return;
+  }
   const edit = event.target.closest('[data-edit-product]');
   if (edit) {
     const product = state.ownedProducts.get(String(edit.dataset.editProduct));

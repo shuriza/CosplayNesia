@@ -4,31 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AvailabilityRequest;
 use App\Models\Product;
-use App\Models\RentalReservation;
+use App\Services\RentalCapacity;
 use Illuminate\Http\JsonResponse;
 
 class AvailabilityController extends Controller
 {
-    public function show(AvailabilityRequest $request, Product $product): JsonResponse
+    public function show(AvailabilityRequest $request, Product $product, RentalCapacity $capacity): JsonResponse
     {
         abort_unless($product->is_active && $product->type === Product::TYPE_RENTAL, 404);
 
         $validated = $request->validated();
-        $reserved = RentalReservation::query()
-            ->where('product_id', $product->id)
-            ->where('status', RentalReservation::STATUS_RESERVED)
-            ->whereDate('start_date', '<=', $validated['end_date'])
-            ->whereDate('end_date', '>=', $validated['start_date'])
-            ->sum('quantity');
+        $summary = $capacity->summary($product, $validated['start_date'], $validated['end_date']);
         $stock = (int) $product->stock;
-        $available = max(0, $stock - (int) $reserved);
+        $available = $summary['available_quantity'];
 
         return response()->json([
             'product_id' => $product->id,
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'stock' => $stock,
-            'reserved_quantity' => (int) $reserved,
+            'reserved_quantity' => $summary['reserved_quantity'],
+            'blocked_quantity' => $summary['blocked_quantity'],
+            'unavailable_quantity' => $summary['unavailable_quantity'],
             'available_quantity' => $available,
             'requested_quantity' => (int) ($validated['quantity'] ?? 1),
             'available' => $available >= (int) ($validated['quantity'] ?? 1),

@@ -21,7 +21,10 @@ use Illuminate\Support\Facades\DB;
 
 class CheckoutService
 {
-    public function __construct(private readonly NotificationRecorder $notifications) {}
+    public function __construct(
+        private readonly NotificationRecorder $notifications,
+        private readonly RentalCapacity $capacity,
+    ) {}
 
     public function create(User $user, array $items, ?string $idempotencyKey = null, ?array $handoff = null): Order
     {
@@ -87,13 +90,8 @@ class CheckoutService
                         throw new RentalUnavailableException($product->name);
                     }
 
-                    $reserved = RentalReservation::query()
-                        ->where('product_id', $product->id)
-                        ->where('status', RentalReservation::STATUS_RESERVED)
-                        ->whereDate('start_date', '<=', $end->toDateString())
-                        ->whereDate('end_date', '>=', $start->toDateString())
-                        ->sum('quantity');
-                    if ((int) $reserved + $quantity > (int) $product->stock) {
+                    $allocated = $this->capacity->peak($product, $start->toDateString(), $end->toDateString());
+                    if ($allocated + $quantity > (int) $product->stock) {
                         throw new RentalUnavailableException($product->name);
                     }
                     $snapshot['rental_start_date'] = $start->toDateString();

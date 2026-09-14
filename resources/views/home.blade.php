@@ -227,6 +227,48 @@
         </div>
     </aside>
 
+    <aside class="cart-drawer rental-block-drawer" id="rental-block-drawer" role="dialog" aria-modal="true" aria-labelledby="rental-block-title" aria-describedby="rental-block-description" aria-hidden="true" inert>
+        <div class="drawer-header"><div><span class="section-kicker">Kelola kapasitas</span><h2 id="rental-block-title">Jadwal sewa</h2></div><button type="button" class="close-button" data-close-layer aria-label="Tutup jadwal sewa">×</button></div>
+        <div class="rental-block-scroll">
+            <div class="rental-block-product"><strong id="rental-block-product-name">Produk sewa</strong><span id="rental-block-product-stock"></span></div>
+            <p class="rental-block-description" id="rental-block-description">Lihat kapasitas harian dan blok tanggal yang tidak dapat dipesan pembeli. Tanggal mulai dan selesai dihitung inklusif.</p>
+
+            <section class="rental-block-section" aria-labelledby="rental-block-window-title">
+                <div class="rental-block-section__heading"><h3 id="rental-block-window-title">Periode kalender</h3><span>maks. 30 hari</span></div>
+                <form class="rental-block-form rental-block-window-form" id="rental-block-window-form" novalidate>
+                    <div class="form-row"><label>Tanggal mulai<input name="start_date" type="date" required></label><label>Tanggal selesai<input name="end_date" type="date" required></label></div>
+                    <p class="form-error" id="rental-block-window-error" role="alert" hidden></p>
+                    <button type="submit" class="button button--outline">Tampilkan jadwal</button>
+                </form>
+            </section>
+
+            <p class="rental-block-success" id="rental-block-success" role="status" aria-live="polite" hidden></p>
+            <p class="form-error rental-block-results-error" id="rental-block-results-error" role="alert" hidden></p>
+
+            <section class="rental-block-section" aria-labelledby="rental-block-capacity-title">
+                <div class="rental-block-section__heading"><h3 id="rental-block-capacity-title">Kapasitas harian</h3><span id="rental-block-loading" aria-live="polite"></span></div>
+                <div id="rental-block-calendar" class="rental-block-calendar" aria-live="polite" aria-busy="false"></div>
+            </section>
+
+            <section class="rental-block-section" aria-labelledby="rental-block-create-title">
+                <div class="rental-block-section__heading"><h3 id="rental-block-create-title">Blok tanggal</h3><span>untuk toko ini</span></div>
+                <form class="rental-block-form" id="rental-block-form" novalidate>
+                    <div class="form-row"><label>Tanggal mulai<input name="start_date" type="date" required></label><label>Tanggal selesai<input name="end_date" type="date" required></label></div>
+                    <label>Jumlah yang diblokir<input name="quantity" type="number" min="1" max="10000" step="1" value="1" required inputmode="numeric"></label>
+                    <label>Catatan <span class="rental-block-optional">(opsional)</span><textarea name="reason" rows="3" maxlength="200" placeholder="Contoh: perawatan kostum atau jadwal pemotretan"></textarea></label>
+                    <p class="form-error" id="rental-block-form-error" role="alert" hidden></p>
+                    <button type="submit" class="button button--primary button--full">Simpan blok tanggal</button>
+                </form>
+            </section>
+
+            <section class="rental-block-section rental-block-list-section" aria-labelledby="rental-block-list-title">
+                <div class="rental-block-section__heading"><h3 id="rental-block-list-title">Blok aktif pada periode ini</h3><span id="rental-block-list-count" aria-live="polite"></span></div>
+                <div id="rental-block-list" class="rental-block-list" aria-live="polite" aria-busy="false"></div>
+                <button type="button" class="button button--outline rental-block-load-more" id="load-more-rental-blocks" hidden>Muat blok lainnya</button>
+            </section>
+        </div>
+    </aside>
+
     <aside class="cart-drawer" id="add-product-drawer" role="dialog" aria-modal="true" aria-labelledby="add-product-title" aria-hidden="true" inert>
         <div class="drawer-header"><div><span class="section-kicker" id="product-form-kicker">Mulai berjualan</span><h2 id="add-product-title">Tambah Produk</h2></div><button type="button" class="close-button" data-close-layer aria-label="Tutup formulir produk">×</button></div>
         <div class="drawer-form-wrap">

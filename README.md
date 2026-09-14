@@ -63,6 +63,9 @@ php artisan migrate:fresh --seed
 - Reservasi tumpang tindih divalidasi terhadap kapasitas stok; perubahan stok tidak boleh turun di bawah puncak reservasi aktif
 - Produk rental dengan reservasi aktif tidak dapat diubah menjadi produk jual, tetapi tetap dapat dinonaktifkan
 - Pembeli dapat membatalkan rental sebelum tanggal mulai sehingga kapasitas kembali tersedia
+- Kalender kapasitas harian menampilkan jumlah unit yang direservasi, diblokir, dan masih tersedia pada rentang tanggal inklusif
+- Penjual dapat memblokir sebagian stok untuk jadwal pemeliharaan, perbaikan, atau pemakaian pribadi tanpa menonaktifkan listing
+- Blok tanggal tidak pernah mengambil kapasitas reservasi yang sudah masuk dan dapat dibatalkan untuk mengembalikan kapasitas
 
 ### Pesanan, fulfillment, dan ulasan
 
@@ -101,7 +104,7 @@ php artisan migrate:fresh --seed
 
 - Index khusus untuk cursor pagination dan pencarian katalog
 - Query list dijaga bounded terhadap ukuran halaman
-- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, fulfillment, timeline, handoff, ulasan, feed ulasan publik, dan isolasi data
+- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, blok jadwal sewa, fulfillment, timeline, handoff, ulasan, feed ulasan publik, dan isolasi data
 
 ## Struktur Utama
 
@@ -112,6 +115,8 @@ php artisan migrate:fresh --seed
 - `app/Http/Controllers/FulfillmentMessageController.php` melayani percakapan pesanan
 - `app/Services/NotificationRecorder.php` satu-satunya jalur tulis notifikasi, idempotent dan menolak self-notify
 - `app/Services/MessageThread.php` memutuskan peran peserta, mengunci thread, dan mengirim fan-out pesan
+- `app/Services/RentalCapacity.php` satu-satunya perhitungan kapasitas sewa: puncak gabungan reservasi dan blok tanggal
+- `app/Http/Controllers/RentalBlockController.php` melayani kalender kapasitas dan mutasi blok tanggal penjual
 - `app/Http/Requests` memvalidasi seluruh input mutasi
 - `app/Services/CheckoutService.php` menangani checkout, rental, fulfillment, dan pencatatan timeline secara atomik
 - `app/Models` berisi model dan relasi Eloquent
@@ -136,6 +141,8 @@ Inbox ulasan penjual `GET /api/seller/reviews` hanya memuat ulasan pada produk m
 Notifikasi ditulis pada tabel `user_notifications` yang sengaja dipisah dari tabel `notifications` milik Laravel agar tidak menimpa relasi trait `Notifiable`. Semua penulisan lewat `NotificationRecorder` di dalam transaksi mutasi yang sama, memakai `insertOrIgnore` terhadap `event_key` unik sehingga aman terhadap retry. Balasan ulasan hanya memberi tahu pembeli saat balasan pertama muncul; penyuntingan berikutnya tidak mengirim notifikasi lagi. Endpoint `GET /api/notifications` mengembalikan `unread_count` bersama halaman cursor, sedangkan `PATCH /api/notifications/{id}/read` dan `PATCH /api/notifications/read-all` mengubah status baca tanpa menyentuh isi notifikasi.
 
 Percakapan pesanan memakai satu thread per fulfillment pada `GET|POST /api/fulfillments/{fulfillment}/messages`. Peran peserta diputuskan per fulfillment, bukan per prefix URL: penjual pemilik fulfillment dan pembeli pemilik pesanan induk. Peserta lain menerima 403, termasuk penjual pada fulfillment lain di pesanan yang sama. `sender_role` disimpan sebagai snapshot agar percakapan tetap terbaca setelah akun pengirim dihapus, dan label pihak lawan selalu berupa peran, bukan nama akun. Penanda baca disimpan sebagai id pesan terakhir yang dibaca tiap sisi karena `created_at` hanya berpresisi detik. Mengirim pesan otomatis menandai thread terbaca bagi pengirim. Fulfillment yang dibatalkan menolak pesan baru dengan 409 tetapi tetap menampilkan riwayat.
+
+Jadwal sewa penjual memakai `GET|POST /api/products/{product}/rental-blocks` dan `DELETE /api/products/{product}/rental-blocks/{block}`; kalender hanya dapat dibuka pemilik listing dan hanya untuk produk Sewa. Blok menyimpan rentang tanggal inklusif, jumlah unit, dan catatan privat yang hanya muncul di endpoint pemilik—tidak pernah pada ketersediaan publik. Kapasitas menghitung **puncak gabungan** reservasi dan blok per hari, bukan jumlah total pada rentang: reservasi yang berlangsung pada hari berbeda tidak mengurangi kapasitas secara bersamaan. Penurunan stok dan perubahan tipe menjadi produk jual ditolak 422 selama puncak tersebut masih membutuhkan stok lebih besar, sedangkan penonaktifan listing tetap diizinkan. Pembatalan blok bersifat idempotent, dan blok yang dibatalkan atau sudah lewat tidak lagi menahan kapasitas.
 
 Belum ada payment gateway, layanan pengiriman, atau deployment produksi. Notifikasi bersifat in-app saja; belum ada pengiriman email, push, maupun realtime broadcast. Seller transition, pembatalan rental, ulasan, dan mutasi stok memakai transaksi serta penguncian berurutan untuk menjaga invariant. SQLite dan retry transaksi ditujukan untuk demo lokal, bukan beban tulis bersamaan; validasi contention produksi harus menggunakan database terkelola yang mendukung row locking.
 

@@ -89,6 +89,25 @@ class RentalBookingTest extends TestCase
         $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 1, 'available_quantity' => 1]);
     }
 
+    public function test_disjoint_reservations_share_capacity_across_a_longer_booking(): void
+    {
+        $product = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 2]);
+        foreach ([2, 4] as $offset) {
+            $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+                'items' => [['id' => $product->id, 'quantity' => 1, ...$this->dates($offset, 1)]],
+            ]))->assertCreated();
+        }
+
+        $dates = $this->dates(2, 3);
+        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))
+            ->assertOk()->assertJsonPath('available_quantity', 1);
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'quantity' => 1, ...$dates]],
+        ]))->assertCreated();
+        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))
+            ->assertOk()->assertJsonPath('available_quantity', 0);
+    }
+
     public function test_rental_stock_cannot_drop_below_peak_reserved_capacity(): void
     {
         $seller = $this->user();

@@ -11,6 +11,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductReviewFeedController;
+use App\Http\Controllers\RentalBlockController;
 use App\Http\Controllers\SellerReviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,10 @@ Route::prefix('api')->group(function (): void {
         Route::patch('/products/{product}', [ProductController::class, 'update']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy']);
         Route::get('/my-products', [ProductController::class, 'owned']);
+
+        Route::get('/products/{product}/rental-blocks', [RentalBlockController::class, 'index']);
+        Route::post('/products/{product}/rental-blocks', [RentalBlockController::class, 'store']);
+        Route::delete('/products/{product}/rental-blocks/{block}', [RentalBlockController::class, 'destroy']);
 
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);

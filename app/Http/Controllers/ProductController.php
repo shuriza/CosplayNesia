@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Models\Product;
-use App\Models\RentalReservation;
+use App\Services\RentalCapacity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -106,7 +106,7 @@ class ProductController extends Controller
         ]);
     }
 
-    public function update(StoreProductRequest $request, Product $product): JsonResponse
+    public function update(StoreProductRequest $request, Product $product, RentalCapacity $capacity): JsonResponse
     {
         $attributes = $request->validated();
         $defaults = [
@@ -122,7 +122,7 @@ class ProductController extends Controller
             }
         }
 
-        $updated = DB::transaction(function () use ($request, $product, $attributes): Product {
+        $updated = DB::transaction(function () use ($request, $product, $attributes, $capacity): Product {
             $lockedProduct = Product::query()
                 ->whereKey($product->id)
                 ->where('seller_id', $request->user()->id)
@@ -132,15 +132,15 @@ class ProductController extends Controller
             if ($lockedProduct->type === Product::TYPE_RENTAL && (
                 array_key_exists('stock', $attributes) || array_key_exists('type', $attributes)
             )) {
-                $reservedCapacity = $this->peakReservedCapacity($lockedProduct);
+                $reservedCapacity = $capacity->peak($lockedProduct, today(config('app.timezone'))->toDateString());
                 if (($attributes['type'] ?? Product::TYPE_RENTAL) !== Product::TYPE_RENTAL && $reservedCapacity > 0) {
                     throw ValidationException::withMessages([
-                        'type' => 'Jenis produk tidak dapat diubah selama masih ada pesanan sewa aktif.',
+                        'type' => 'Jenis produk tidak dapat diubah selama masih ada reservasi atau blok sewa aktif.',
                     ]);
                 }
                 if (array_key_exists('stock', $attributes) && (int) $attributes['stock'] < $reservedCapacity) {
                     throw ValidationException::withMessages([
-                        'stock' => "Stok minimal {$reservedCapacity} karena sudah dialokasikan untuk pesanan sewa aktif.",
+                        'stock' => "Stok minimal {$reservedCapacity} karena sudah dialokasikan untuk reservasi atau blok sewa aktif.",
                     ]);
                 }
             }
@@ -159,32 +159,5 @@ class ProductController extends Controller
         $product->delete();
 
         return response()->json(null, 204);
-    }
-
-    private function peakReservedCapacity(Product $product): int
-    {
-        $events = [];
-        $reservations = RentalReservation::query()
-            ->where('product_id', $product->id)
-            ->where('status', RentalReservation::STATUS_RESERVED)
-            ->whereDate('end_date', '>=', today(config('app.timezone')))
-            ->get(['start_date', 'end_date', 'quantity']);
-
-        foreach ($reservations as $reservation) {
-            $start = $reservation->start_date->toDateString();
-            $afterEnd = $reservation->end_date->copy()->addDay()->toDateString();
-            $events[$start] = ($events[$start] ?? 0) + $reservation->quantity;
-            $events[$afterEnd] = ($events[$afterEnd] ?? 0) - $reservation->quantity;
-        }
-
-        ksort($events);
-        $reserved = 0;
-        $peak = 0;
-        foreach ($events as $quantity) {
-            $reserved += $quantity;
-            $peak = max($peak, $reserved);
-        }
-
-        return $peak;
     }
 }
