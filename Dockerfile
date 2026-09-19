@@ -9,8 +9,7 @@ RUN composer install \
     --no-autoloader \
     --prefer-dist
 
-COPY app app
-COPY artisan bootstrap config database public resources routes ./
+COPY . .
 RUN composer dump-autoload --no-dev --optimize
 
 FROM node:22-alpine AS assets
