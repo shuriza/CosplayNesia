@@ -67,7 +67,14 @@ jobs:
       - name: Require concurrent-writer support
         run: |
           php -r "exit(function_exists('pcntl_fork') ? 0 : 1);"
-      - run: php artisan test --configuration=phpunit.pgsql.xml
+      - name: Run PostgreSQL suite without warnings
+        run: >-
+          php vendor/bin/phpunit
+          --configuration=phpunit.pgsql.xml
+          --stop-on-warning
+          --display-warnings
+          --fail-on-warning
+          --colors=never
       - name: Migration rollback drill
         run: |
           php artisan migrate:fresh --seed --force
