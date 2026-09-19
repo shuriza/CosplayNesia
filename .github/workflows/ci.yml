@@ -45,7 +45,7 @@ jobs:
       SESSION_DRIVER: array
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgres:16-alpine
         env:
           POSTGRES_DB: cosplaynesia_test
           POSTGRES_PASSWORD: postgres
@@ -88,3 +88,23 @@ jobs:
           createdb --host=127.0.0.1 --username=postgres cosplaynesia_restore
           pg_restore --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_restore --exit-on-error storage/app/cosplaynesia.dump
           DB_DATABASE=cosplaynesia_restore php artisan migrate:status --no-interaction
+
+  container:
+    runs-on: ubuntu-latest
+    env:
+      APP_KEY: base64:Mb4PKB1DDd/m96oZLjvvxzXNpUkyJwSJwD91L5LcujA=
+      STAGING_HOST: staging.example.test
+      DB_PASSWORD: staging-database-password
+      S3_ACCESS_KEY: staging-access-key
+      S3_SECRET_KEY: staging-object-storage-secret
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate staging topology
+        run: docker compose --file compose.staging.yml config --quiet
+      - name: Build production image from zero
+        run: docker build --tag cosplaynesia:${{ github.sha }} .
+      - name: Verify required runtime extensions
+        run: >-
+          docker run --rm --entrypoint php
+          cosplaynesia:${{ github.sha }}
+          -r "exit(extension_loaded('mbstring') && extension_loaded('pcntl') && extension_loaded('pdo_pgsql') ? 0 : 1);"

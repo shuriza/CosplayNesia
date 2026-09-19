@@ -48,6 +48,18 @@ php artisan migrate:fresh --seed
 
 Rencana pengembangan dari baseline demo hingga marketplace production-ready dibagi menjadi batch berurutan di [ROADMAP.md](ROADMAP.md). Setiap batch memiliki tujuan, cakupan, dependency, dan exit gate yang wajib terpenuhi sebelum batch berikutnya dimulai.
 
+## Staging container
+
+Image produksi dan topology staging tersedia melalui `Dockerfile` dan `compose.staging.yml`. Siapkan DNS publik `STAGING_HOST` ke host staging, buka port 80/443, salin `.env.staging.example` menjadi `.env.staging`, lalu isi seluruh secret:
+
+```powershell
+docker compose --env-file .env.staging -f compose.staging.yml build
+docker compose --env-file .env.staging -f compose.staging.yml up -d
+docker compose --env-file .env.staging -f compose.staging.yml exec web php artisan app:validate-runtime
+```
+
+Service `migrate` memvalidasi konfigurasi produksi sebelum migrasi. Service `web`, `worker`, dan `scheduler` memakai image yang sama; PostgreSQL 16 dan object storage S3-compatible disediakan untuk staging. Caddy menerbitkan sertifikat TLS otomatis untuk `STAGING_HOST`; Apache tidak diekspos langsung. Endpoint `/up` adalah liveness, sedangkan `/ready` memeriksa konfigurasi, database, dan cache.
+
 ## Fitur
 
 ### Katalog dan akun
