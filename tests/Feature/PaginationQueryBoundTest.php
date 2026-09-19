@@ -90,6 +90,10 @@ class PaginationQueryBoundTest extends TestCase
 
     private function assertQueryCountIsPageSizeInvariant(User $user, string $path): void
     {
+        // Warm the account-session middleware before measuring pagination. The first request after
+        // switching actingAs identities intentionally rotates the device token and is not a
+        // page-size-dependent collection query.
+        $this->actingAs($user)->getJson('/api/me')->assertOk();
         $single = $this->selectQueryCount($user, $path.'?per_page=1');
         $full = $this->selectQueryCount($user, $path.'?per_page=5');
 

@@ -30,6 +30,7 @@ class UpdateProfileRequest extends FormRequest
                 'email:rfc',
                 'max:255',
                 Rule::unique(User::class, 'email')->ignore($this->user()?->id),
+                Rule::unique(User::class, 'pending_email')->ignore($this->user()?->id),
             ],
             'current_password' => ['required', 'string', 'current_password'],
         ];

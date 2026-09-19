@@ -31,6 +31,8 @@ Versi pertama dianggap feature complete hanya jika seluruh kondisi berikut terpe
 
 Setiap batch wajib menghasilkan vertical slice yang dapat digunakan. Batch berikutnya baru dimulai setelah exit gate batch aktif terpenuhi.
 
+Keputusan 19 September 2026: karena belum tersedia VPS, DNS, dan credential staging, verifikasi deployment live Batch 1 ditunda sebagai **gate keras sebelum Batch 6**. Batch 2–5 boleh berjalan berdasarkan CI production-like; Batch 6 dan seterusnya tidak boleh dimulai sampai workflow `Deploy staging` sukses pada VPS nyata dan HTTPS `/ready` terverifikasi. Ini bukan klaim bahwa staging live sudah tersedia.
+
 Definition of Done universal:
 
 - schema dan migrasi forward/rollback selesai;
@@ -64,6 +66,8 @@ Cakupan: katalog, akun, listing, favorit, cart lokal, checkout demo, reservasi d
 
 ## Batch 1 — Fondasi produksi dan delivery pipeline
 
+**Status:** selesai bersyarat untuk kode dan CI; deployment live dipindahkan ke gate pra-Batch 6.
+
 **Tujuan:** menghilangkan risiko teknis yang akan membuat pembayaran dan fulfillment nyata tidak aman.
 
 Cakupan:
@@ -77,7 +81,7 @@ Cakupan:
 - buat deployment staging repeatable, backup otomatis, restore drill, dan rollback migration/release;
 - pecah bootstrap frontend menjadi modul domain tanpa mengubah behavior.
 
-**Exit gate:** staging dapat dibuat dari nol oleh pipeline; checkout paralel pada PostgreSQL tidak oversell; queue retry tidak menduplikasi side effect; backup staging berhasil direstore; pencarian dan pagination setara dengan baseline.
+**Exit gate:** image dan topology staging dapat dibuat dari nol oleh pipeline; checkout paralel pada PostgreSQL tidak oversell; queue retry tidak menduplikasi side effect; backup PostgreSQL berhasil direstore; pencarian dan pagination setara dengan baseline. Bukti: CI run `35437986973` hijau. Deployment ke VPS nyata tetap wajib sebelum Batch 6.
 
 ## Batch 2 — Identitas, keamanan akun, dan legal consent
 
@@ -149,6 +153,8 @@ Cakupan:
 ## Batch 6 — Pembayaran nyata dan finalisasi order
 
 **Tujuan:** order hanya dikonfirmasi oleh hasil pembayaran yang terverifikasi.
+
+**Prerequisite keras:** workflow `Deploy staging` untuk commit kandidat harus sukses pada VPS nyata, DNS/TLS aktif, `/ready` hijau, serta rollback database/release terbukti pada environment tersebut. Tanpa bukti ini Batch 6 tetap blocked.
 
 Cakupan:
 
@@ -306,6 +312,7 @@ Urutan default bersifat ketat:
 
 Pengecualian yang aman:
 
+- deployment live Batch 1 ditunda karena VPS belum tersedia; hanya Batch 2–5 yang boleh berjalan, dan Batch 6 menjadi hard stop sampai deployment staging nyata lulus;
 - desain ledger dan fee dari Batch 13 harus dibuat sebelum coding Batch 6, tetapi UI payout tetap dikerjakan pada Batch 13;
 - skeleton backoffice minimal untuk melihat webhook/payment exception boleh dibuat di Batch 6, lalu diselesaikan di Batch 12;
 - email verification pada Batch 2 membutuhkan queue/email foundation Batch 1;

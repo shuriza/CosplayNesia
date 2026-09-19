@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\ConfirmEmailChangeNotification;
+use App\Notifications\VerifyEmailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -15,18 +18,28 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_register_and_is_authenticated(): void
     {
+        Notification::fake();
         $response = $this->postJson('/api/auth/register', [
             'name' => 'Surya Cosplayer',
             'email' => 'SURYA@example.com ',
             'password' => 'password123',
             'password_confirmation' => 'password123',
+            'accept_terms' => true,
+            'accept_privacy' => true,
+            'accept_rental_policy' => true,
         ]);
 
         $response->assertCreated()
             ->assertJsonPath('user.email', 'surya@example.com')
             ->assertSessionHas('password_hash_web', Auth::hashPasswordForCookie(Auth::user()->getAuthPassword()));
         $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', ['email' => 'surya@example.com']);
+        $this->assertDatabaseHas('users', [
+            'email' => 'surya@example.com',
+            'terms_version' => config('cosplaynesia.legal.terms_version'),
+            'privacy_version' => config('cosplaynesia.legal.privacy_version'),
+            'rental_policy_version' => config('cosplaynesia.legal.rental_policy_version'),
+        ]);
+        Notification::assertSentTo(User::findOrFail($response->json('user.id')), VerifyEmailNotification::class);
     }
 
     public function test_user_can_login_view_profile_and_logout(): void
@@ -60,6 +73,7 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_update_identity_and_owned_listing_names_with_current_password(): void
     {
+        Notification::fake();
         $user = $this->user([
             'name' => 'Nama Lama',
             'email' => 'old@example.test',
@@ -80,14 +94,15 @@ class AuthenticationTest extends TestCase
             'current_password' => 'password123',
         ])->assertOk()
             ->assertJsonPath('user.name', 'Nama Baru')
-            ->assertJsonPath('user.email', 'new@example.test')
-            ->assertJsonPath('user.email_verified_at', null);
+            ->assertJsonPath('user.email', 'old@example.test')
+            ->assertJsonPath('user.pending_email', 'new@example.test')
+            ->assertJsonPath('user.email_verified_at', fn ($value) => $value !== null);
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Nama Baru',
-            'email' => 'new@example.test',
-            'email_verified_at' => null,
+            'email' => 'old@example.test',
+            'pending_email' => 'new@example.test',
         ]);
         $this->assertDatabaseHas('products', [
             'id' => $product->id,
@@ -98,6 +113,16 @@ class AuthenticationTest extends TestCase
             'seller_name' => 'Nama Lama',
         ]);
         $this->assertAuthenticatedAs($user);
+
+        Notification::assertSentOnDemand(ConfirmEmailChangeNotification::class, function (ConfirmEmailChangeNotification $notification, array $channels, object $notifiable): bool {
+            $this->flushSession()->actingAsGuest();
+            $this->getJson($notification->url)
+                ->assertOk()
+                ->assertJsonPath('user.email', 'new@example.test')
+                ->assertJsonPath('user.pending_email', null);
+
+            return $channels === ['mail'] && $notifiable->routes['mail'] === 'new@example.test';
+        });
     }
 
     public function test_identity_update_requires_valid_password_and_unique_email_without_partial_changes(): void

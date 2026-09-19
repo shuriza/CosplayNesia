@@ -711,6 +711,8 @@ function setAuthMode(mode) {
   $('#auth-title').textContent = registering ? 'Buat akun CosplayNesia' : 'Masuk ke CosplayNesia';
   $('#name-field').hidden = !registering;
   $('#password-confirmation-field').hidden = !registering;
+  $('#registration-consent').hidden = !registering;
+  $$('input', $('#registration-consent')).forEach((input) => { input.required = registering; });
   $('#auth-name').required = registering;
   $('#auth-password-confirmation').required = registering;
   $('#auth-password').autocomplete = registering ? 'new-password' : 'current-password';
@@ -790,6 +792,9 @@ async function submitAuth(form) {
     if (state.authMode === 'register') {
       payload.name = $('#auth-name').value.trim();
       payload.password_confirmation = $('#auth-password-confirmation').value;
+      payload.accept_terms = Boolean(form.elements.accept_terms?.checked);
+      payload.accept_privacy = Boolean(form.elements.accept_privacy?.checked);
+      payload.accept_rental_policy = Boolean(form.elements.accept_rental_policy?.checked);
     }
     const response = await api(`/api/auth/${state.authMode}`, { method: 'POST', body: payload });
     invalidateCheckoutKey();
@@ -2073,6 +2078,115 @@ async function submitProductReview(orderId, itemId, trigger) {
 function fillAccountSettings() {
   $('#profile-name-input').value = String(valueOf(state.user, ['name'], ''));
   $('#profile-email-input').value = String(valueOf(state.user, ['email'], ''));
+  const pending = String(valueOf(state.user, ['pending_email'], ''));
+  const verified = Boolean(valueOf(state.user, ['email_verified_at'], null));
+  $('#email-verification-status').textContent = pending
+    ? `Email aktif tetap ${valueOf(state.user, ['email'], '')}. Konfirmasi telah dikirim ke ${pending}.`
+    : verified ? 'Email telah terverifikasi.' : 'Email belum terverifikasi. Verifikasi diperlukan untuk checkout dan berjualan.';
+  $('#resend-verification').hidden = verified;
+  $('#accept-legal-consent').hidden = Boolean(valueOf(state.user, ['transaction_ready'], false) || !verified);
+}
+
+async function submitForgotPassword(form) {
+  const errorBox = $('.form-error', form);
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  try {
+    const response = await api('/api/auth/forgot-password', { method: 'POST', body: { email: form.elements.email.value.trim() } });
+    showToast(response.message);
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  }
+}
+
+async function submitPasswordReset(form) {
+  const errorBox = $('.form-error', form);
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  try {
+    const fields = new FormData(form);
+    const response = await api('/api/auth/reset-password', { method: 'POST', body: Object.fromEntries(fields) });
+    showToast(response.message);
+    form.reset();
+    form.hidden = true;
+    setAuthMode('login');
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  }
+}
+
+async function loadAccountSessions() {
+  const list = $('#account-sessions-list');
+  list.replaceChildren(listMessage('Memuat perangkat…'));
+  const payload = await api('/api/me/sessions');
+  const entries = Array.isArray(payload?.data) ? payload.data : [];
+  list.replaceChildren(...entries.map((entry) => {
+    const card = node('article', { className: 'profile-card' });
+    card.append(node('strong', { text: entry.is_current ? 'Perangkat ini' : 'Perangkat lain' }));
+    card.append(node('span', { text: String(entry.user_agent || 'Browser tidak dikenal') }));
+    card.append(node('small', { text: `${entry.ip_address || 'IP tidak tersedia'} · ${messageTimestamp(entry.last_seen_at)}` }));
+    if (!entry.is_current) card.append(button('Cabut sesi', 'text-link', { 'data-revoke-session': entry.id }));
+    return card;
+  }));
+}
+
+async function resendVerification(trigger) {
+  trigger.disabled = true;
+  try {
+    const response = await api('/api/me/email-verification', { method: 'POST' });
+    showToast(response.message);
+  } catch (error) { handleProtectedError(error, trigger); }
+  finally { trigger.disabled = false; }
+}
+
+async function acceptLegalConsent(trigger) {
+  trigger.disabled = true;
+  try {
+    state.user = normalizedUser(await api('/api/me/legal-consent', { method: 'POST' }));
+    fillAccountSettings();
+    showToast('Kebijakan terbaru disetujui.');
+  } catch (error) { handleProtectedError(error, trigger); }
+  finally { trigger.disabled = false; }
+}
+
+async function revokeSession(id, trigger) {
+  trigger.disabled = true;
+  try {
+    await api('/api/me/sessions/' + encodeURIComponent(id), { method: 'DELETE' });
+    await loadAccountSessions();
+  } catch (error) { handleProtectedError(error, trigger); }
+}
+
+async function revokeAllSessions(trigger) {
+  trigger.disabled = true;
+  try {
+    await api('/api/me/sessions', { method: 'DELETE' });
+    state.user = null;
+    updateAuthUi();
+    closeLayer();
+    showToast('Semua sesi telah dicabut.');
+  } catch (error) { handleProtectedError(error, trigger); }
+  finally { trigger.disabled = false; }
+}
+
+async function deactivateAccount(form) {
+  const errorBox = $('.form-error', form);
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  try {
+    const response = await api('/api/me', { method: 'DELETE', body: { current_password: form.elements.current_password.value } });
+    state.user = null;
+    state.cart.clear();
+    updateAuthUi();
+    renderCart();
+    closeLayer();
+    showToast(response.message);
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  }
 }
 
 async function submitIdentity(form) {
@@ -2142,6 +2256,7 @@ function openProfile(trigger) {
   $('#profile-password-error').hidden = true;
   openLayer(elements.profileDrawer, trigger);
   loadProfileData();
+  loadAccountSessions().catch((error) => handleProtectedError(error, trigger));
 }
 
 async function logout(trigger) {
@@ -2443,9 +2558,24 @@ $$('.profile-action').forEach((control) => control.addEventListener('click', (ev
 $('.mobile-account-action').addEventListener('click', (event) => state.user ? openProfile(event.currentTarget) : (setAuthMode('login'), openLayer(elements.authModal, event.currentTarget)));
 $$('[data-switch-auth]').forEach((control) => control.addEventListener('click', () => setAuthMode(control.dataset.switchAuth)));
 $('#auth-form').addEventListener('submit', (event) => { event.preventDefault(); submitAuth(event.currentTarget); });
+$('#forgot-password-button').addEventListener('click', () => {
+  const form = $('#forgot-password-form');
+  form.hidden = !form.hidden;
+  if (!form.hidden) form.elements.email.value = $('#auth-email').value.trim();
+});
+$('#forgot-password-form').addEventListener('submit', (event) => { event.preventDefault(); submitForgotPassword(event.currentTarget); });
+$('#reset-password-form').addEventListener('submit', (event) => { event.preventDefault(); submitPasswordReset(event.currentTarget); });
 $('#logout-button').addEventListener('click', (event) => logout(event.currentTarget));
 $('#profile-identity-form').addEventListener('submit', (event) => { event.preventDefault(); submitIdentity(event.currentTarget); });
 $('#profile-password-form').addEventListener('submit', (event) => { event.preventDefault(); submitPassword(event.currentTarget); });
+$('#resend-verification').addEventListener('click', (event) => resendVerification(event.currentTarget));
+$('#accept-legal-consent').addEventListener('click', (event) => acceptLegalConsent(event.currentTarget));
+$('#revoke-all-sessions').addEventListener('click', (event) => revokeAllSessions(event.currentTarget));
+$('#deactivate-account-form').addEventListener('submit', (event) => { event.preventDefault(); deactivateAccount(event.currentTarget); });
+$('#account-sessions-list').addEventListener('click', (event) => {
+  const trigger = event.target.closest('[data-revoke-session]');
+  if (trigger) revokeSession(trigger.dataset.revokeSession, trigger);
+});
 $('#refresh-profile').addEventListener('click', loadProfileData);
 $('#load-more-my-products').addEventListener('click', () => loadOwnedProducts({ append: true }).catch((error) => handleProtectedError(error)));
 $('#load-more-incoming-orders').addEventListener('click', () => loadIncomingFulfillments({ append: true }).catch((error) => handleProtectedError(error)));
@@ -2526,4 +2656,14 @@ document.addEventListener('keydown', (event) => {
 
 setAuthMode('login');
 renderCart();
+const resetParams = new URLSearchParams(window.location.search);
+if (resetParams.has('email_verified')) showToast('Email berhasil diverifikasi.');
+if (resetParams.has('email_changed')) showToast('Email berhasil diperbarui.');
+if (resetParams.has('reset_token') && resetParams.has('email')) {
+  const resetForm = $('#reset-password-form');
+  resetForm.hidden = false;
+  resetForm.elements.token.value = resetParams.get('reset_token') ?? '';
+  resetForm.elements.email.value = resetParams.get('email') ?? '';
+  openLayer(elements.authModal);
+}
 refreshSession().then(fetchProducts);

@@ -188,9 +188,13 @@
             <label>Email<input id="auth-email" name="email" type="email" required autocomplete="email" placeholder="nama@email.com"></label>
             <label>Kata sandi<input id="auth-password" name="password" type="password" required minlength="8" autocomplete="current-password" placeholder="Minimal 8 karakter"></label>
             <label id="password-confirmation-field" hidden>Konfirmasi kata sandi<input id="auth-password-confirmation" name="password_confirmation" type="password" minlength="8" autocomplete="new-password" placeholder="Ulangi kata sandi"></label>
+            <fieldset id="registration-consent" hidden><legend>Persetujuan</legend><label class="review-filter"><input name="accept_terms" type="checkbox"><span>Saya menyetujui Syarat &amp; Ketentuan.</span></label><label class="review-filter"><input name="accept_privacy" type="checkbox"><span>Saya menyetujui Kebijakan Privasi.</span></label><label class="review-filter"><input name="accept_rental_policy" type="checkbox"><span>Saya menyetujui Kebijakan Rental.</span></label></fieldset>
             <p class="form-error" id="auth-error" role="alert" hidden></p>
             <button class="button button--primary button--full" type="submit">Masuk</button>
         </form>
+        <button type="button" class="text-link" id="forgot-password-button">Lupa kata sandi?</button>
+        <form id="forgot-password-form" class="account-form" hidden novalidate><label>Email akun<input name="email" type="email" required autocomplete="email"></label><p class="form-error" role="alert" hidden></p><button type="submit" class="button button--outline button--full">Kirim tautan reset</button></form>
+        <form id="reset-password-form" class="account-form" hidden novalidate><input name="token" type="hidden"><label>Email akun<input name="email" type="email" required autocomplete="email"></label><label>Kata sandi baru<input name="password" type="password" required minlength="8" autocomplete="new-password"></label><label>Konfirmasi kata sandi<input name="password_confirmation" type="password" required minlength="8" autocomplete="new-password"></label><p class="form-error" role="alert" hidden></p><button type="submit" class="button button--primary button--full">Reset kata sandi</button></form>
         <small>Dengan melanjutkan, kamu menyetujui syarat dan kebijakan privasi CosplayNesia.</small>
     </section>
 
@@ -201,6 +205,7 @@
             <div class="profile-actions"><button type="button" class="button button--primary" id="add-product-button">Tambah produk</button><button type="button" class="button button--outline" id="logout-button">Keluar</button></div>
             <section class="profile-section account-settings" aria-labelledby="account-settings-title">
                 <h3 id="account-settings-title">Pengaturan Akun</h3>
+                <div class="account-form" id="email-verification-panel"><p id="email-verification-status"></p><button type="button" class="button button--outline" id="resend-verification">Kirim ulang verifikasi</button><button type="button" class="button button--outline" id="accept-legal-consent" hidden>Setujui kebijakan terbaru</button></div>
                 <form class="account-form" id="profile-identity-form" novalidate>
                     <fieldset><legend>Identitas</legend>
                         <label>Nama lengkap<input id="profile-name-input" name="name" type="text" required minlength="2" maxlength="80" autocomplete="name"></label>
@@ -219,6 +224,8 @@
                     <p class="form-error" id="profile-password-error" role="alert" hidden></p>
                     <button type="submit" class="button button--outline">Ubah kata sandi</button>
                 </form>
+                <section class="account-form" aria-labelledby="account-sessions-title"><h4 id="account-sessions-title">Perangkat aktif</h4><div class="profile-list" id="account-sessions-list"></div><button type="button" class="button button--outline" id="revoke-all-sessions">Keluar dari semua perangkat</button></section>
+                <form class="account-form" id="deactivate-account-form" novalidate><fieldset><legend>Nonaktifkan akun</legend><p>Listing akan dinonaktifkan dan identitas akun dianonimkan. Riwayat transaksi tetap disimpan.</p><label>Kata sandi saat ini<input name="current_password" type="password" required autocomplete="current-password"></label></fieldset><p class="form-error" role="alert" hidden></p><button type="submit" class="button button--outline">Nonaktifkan akun</button></form>
             </section>
             <section class="profile-section" aria-labelledby="my-products-title"><div class="profile-section__heading"><div><h3 id="my-products-title">Toko Saya</h3><span id="my-products-count" class="profile-section__count" aria-live="polite"></span></div><button type="button" class="text-link" id="refresh-profile">Muat ulang</button></div><div class="profile-list" id="my-products-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-my-products" hidden>Muat lebih banyak produk</button></section>
             <section class="profile-section" aria-labelledby="incoming-orders-title"><div class="profile-section__heading"><h3 id="incoming-orders-title">Pesanan Masuk</h3><span id="incoming-orders-count" class="profile-section__count" aria-live="polite"></span></div><div class="profile-list" id="incoming-orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-incoming-orders" hidden>Muat lebih banyak pesanan masuk</button></section>

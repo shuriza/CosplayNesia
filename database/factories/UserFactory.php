@@ -16,8 +16,17 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
+            'terms_version' => config('cosplaynesia.legal.terms_version'),
+            'privacy_version' => config('cosplaynesia.legal.privacy_version'),
+            'rental_policy_version' => config('cosplaynesia.legal.rental_policy_version'),
+            'legal_accepted_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function unverified(): static
+    {
+        return $this->state(fn (): array => ['email_verified_at' => null]);
     }
 }

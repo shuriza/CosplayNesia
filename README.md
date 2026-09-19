@@ -69,6 +69,12 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - Katalog responsif dengan pencarian SQLite FTS5, filter kategori, sorting deterministik, favorit, dan cursor-based load more
 - Register, login, logout, pembaruan profil, dan rotasi kata sandi dengan verifikasi kata sandi saat ini
 - Session authentication Laravel yang mengeluarkan device lain setelah kata sandi dirotasi tanpa mengeluarkan device yang melakukan perubahan
+- Verifikasi email dan resend ter-throttle; akun belum terverifikasi tidak dapat checkout atau menerbitkan listing
+- Forgot/reset password anti-enumeration dengan token sekali pakai yang mencabut seluruh device session
+- Perubahan email memakai alamat pending dan baru aktif setelah tautan signed pada email baru dikonfirmasi
+- Daftar perangkat aktif, revoke per-device/revoke-all, serta penolakan eksplisit untuk session yang sudah dicabut
+- Consent Syarat, Privasi, dan Kebijakan Rental di-versioning; consent usang memblokir transaksi sampai diterima ulang
+- Deaktivasi akun menganonimkan identitas, menonaktifkan listing, dan mempertahankan snapshot transaksi serta audit keamanan
 - Favorit persisten dan listing milik pengguna dengan akses berbasis kepemilikan
 - Tambah, edit, aktifkan/nonaktifkan, dan hapus listing; listing nonaktif tidak dapat di-checkout
 
@@ -123,6 +129,7 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - Index khusus untuk cursor pagination dan pencarian katalog
 - Query list dijaga bounded terhadap ukuran halaman
 - Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, blok jadwal sewa, fulfillment, timeline, handoff, ulasan, feed ulasan publik, dan isolasi data
+- CI memverifikasi SQLite dan PostgreSQL, checkout paralel, retry queue idempotent, rollback migration/database, restore backup, build container, dan extension runtime
 
 ## Struktur Utama
 
@@ -133,6 +140,8 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - `app/Http/Controllers/FulfillmentMessageController.php` melayani percakapan pesanan
 - `app/Services/NotificationRecorder.php` satu-satunya jalur tulis notifikasi, idempotent dan menolak self-notify
 - `app/Services/MessageThread.php` memutuskan peran peserta, mengunci thread, dan mengirim fan-out pesan
+- `app/Services/AccountSessionManager.php` mengelola token perangkat terpisah dari session id Laravel, revoke, dan rotasi saat identitas auth berubah
+- `app/Services/SecurityEventRecorder.php` menjadi jalur tulis audit keamanan append-only
 - `app/Services/RentalCapacity.php` satu-satunya perhitungan kapasitas sewa: puncak gabungan reservasi dan blok tanggal
 - `app/Http/Controllers/RentalBlockController.php` melayani kalender kapasitas dan mutasi blok tanggal penjual
 - `app/Http/Requests` memvalidasi seluruh input mutasi
