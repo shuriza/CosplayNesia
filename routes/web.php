@@ -11,11 +11,13 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductReviewFeedController;
+use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RentalBlockController;
 use App\Http\Controllers\SellerReviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
+Route::get('/ready', ReadinessController::class)->name('readiness');
 
 Route::prefix('api')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);

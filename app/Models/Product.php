@@ -96,11 +96,21 @@ class Product extends Model
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         return $query->when($term, function (Builder $query, string $term): void {
-            if (mb_strlen($term) >= 3 && DB::connection($query->getModel()->getConnectionName())->getDriverName() === 'sqlite') {
+            $driver = DB::connection($query->getModel()->getConnectionName())->getDriverName();
+            if (mb_strlen($term) >= 3 && $driver === 'sqlite') {
                 $phrase = '"'.str_replace('"', '""', $term).'"';
                 $query->whereRaw(
                     'products.id in (select product_id from product_search where product_search match ?)',
                     [$phrase],
+                );
+
+                return;
+            }
+
+            if ($driver === 'pgsql') {
+                $query->whereRaw(
+                    "to_tsvector('simple'::regconfig, coalesce(name, '') || ' ' || coalesce(series, '') || ' ' || coalesce(seller, '') || ' ' || coalesce(city, '')) @@ websearch_to_tsquery('simple'::regconfig, ?)",
+                    [$term],
                 );
 
                 return;

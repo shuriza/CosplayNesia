@@ -44,6 +44,10 @@ Reset database demo dan muat kembali 12 produk awal:
 php artisan migrate:fresh --seed
 ```
 
+## Roadmap
+
+Rencana pengembangan dari baseline demo hingga marketplace production-ready dibagi menjadi batch berurutan di [ROADMAP.md](ROADMAP.md). Setiap batch memiliki tujuan, cakupan, dependency, dan exit gate yang wajib terpenuhi sebelum batch berikutnya dimulai.
+
 ## Fitur
 
 ### Katalog dan akun

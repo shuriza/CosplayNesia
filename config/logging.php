@@ -1,5 +1,7 @@
 <?php
 
+use App\Logging\RedactSensitiveContext;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 
@@ -9,7 +11,15 @@ return [
     'channels' => [
         'stack' => ['driver' => 'stack', 'channels' => explode(',', (string) env('LOG_STACK', 'single')), 'ignore_exceptions' => false],
         'single' => ['driver' => 'single', 'path' => storage_path('logs/laravel.log'), 'level' => env('LOG_LEVEL', 'debug'), 'replace_placeholders' => true],
-        'stderr' => ['driver' => 'monolog', 'level' => env('LOG_LEVEL', 'debug'), 'handler' => StreamHandler::class, 'with' => ['stream' => 'php://stderr']],
+        'stderr' => [
+            'driver' => 'monolog',
+            'level' => env('LOG_LEVEL', 'debug'),
+            'handler' => StreamHandler::class,
+            'formatter' => JsonFormatter::class,
+            'formatter_with' => ['batchMode' => JsonFormatter::BATCH_MODE_JSON, 'appendNewline' => true],
+            'with' => ['stream' => 'php://stderr'],
+            'tap' => [RedactSensitiveContext::class],
+        ],
         'null' => ['driver' => 'monolog', 'handler' => NullHandler::class],
         'emergency' => ['path' => storage_path('logs/laravel.log')],
     ],

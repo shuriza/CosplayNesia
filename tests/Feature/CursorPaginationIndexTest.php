@@ -12,6 +12,8 @@ class CursorPaginationIndexTest extends TestCase
 
     public function test_cursor_list_queries_use_scope_and_order_indexes_without_temporary_sorting(): void
     {
+        $this->markTestSkippedUnlessSqlite();
+
         $this->assertIndexedPlan(
             'SELECT * FROM products WHERE seller_id = ? ORDER BY created_at DESC, id DESC LIMIT 5',
             [1],
@@ -76,6 +78,8 @@ class CursorPaginationIndexTest extends TestCase
 
     public function test_long_catalog_search_uses_fts_virtual_index_instead_of_scanning_products(): void
     {
+        $this->markTestSkippedUnlessSqlite();
+
         $details = collect(DB::select(<<<'SQL'
             EXPLAIN QUERY PLAN
             SELECT products.* FROM products
@@ -100,5 +104,12 @@ class CursorPaginationIndexTest extends TestCase
         $this->assertStringContainsString("USING INDEX {$index}", $details);
         $this->assertStringNotContainsString('SCAN ', $details);
         $this->assertStringNotContainsString('USE TEMP B-TREE', $details);
+    }
+
+    private function markTestSkippedUnlessSqlite(): void
+    {
+        if (DB::getDriverName() !== 'sqlite') {
+            $this->markTestSkipped('SQLite query-plan assertion. PostgreSQL search is covered by the integration workflow.');
+        }
     }
 }

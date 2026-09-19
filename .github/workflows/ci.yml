@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - run: php artisan test
+      - run: vendor/bin/pint --test
+      - run: npm run build
+      - run: composer audit --locked
+
+  postgres:
+    runs-on: ubuntu-latest
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:Mb4PKB1DDd/m96oZLjvvxzXNpUkyJwSJwD91L5LcujA=
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: cosplaynesia_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_SSLMODE: disable
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: cosplaynesia_test
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d cosplaynesia_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_pgsql
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist
+      - run: php artisan test --configuration=phpunit.pgsql.xml
+      - name: Migration rollback drill
+        run: |
+          php artisan migrate:fresh --seed --force
+          php artisan migrate:rollback --step=2 --force
+          php artisan migrate --force
+      - name: PostgreSQL backup and restore drill
+        env:
+          PGPASSWORD: postgres
+        run: |
+          pg_dump --host=127.0.0.1 --username=postgres --format=custom --file=storage/app/cosplaynesia.dump cosplaynesia_test
+          createdb --host=127.0.0.1 --username=postgres cosplaynesia_restore
+          pg_restore --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_restore --exit-on-error storage/app/cosplaynesia.dump
+          DB_DATABASE=cosplaynesia_restore php artisan migrate:status --no-interaction
