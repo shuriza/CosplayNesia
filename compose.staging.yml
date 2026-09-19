@@ -4,7 +4,7 @@ x-app: &app
   build:
     context: .
     target: runtime
-  image: cosplaynesia:staging
+  image: cosplaynesia:${IMAGE_TAG:-staging}
   restart: unless-stopped
   environment:
     APP_NAME: CosplayNesia

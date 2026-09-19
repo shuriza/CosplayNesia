@@ -88,6 +88,19 @@ jobs:
           createdb --host=127.0.0.1 --username=postgres cosplaynesia_restore
           pg_restore --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_restore --exit-on-error storage/app/cosplaynesia.dump
           DB_DATABASE=cosplaynesia_restore php artisan migrate:status --no-interaction
+      - name: Failed-release database rollback drill
+        env:
+          PGPASSWORD: postgres
+        run: |
+          expected_products=$(psql --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_test --tuples-only --no-align --command='select count(*) from products')
+          pg_dump --host=127.0.0.1 --username=postgres --format=custom --file=storage/app/pre-failed-release.dump cosplaynesia_test
+          psql --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_test --command='truncate table products cascade'
+          test "$(psql --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_test --tuples-only --no-align --command='select count(*) from products')" = "0"
+          dropdb --host=127.0.0.1 --username=postgres --maintenance-db=postgres --force cosplaynesia_test
+          createdb --host=127.0.0.1 --username=postgres --maintenance-db=postgres --owner=postgres cosplaynesia_test
+          pg_restore --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_test --exit-on-error storage/app/pre-failed-release.dump
+          test "$(psql --host=127.0.0.1 --username=postgres --dbname=cosplaynesia_test --tuples-only --no-align --command='select count(*) from products')" = "$expected_products"
+          php artisan migrate:status --no-interaction
 
   container:
     runs-on: ubuntu-latest

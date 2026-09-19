@@ -1,0 +1,117 @@
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, tag, or branch to deploy
+        required: true
+        default: main
+
+permissions:
+  actions: read
+  contents: read
+  deployments: write
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: staging
+      url: https://${{ vars.STAGING_HOST }}
+    env:
+      DEPLOY_ROOT: /opt/cosplaynesia
+      STAGING_HOST: ${{ vars.STAGING_HOST }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Validate deployment configuration
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          test -n "$STAGING_HOST"
+          test -n "$VPS_HOST"
+          test -n "$VPS_USER"
+          test -n "$APP_KEY"
+          test -n "$DB_PASSWORD"
+          test -n "$S3_ACCESS_KEY"
+          test -n "$S3_SECRET_KEY"
+          test -n "$VPS_KNOWN_HOSTS"
+          test -n "$VPS_SSH_KEY"
+
+      - name: Require successful CI for selected commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          release_sha=$(git rev-parse HEAD)
+          successful_runs=$(gh api \
+            --method GET \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs" \
+            -f head_sha="$release_sha" \
+            -f status=success \
+            --jq '.total_count')
+          test "$successful_runs" -gt 0
+
+      - name: Configure verified SSH access
+        env:
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/known_hosts ~/.ssh/id_ed25519
+
+      - name: Prepare immutable release
+        id: release
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          S3_ACCESS_KEY: ${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
+        run: |
+          release_sha=$(git rev-parse HEAD)
+          echo "sha=$release_sha" >> "$GITHUB_OUTPUT"
+          git archive --format=tar.gz --output=release.tar.gz HEAD
+          {
+            printf 'APP_KEY=%s\n' "$APP_KEY"
+            printf 'STAGING_HOST=%s\n' "$STAGING_HOST"
+            printf 'IMAGE_TAG=%s\n' "$release_sha"
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+            printf 'S3_ACCESS_KEY=%s\n' "$S3_ACCESS_KEY"
+            printf 'S3_SECRET_KEY=%s\n' "$S3_SECRET_KEY"
+          } > .env.staging
+          chmod 600 .env.staging
+
+      - name: Upload release to VPS
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          remote="$VPS_USER@$VPS_HOST"
+          ssh -o BatchMode=yes -o ConnectTimeout=15 "$remote" "install -d -m 700 '$DEPLOY_ROOT/releases/$RELEASE_SHA' '$DEPLOY_ROOT/backups'"
+          scp -o BatchMode=yes -o ConnectTimeout=15 release.tar.gz .env.staging "$remote:$DEPLOY_ROOT/releases/$RELEASE_SHA/"
+          ssh -o BatchMode=yes -o ConnectTimeout=15 "$remote" "cd '$DEPLOY_ROOT/releases/$RELEASE_SHA' && tar -xzf release.tar.gz && rm release.tar.gz && chmod 600 .env.staging"
+
+      - name: Deploy and verify HTTPS readiness
+        env:
+          RELEASE_SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          remote="$VPS_USER@$VPS_HOST"
+          ssh -o BatchMode=yes -o ConnectTimeout=15 "$remote" \
+            "DEPLOY_ROOT='$DEPLOY_ROOT' RELEASE_SHA='$RELEASE_SHA' STAGING_HOST='$STAGING_HOST' sh '$DEPLOY_ROOT/releases/$RELEASE_SHA/scripts/deploy-staging.sh'"
+          curl --fail --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 \
+            "https://$STAGING_HOST/ready"

@@ -60,6 +60,8 @@ docker compose --env-file .env.staging -f compose.staging.yml exec web php artis
 
 Service `migrate` memvalidasi konfigurasi produksi sebelum migrasi. Service `web`, `worker`, dan `scheduler` memakai image yang sama; PostgreSQL 16 dan object storage S3-compatible disediakan untuk staging. Caddy menerbitkan sertifikat TLS otomatis untuk `STAGING_HOST`; Apache tidak diekspos langsung. Endpoint `/up` adalah liveness, sedangkan `/ready` memeriksa konfigurasi, database, dan cache.
 
+Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitHub Environment `staging` membutuhkan variable `STAGING_HOST` serta secrets `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_KNOWN_HOSTS`, `APP_KEY`, `DB_PASSWORD`, `S3_ACCESS_KEY`, dan `S3_SECRET_KEY`. Workflow hanya menerima commit yang CI-nya hijau, mengirim source sebagai release immutable, dan membuat backup PostgreSQL sebelum migrasi. Jika build, migration, atau HTTPS `/ready` gagal, workflow menghentikan writer, mengembalikan database dari dump pra-deploy, mengaktifkan release sebelumnya, lalu memverifikasi readiness lagi. User VPS harus dapat menjalankan Docker Compose tanpa `sudo`, mempunyai akses tulis ke `/opt/cosplaynesia`, dan menyediakan `curl`; DNS `STAGING_HOST` harus menunjuk ke VPS dan port 80/443 harus terbuka.
+
 ## Fitur
 
 ### Katalog dan akun
