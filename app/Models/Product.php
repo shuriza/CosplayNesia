@@ -107,10 +107,10 @@ class Product extends Model
                 return;
             }
 
-            if ($driver === 'pgsql') {
+            if (mb_strlen($term) >= 3 && $driver === 'pgsql') {
                 $query->whereRaw(
-                    "to_tsvector('simple'::regconfig, coalesce(name, '') || ' ' || coalesce(series, '') || ' ' || coalesce(seller, '') || ' ' || coalesce(city, '')) @@ websearch_to_tsquery('simple'::regconfig, ?)",
-                    [$term],
+                    "lower(coalesce(name, '') || ' ' || coalesce(series, '') || ' ' || coalesce(seller, '') || ' ' || coalesce(city, '')) LIKE ?",
+                    ['%'.mb_strtolower($term).'%'],
                 );
 
                 return;

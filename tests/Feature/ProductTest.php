@@ -28,13 +28,22 @@ class ProductTest extends TestCase
 
     public function test_trigram_search_index_backfills_and_tracks_product_changes(): void
     {
-        $this->assertSame([
-            'products_search_delete',
-            'products_search_insert',
-            'products_search_update',
-        ], collect(DB::select(
-            "SELECT name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'products_search_%' ORDER BY name",
-        ))->pluck('name')->all());
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlite') {
+            $this->assertSame([
+                'products_search_delete',
+                'products_search_insert',
+                'products_search_update',
+            ], collect(DB::select(
+                "SELECT name FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'products_search_%' ORDER BY name",
+            ))->pluck('name')->all());
+        } elseif ($driver === 'pgsql') {
+            $this->assertSame('products_search_trigram_index', DB::table('pg_indexes')
+                ->where('schemaname', 'public')
+                ->where('tablename', 'products')
+                ->where('indexname', 'products_search_trigram_index')
+                ->value('indexname'));
+        }
 
         $owner = $this->user(['name' => 'Kitsune Search']);
         $product = Product::factory()->for($owner, 'owner')->create([
@@ -53,7 +62,10 @@ class ProductTest extends TestCase
         $this->getJson('/api/products?q=Na')->assertOk()->assertJsonPath('data.0.id', $product->id);
 
         $product->delete();
-        $this->assertDatabaseMissing('product_search', ['product_id' => $product->id]);
+        if ($driver === 'sqlite') {
+            $this->assertDatabaseMissing('product_search', ['product_id' => $product->id]);
+        }
+        $this->getJson('/api/products?q=avia')->assertOk()->assertJsonPath('data', []);
     }
 
     public function test_authenticated_user_can_create_and_only_list_owned_products(): void

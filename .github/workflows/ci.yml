@@ -61,9 +61,12 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: mbstring, pdo_pgsql
+          extensions: mbstring, pcntl, pdo_pgsql
           coverage: none
       - run: composer install --no-interaction --prefer-dist
+      - name: Require concurrent-writer support
+        run: |
+          php -r "exit(function_exists('pcntl_fork') ? 0 : 1);"
       - run: php artisan test --configuration=phpunit.pgsql.xml
       - name: Migration rollback drill
         run: |
