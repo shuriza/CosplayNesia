@@ -35,24 +35,24 @@ class CursorPaginationIndexTest extends TestCase
             'fulfillments_seller_status_cursor_index',
         );
         $this->assertIndexedPlan(
-            'SELECT * FROM products WHERE is_active = ? ORDER BY popular DESC, id DESC LIMIT 8',
-            [1],
-            'products_active_popular_cursor_index',
+            'SELECT * FROM products WHERE status = ? ORDER BY popular DESC, id DESC LIMIT 8',
+            ['published'],
+            'products_status_popular_cursor_index',
         );
         $this->assertIndexedPlan(
-            'SELECT * FROM products WHERE is_active = ? ORDER BY created_at DESC, id DESC LIMIT 8',
-            [1],
-            'products_active_created_cursor_index',
+            'SELECT * FROM products WHERE status = ? ORDER BY created_at DESC, id DESC LIMIT 8',
+            ['published'],
+            'products_status_created_cursor_index',
         );
         $this->assertIndexedPlan(
-            'SELECT * FROM products WHERE is_active = ? ORDER BY price ASC, id ASC LIMIT 8',
-            [1],
-            'products_active_price_cursor_index',
+            'SELECT * FROM products WHERE status = ? ORDER BY price ASC, id ASC LIMIT 8',
+            ['published'],
+            'products_status_price_cursor_index',
         );
         $this->assertIndexedPlan(
-            'SELECT * FROM products WHERE is_active = ? ORDER BY price DESC, id DESC LIMIT 8',
-            [1],
-            'products_active_price_cursor_index',
+            'SELECT * FROM products WHERE status = ? ORDER BY price DESC, id DESC LIMIT 8',
+            ['published'],
+            'products_status_price_cursor_index',
         );
         $this->assertIndexedPlan(
             'SELECT * FROM product_reviews WHERE product_id = ? ORDER BY created_at DESC, id DESC LIMIT 5',
@@ -83,7 +83,7 @@ class CursorPaginationIndexTest extends TestCase
         $details = collect(DB::select(<<<'SQL'
             EXPLAIN QUERY PLAN
             SELECT products.* FROM products
-            WHERE is_active = 1
+            WHERE status = 'published'
               AND products.id IN (
                   SELECT product_id FROM product_search WHERE product_search MATCH ?
               )

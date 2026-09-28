@@ -2,13 +2,14 @@
 
 namespace Tests;
 
+use App\Models\ProductVariant;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
     protected function checkoutPayload(array $payload): array
     {
-        return array_replace_recursive([
+        $payload = array_replace_recursive([
             'recipient' => [
                 'name' => 'Test Recipient',
                 'phone' => '081234567890',
@@ -23,5 +24,20 @@ abstract class TestCase extends BaseTestCase
             ],
             'handoff_note' => null,
         ], $payload);
+        foreach ($payload['items'] ?? [] as $index => $item) {
+            if (isset($item['variant_id']) || ! isset($item['id'])) {
+                continue;
+            }
+            $variantId = ProductVariant::query()
+                ->where('product_id', $item['id'])
+                ->orderByDesc('is_default')
+                ->orderBy('position')
+                ->value('id');
+            if ($variantId !== null) {
+                $payload['items'][$index]['variant_id'] = $variantId;
+            }
+        }
+
+        return $payload;
     }
 }

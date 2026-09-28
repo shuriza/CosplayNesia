@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ProductVariant;
 use App\Models\RentalReservation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class AvailabilityRequest extends FormRequest
@@ -17,6 +19,7 @@ class AvailabilityRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'variant_id' => ['required', 'integer', Rule::exists(ProductVariant::class, 'id')],
             'start_date' => ['required', 'date_format:Y-m-d'],
             'end_date' => ['required', 'date_format:Y-m-d'],
             'quantity' => ['sometimes', 'integer', 'min:1', 'max:20'],

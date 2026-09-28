@@ -91,6 +91,28 @@ button:disabled { cursor: not-allowed; opacity: 0.58; transform: none !important
 }
 .profile-card__actions button:hover { border-color: var(--primary); }
 .profile-card__actions .danger-action { color: #a82038; margin-left: auto; }
+.storefront { display: grid; gap: 14px; }
+.storefront > h2 { margin: 0; font: 800 clamp(24px,4vw,38px)/1.15 "Plus Jakarta Sans", sans-serif; }
+.storefront__products { margin-top: 10px; grid-template-columns: repeat(3,minmax(0,1fr)); }
+.listing-gallery { display: grid; grid-template-columns: repeat(auto-fill,minmax(110px,1fr)); gap: 10px; margin-top: 12px; }
+.listing-gallery__item { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.listing-gallery__image { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.listing-gallery__actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; }
+.listing-gallery__actions button { font-size: 11px; }
+.listing-variants { display: grid; gap: 7px; margin-top: 12px; }
+.listing-variant { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.listing-variant strong, .listing-variant small { display: block; }
+.listing-variant small { margin-top: 3px; color: var(--muted); }
+.listing-variant__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.listing-variant__actions button { font-size: 11px; }
+.listing-detail-list { margin: 14px 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.pricing-terms { margin: -10px 0 12px; color: var(--muted); font-size: 12px; }
+.variant-picker { display: grid; gap: 6px; margin-bottom: 14px; font-size: 12px; font-weight: 700; }
+.variant-picker select, .cart-item select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: #fff; color: var(--ink); }
+.listing-readiness { margin-top: 12px; padding: 11px; border: 1px solid #ead6a4; border-radius: 10px; background: #fffaf0; }
+.listing-readiness--ready { border-color: #b8dfc5; background: #f0faf3; }
+.listing-readiness ul { display: grid; gap: 3px; margin: 7px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 11px; }
+.listing-readiness li.is-complete { color: #277544; }
 .order-items { display: grid; gap: 4px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 11px; }
 .account-settings { display: grid; gap: 14px; }
 .account-settings > h3 { margin-bottom: 0; }

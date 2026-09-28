@@ -18,27 +18,87 @@ class Product extends Model
 
     public const TYPE_SALE = 'Beli';
 
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_PAUSED = 'paused';
+
+    public const STATUS_REJECTED = 'rejected';
+
+    public const STATUS_ARCHIVED = 'archived';
+
     protected $fillable = [
-        'seller_id', 'name', 'series', 'category', 'price', 'type', 'size',
-        'seller', 'city', 'popular', 'badge', 'image', 'stock', 'is_active',
+        'seller_id', 'store_id', 'name', 'series', 'category', 'category_attributes', 'costume_includes',
+        'price', 'sale_price', 'rental_price_per_day', 'rental_deposit', 'rental_min_days',
+        'rental_max_days', 'type', 'size', 'measurements', 'care_instructions', 'seller', 'city', 'popular',
+        'badge', 'image', 'stock', 'status',
     ];
 
     protected function casts(): array
     {
         return [
             'price' => 'integer',
+            'sale_price' => 'integer',
+            'rental_price_per_day' => 'integer',
+            'rental_deposit' => 'integer',
+            'rental_min_days' => 'integer',
+            'rental_max_days' => 'integer',
             'stock' => 'integer',
             'popular' => 'integer',
             'rating' => 'float',
             'review_count' => 'integer',
-            'is_active' => 'boolean',
+            'published_at' => 'datetime',
+            'archived_at' => 'datetime',
+            'submitted_for_review_at' => 'datetime',
+            'moderated_at' => 'datetime',
+            'content_version' => 'integer',
+            'approved_version' => 'integer',
+            'category_attributes' => 'array',
+            'costume_includes' => 'array',
+            'measurements' => 'array',
             'is_favorite' => 'boolean',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (Product $product): void {
+            if ($product->type === self::TYPE_RENTAL && $product->rental_price_per_day === null) {
+                $product->forceFill([
+                    'rental_price_per_day' => $product->price,
+                    'rental_deposit' => 0,
+                    'rental_min_days' => 1,
+                    'rental_max_days' => RentalReservation::MAX_DAYS,
+                ])->save();
+            } elseif ($product->type === self::TYPE_SALE && $product->sale_price === null) {
+                $product->forceFill(['sale_price' => $product->price])->save();
+            }
+            $product->variants()->create([
+                'sku' => 'LEGACY-'.$product->id,
+                'label' => $product->size ?: 'Standar',
+                'size' => $product->size,
+                'condition' => ProductVariant::CONDITION_GOOD,
+                'stock' => $product->stock,
+                'position' => 0,
+                'is_default' => true,
+            ]);
+        });
     }
 
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
+    }
+
+    public function moderator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'moderated_by');
     }
 
     public function favoritedBy(): BelongsToMany
@@ -49,6 +109,16 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('position');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('position')->orderBy('id');
     }
 
     public function rentalReservations(): HasMany
@@ -66,6 +136,16 @@ class Product extends Model
         return $query
             ->withCount(['reviews as review_count'])
             ->withAvg('reviews as rating', 'rating');
+    }
+
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_PUBLISHED);
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->status === self::STATUS_PUBLISHED;
     }
 
     /**

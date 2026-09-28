@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\RentalReservation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,8 +42,12 @@ class CheckoutRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'address_id' => ['nullable', 'integer'],
+            'pickup_seller_ids' => ['sometimes', 'array', 'max:50'],
+            'pickup_seller_ids.*' => ['integer', 'distinct'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
-            'items.*.id' => ['required', 'integer', 'distinct', Rule::exists(Product::class, 'id')->where('is_active', true)],
+            'items.*.id' => ['required', 'integer', Rule::exists(Product::class, 'id')->where('status', Product::STATUS_PUBLISHED)],
+            'items.*.variant_id' => ['required', 'integer', 'distinct', Rule::exists(ProductVariant::class, 'id')],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
             'items.*.start_date' => ['nullable', 'date_format:Y-m-d'],
             'items.*.end_date' => ['nullable', 'date_format:Y-m-d'],
@@ -70,9 +75,14 @@ class CheckoutRequest extends FormRequest
             $items = $this->input('items', []);
             $ids = collect($items)->pluck('id')->filter()->unique()->values();
             $types = Product::query()->whereIn('id', $ids)->pluck('type', 'id');
+            $variantIds = collect($items)->pluck('variant_id')->filter()->unique()->values();
+            $variantProducts = ProductVariant::query()->whereIn('id', $variantIds)->pluck('product_id', 'id');
             $today = Carbon::today(config('app.timezone'));
 
             foreach ($items as $index => $item) {
+                if ((int) $variantProducts->get($item['variant_id'] ?? null) !== (int) ($item['id'] ?? 0)) {
+                    $validator->errors()->add("items.{$index}.variant_id", 'Variasi tidak tersedia untuk produk ini.');
+                }
                 $type = $types->get($item['id'] ?? null);
                 $start = $item['start_date'] ?? null;
                 $end = $item['end_date'] ?? null;

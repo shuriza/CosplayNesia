@@ -8,16 +8,20 @@ use App\Exceptions\InsufficientStockException;
 use App\Exceptions\OwnedProductCheckoutException;
 use App\Exceptions\RentalCancellationNotAllowedException;
 use App\Exceptions\RentalUnavailableException;
+use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderActivity;
 use App\Models\OrderFulfillment;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\RentalReservation;
+use App\Models\Store;
 use App\Models\User;
 use App\Models\UserNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CheckoutService
 {
@@ -26,12 +30,16 @@ class CheckoutService
         private readonly RentalCapacity $capacity,
     ) {}
 
-    public function create(User $user, array $items, ?string $idempotencyKey = null, ?array $handoff = null): Order
+    public function create(User $user, array $items, ?string $idempotencyKey = null, ?array $handoff = null, array $pickupSellerIds = []): Order
     {
         $handoffSnapshot = $this->handoffSnapshot($handoff);
-        $idempotencyHash = $idempotencyKey === null ? null : $this->hashItems($items, $handoffSnapshot);
+        $pickupSellerIds = collect($pickupSellerIds)->map(fn ($id): int => (int) $id)->unique()->sort()->values()->all();
+        $idempotencyHash = $idempotencyKey === null ? null : $this->hashItems($items, [
+            ...$handoffSnapshot,
+            'pickup_seller_ids' => $pickupSellerIds,
+        ]);
 
-        return DB::transaction(function () use ($user, $items, $idempotencyKey, $idempotencyHash, $handoffSnapshot): Order {
+        return DB::transaction(function () use ($user, $items, $idempotencyKey, $idempotencyHash, $handoffSnapshot, $pickupSellerIds): Order {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($user->id);
 
             if ($idempotencyKey !== null) {
@@ -49,9 +57,29 @@ class CheckoutService
             }
 
             $productIds = collect($items)->pluck('id')->map(fn ($id): int => (int) $id)->unique()->sort()->values();
+            $storeIds = Product::query()
+                ->whereIn('id', $productIds)
+                ->whereNotNull('store_id')
+                ->orderBy('store_id')
+                ->pluck('store_id')
+                ->unique()
+                ->values();
+            $stores = Store::query()
+                ->whereIn('id', $storeIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
             $products = Product::query()
                 ->with('owner')
                 ->whereIn('id', $productIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+            $variantIds = collect($items)->pluck('variant_id')->map(fn ($id): int => (int) $id)->unique()->sort()->values();
+            $variants = ProductVariant::query()
+                ->whereIn('id', $variantIds)
                 ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
@@ -63,17 +91,27 @@ class CheckoutService
 
             $snapshots = [];
             $total = 0;
+            $rentalDeposit = 0;
 
             foreach ($items as $item) {
                 $product = $products->get((int) $item['id']);
-                if (! $product || ! $product->is_active) {
+                $variant = $variants->get((int) $item['variant_id']);
+                $sellerCanReceiveOrders = $product?->seller_id === null
+                    || ($product?->store_id !== null && $stores->get($product->store_id)?->status === Store::STATUS_APPROVED);
+                if (! $product || ! $variant || $variant->product_id !== $product->id || ! $product->isPublished() || ! $sellerCanReceiveOrders) {
                     throw new InsufficientStockException($product?->name ?? 'Produk');
                 }
 
                 $quantity = (int) $item['quantity'];
                 $snapshot = [
                     'product_id' => $product->id,
+                    'product_variant_id' => $variant->id,
                     'product_name' => $product->name,
+                    'variant_sku' => $variant->sku,
+                    'variant_label' => $variant->label,
+                    'variant_size' => $variant->size,
+                    'variant_color' => $variant->color,
+                    'variant_condition' => $variant->condition,
                     'product_type' => $product->type,
                     'unit_price' => $product->price,
                     'quantity' => $quantity,
@@ -81,6 +119,7 @@ class CheckoutService
                     'rental_end_date' => null,
                     'seller_id' => $product->seller_id,
                     'seller_name' => $product->seller ?: $product->owner?->name,
+                    'store_id' => $product->store_id,
                 ];
 
                 if ($product->type === Product::TYPE_RENTAL) {
@@ -90,29 +129,39 @@ class CheckoutService
                         throw new RentalUnavailableException($product->name);
                     }
 
-                    $allocated = $this->capacity->peak($product, $start->toDateString(), $end->toDateString());
-                    if ($allocated + $quantity > (int) $product->stock) {
+                    $allocated = $this->capacity->peak($product, $start->toDateString(), $end->toDateString(), $variant->id);
+                    if ($allocated + $quantity > (int) $variant->stock) {
                         throw new RentalUnavailableException($product->name);
                     }
                     $snapshot['rental_start_date'] = $start->toDateString();
                     $snapshot['rental_end_date'] = $end->toDateString();
                 } else {
-                    $updated = Product::query()
-                        ->whereKey($product->id)
-                        ->where('is_active', true)
+                    $updated = ProductVariant::query()
+                        ->whereKey($variant->id)
+                        ->where('product_id', $product->id)
                         ->where('stock', '>=', $quantity)
                         ->decrement('stock', $quantity);
                     if ($updated !== 1) {
                         throw new InsufficientStockException($product->name);
                     }
+                    $product->forceFill(['stock' => (int) $product->variants()->sum('stock')])->save();
                 }
 
                 $snapshots[] = $snapshot;
                 $total += (int) $product->price * $quantity;
+                if ($product->type === Product::TYPE_RENTAL) {
+                    $rentalDeposit += (int) ($product->rental_deposit ?? 0) * $quantity;
+                }
             }
 
             $order = $lockedUser->orders()->create([
                 'total_amount' => $total,
+                'merchandise_subtotal' => $total,
+                'shipping_fee' => null,
+                'platform_fee' => 0,
+                'rental_deposit' => $rentalDeposit,
+                'grand_total' => null,
+                'fee_currency' => 'IDR',
                 'status' => Order::STATUS_DEMO_CONFIRMED,
                 'idempotency_key' => $idempotencyKey,
                 'idempotency_hash' => $idempotencyHash,
@@ -126,9 +175,17 @@ class CheckoutService
                     continue;
                 }
                 $sellerKey = (string) $snapshot['seller_id'];
+                $pickup = in_array((int) $snapshot['seller_id'], array_map('intval', $pickupSellerIds), true);
+                $store = $stores->get($snapshot['store_id']);
+                if ($pickup && ! $store?->pickup_enabled) {
+                    throw ValidationException::withMessages(['pickup_seller_ids' => 'Pickup tidak tersedia untuk salah satu toko.']);
+                }
                 $fulfillments[$sellerKey] ??= $order->fulfillments()->create([
                     'seller_id' => $snapshot['seller_id'],
                     'seller_name' => $snapshot['seller_name'],
+                    'handoff_method' => $pickup ? 'pickup' : 'legacy',
+                    'pickup_instructions' => $pickup ? $store->pickup_instructions : null,
+                    'pickup_city' => $pickup ? $store->city : null,
                     'status' => OrderFulfillment::STATUS_RECEIVED,
                     'status_changed_at' => now(),
                 ]);
@@ -141,7 +198,13 @@ class CheckoutService
                 $item = $order->items()->create([
                     'fulfillment_id' => $fulfillment?->id,
                     'product_id' => $snapshot['product_id'],
+                    'product_variant_id' => $snapshot['product_variant_id'],
                     'product_name' => $snapshot['product_name'],
+                    'variant_sku' => $snapshot['variant_sku'],
+                    'variant_label' => $snapshot['variant_label'],
+                    'variant_size' => $snapshot['variant_size'],
+                    'variant_color' => $snapshot['variant_color'],
+                    'variant_condition' => $snapshot['variant_condition'],
                     'product_type' => $snapshot['product_type'],
                     'unit_price' => $snapshot['unit_price'],
                     'quantity' => $snapshot['quantity'],
@@ -155,6 +218,7 @@ class CheckoutService
                         'order_id' => $order->id,
                         'order_item_id' => $item->id,
                         'product_id' => $snapshot['product_id'],
+                        'product_variant_id' => $snapshot['product_variant_id'],
                         'quantity' => $snapshot['quantity'],
                         'start_date' => $snapshot['rental_start_date'],
                         'end_date' => $snapshot['rental_end_date'],
@@ -173,6 +237,10 @@ class CheckoutService
             $order->load('fulfillments');
             $order->syncAggregateStatus();
             $this->recordCheckoutActivities($order, $lines, $fulfillments);
+            CartItem::query()
+                ->where('user_id', $lockedUser->id)
+                ->whereIn('product_variant_id', collect($snapshots)->pluck('product_variant_id'))
+                ->delete();
 
             $created = $this->loadOrder($order->fresh());
             $created->wasRecentlyCreated = true;
@@ -193,6 +261,7 @@ class CheckoutService
                 ->firstOrFail();
             $items = $lockedFulfillment->items()->orderBy('id')->lockForUpdate()->get();
             $products = $this->lockedProducts($items);
+            $variants = $this->lockedVariants($items);
             $reservations = $this->lockedReservations($items);
             $items->each(fn (OrderItem $item) => $item->setRelation(
                 'rentalReservation',
@@ -241,7 +310,7 @@ class CheckoutService
             }
 
             if ($target === OrderFulfillment::STATUS_CANCELLED) {
-                $this->cancelItems($order, $lockedFulfillment, $items, $products, $reservations, $user->id, OrderActivity::ROLE_SELLER, $timestamp);
+                $this->cancelItems($order, $lockedFulfillment, $items, $products, $variants, $reservations, $user->id, OrderActivity::ROLE_SELLER, $timestamp);
             }
 
             $attributes = ['status' => $target, 'status_changed_at' => $timestamp];
@@ -384,7 +453,7 @@ class CheckoutService
         }, 3);
     }
 
-    private function cancelItems(Order $order, ?OrderFulfillment $fulfillment, $items, $products, $reservations, int $actorId, string $actorRole, Carbon $timestamp): void
+    private function cancelItems(Order $order, ?OrderFulfillment $fulfillment, $items, $products, $variants, $reservations, int $actorId, string $actorRole, Carbon $timestamp): void
     {
         foreach ($items as $item) {
             $reservation = $reservations->get($item->id);
@@ -410,10 +479,12 @@ class CheckoutService
                 continue;
             }
             $product = $item->product_id === null ? null : $products->get($item->product_id);
-            if ($product === null) {
+            $variant = $item->product_variant_id === null ? null : $variants->get($item->product_variant_id);
+            if ($product === null || $variant === null) {
                 continue;
             }
-            $product->increment('stock', $item->quantity);
+            $variant->increment('stock', $item->quantity);
+            $product->forceFill(['stock' => (int) $product->variants()->sum('stock')])->save();
             $item->update(['stock_released_at' => now()]);
         }
     }
@@ -547,7 +618,10 @@ class CheckoutService
     {
         return [
             'product_id' => (int) $item->product_id,
+            'product_variant_id' => (int) $item->product_variant_id,
             'product_name' => $item->product_name,
+            'variant_sku' => $item->variant_sku,
+            'variant_label' => $item->variant_label,
             'product_type' => $item->product_type,
             'quantity' => (int) $item->quantity,
             'rental_start_date' => $item->rental_start_date?->toDateString(),
@@ -570,7 +644,10 @@ class CheckoutService
     {
         return [
             'product_id' => (int) $snapshot['product_id'],
+            'product_variant_id' => (int) $snapshot['product_variant_id'],
             'product_name' => $snapshot['product_name'],
+            'variant_sku' => $snapshot['variant_sku'],
+            'variant_label' => $snapshot['variant_label'],
             'product_type' => $snapshot['product_type'],
             'quantity' => (int) $snapshot['quantity'],
             'rental_start_date' => $snapshot['rental_start_date'],
@@ -583,6 +660,13 @@ class CheckoutService
         $ids = $items->pluck('product_id')->filter()->unique()->sort()->values();
 
         return Product::query()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+    }
+
+    private function lockedVariants($items)
+    {
+        $ids = $items->pluck('product_variant_id')->filter()->unique()->sort()->values();
+
+        return ProductVariant::query()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get()->keyBy('id');
     }
 
     private function lockedReservations($items)
@@ -602,12 +686,13 @@ class CheckoutService
         $canonical = array_map(static function (array $item): array {
             return [
                 'id' => (int) $item['id'],
+                'variant_id' => (int) $item['variant_id'],
                 'quantity' => (int) $item['quantity'],
                 'start_date' => $item['start_date'] ?? null,
                 'end_date' => $item['end_date'] ?? null,
             ];
         }, $items);
-        usort($canonical, static fn (array $left, array $right): int => $left['id'] <=> $right['id']);
+        usort($canonical, static fn (array $left, array $right): int => $left['variant_id'] <=> $right['variant_id']);
 
         return hash('sha256', json_encode([
             'items' => $canonical,

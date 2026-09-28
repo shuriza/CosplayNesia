@@ -11,7 +11,7 @@ Sudah tersedia dan terverifikasi:
 - checkout atomik dan idempotent, snapshot pesanan, kapasitas sewa, serta blok jadwal;
 - fulfillment multi-penjual, timeline immutable, ulasan terverifikasi, balasan penjual;
 - notifikasi in-app dan percakapan per fulfillment;
-- 108 feature tests / 1100 assertions, Pint, syntax check JavaScript, build Vite, dan browser smoke terakhir lulus.
+- 138 feature tests / 1349 assertions (4 integration tests PostgreSQL dilewati saat service tidak tersedia), Pint, syntax check JavaScript, build Vite, dan browser smoke headless desktop/mobile terakhir lulus.
 
 Baseline ini tetap disebut **demo** karena belum mempunyai pembayaran nyata, pengiriman, lifecycle pengembalian sewa, refund/dispute, backoffice, maupun deployment produksi.
 
@@ -102,6 +102,8 @@ Cakupan:
 
 ## Batch 3 — Onboarding penjual dan storefront
 
+**Status:** vertical slice lokal selesai dan terverifikasi; onboarding sub-account provider pembayaran ditunda atas keputusan pemilik proyek sampai akun provider tersedia.
+
 **Tujuan:** memisahkan identitas akun dari identitas toko dan memastikan hanya penjual yang disetujui dapat menerima order.
 
 Cakupan:
@@ -118,6 +120,8 @@ Cakupan:
 
 ## Batch 4 — Katalog, media, variasi, dan kualitas listing
 
+**Status:** selesai dan terverifikasi lokal; media memakai disk terkonfigurasi dan tidak mengklaim object storage produksi sebelum credential tersedia.
+
 **Tujuan:** listing merepresentasikan barang nyata, bukan satu record sederhana dengan URL gambar.
 
 Cakupan:
@@ -133,7 +137,11 @@ Cakupan:
 
 **Exit gate:** pembeli memilih SKU yang tepat; stok/capacity dilock per SKU; file non-gambar atau oversize ditolak; arsip listing tidak menghilangkan snapshot order/review; katalog tidak menampilkan draft/rejected/suspended store.
 
+Verifikasi penutupan: 128 test / 1308 assertion lulus, Pint dan syntax check JavaScript lulus, production build Vite lulus, serta Chromium headless membuktikan moderation flow, pilihan SKU checkout, snapshot order, dan layout mobile 390 px tanpa overflow horizontal.
+
 ## Batch 5 — Cart persisten, alamat, ongkir, dan janji layanan
+
+**Status:** seluruh slice lokal selesai dan terverifikasi: cart persisten/merge, address book, snapshot komponen biaya, asal pengiriman, dan pickup per seller. Aggregator, quote per seller, serta expiry/requote tetap diblokir sampai credential provider tersedia.
 
 **Tujuan:** checkout mempunyai biaya dan tujuan pengiriman yang benar sebelum pembayaran dibuat.
 

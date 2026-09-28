@@ -12,7 +12,9 @@ class OrderItem extends Model
     use HasFactory;
 
     protected $fillable = [
-        'order_id', 'fulfillment_id', 'product_id', 'product_name', 'product_type', 'unit_price', 'quantity',
+        'order_id', 'fulfillment_id', 'product_id', 'product_variant_id', 'product_name',
+        'variant_sku', 'variant_label', 'variant_size', 'variant_color', 'variant_condition',
+        'product_type', 'unit_price', 'quantity',
         'rental_start_date', 'rental_end_date', 'stock_released_at',
     ];
 
@@ -35,6 +37,11 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     public function rentalReservation(): HasOne

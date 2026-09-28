@@ -30,6 +30,7 @@ class ProductSeeder extends Seeder
                 'price' => $product[4], 'type' => $product[5], 'size' => $product[6],
                 'seller' => $product[7], 'city' => $product[8], 'popular' => $product[9],
                 'badge' => $product[10], 'image' => $product[11], 'stock' => $product[12],
+                'status' => Product::STATUS_PUBLISHED, 'published_at' => now(),
             ]);
         }
     }

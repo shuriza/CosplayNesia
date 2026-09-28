@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductReview;
+use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,8 @@ class ProductReviewFeedController extends Controller
 {
     public function index(Request $request, Product $product): JsonResponse
     {
-        abort_unless($product->is_active, 404);
+        $publicStore = $product->seller_id === null || $product->store?->status === Store::STATUS_APPROVED;
+        abort_unless($product->isPublished() && $publicStore, 404);
 
         $filters = $request->validate([
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],

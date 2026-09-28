@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AccountPasswordRequest;
 use App\Models\AccountSession;
+use App\Models\Product;
 use App\Models\User;
 use App\Services\AccountSessionManager;
 use App\Services\SecurityEventRecorder;
@@ -93,7 +94,10 @@ class AccountSecurityController extends Controller
         $user = DB::transaction(function () use ($request, $sessions, $events): User {
             $user = User::query()->lockForUpdate()->findOrFail($request->user()->id);
             $events->record($user, 'account.deactivated', $request);
-            $user->products()->update(['is_active' => false]);
+            $user->products()->where('status', '!=', Product::STATUS_ARCHIVED)->update([
+                'status' => Product::STATUS_ARCHIVED,
+                'archived_at' => now(),
+            ]);
             $sessions->revokeAll($user);
             $user->forceFill([
                 'name' => 'Akun dinonaktifkan',

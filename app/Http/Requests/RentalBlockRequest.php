@@ -15,8 +15,11 @@ class RentalBlockRequest extends AvailabilityRequest
 
     public function rules(): array
     {
+        $rules = parent::rules();
+        unset($rules['variant_id']);
+
         return [
-            ...parent::rules(),
+            ...$rules,
             'quantity' => [$this->isMethod('post') ? 'required' : 'sometimes', 'integer', 'min:1', 'max:10000'],
             'reason' => ['nullable', 'string', 'max:200'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],

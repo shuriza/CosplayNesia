@@ -25,14 +25,22 @@ class Order extends Model
     public const STATUS_PARTIALLY_CANCELLED = 'partially_cancelled';
 
     protected $fillable = [
-        'user_id', 'total_amount', 'status', 'idempotency_key', 'idempotency_hash',
+        'user_id', 'total_amount', 'merchandise_subtotal', 'shipping_fee', 'platform_fee',
+        'rental_deposit', 'grand_total', 'fee_currency', 'status', 'idempotency_key', 'idempotency_hash',
         'recipient_name', 'recipient_phone', 'recipient_email', 'address_line1', 'address_line2',
         'city', 'province', 'postal_code', 'handoff_note',
     ];
 
     protected function casts(): array
     {
-        return ['total_amount' => 'integer'];
+        return [
+            'total_amount' => 'integer',
+            'merchandise_subtotal' => 'integer',
+            'shipping_fee' => 'integer',
+            'platform_fee' => 'integer',
+            'rental_deposit' => 'integer',
+            'grand_total' => 'integer',
+        ];
     }
 
     public function user(): BelongsTo

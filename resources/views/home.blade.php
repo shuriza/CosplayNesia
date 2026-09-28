@@ -203,6 +203,9 @@
         <div class="profile-scroll">
             <div class="profile-info"><div class="profile-avatar" aria-hidden="true">C</div><div><strong id="profile-name">Cosplayer</strong><span id="profile-email"></span></div></div>
             <div class="profile-actions"><button type="button" class="button button--primary" id="add-product-button">Tambah produk</button><button type="button" class="button button--outline" id="logout-button">Keluar</button></div>
+            <section class="profile-section" aria-labelledby="store-onboarding-title"><div class="profile-section__heading"><h3 id="store-onboarding-title">Toko &amp; Verifikasi Penjual</h3><span id="store-status" class="profile-section__count"></span></div><div id="store-summary" class="profile-list"></div><form class="account-form" id="store-onboarding-form" enctype="multipart/form-data" novalidate><label>Nama toko<input name="name" type="text" required minlength="3" maxlength="100"></label><label>Deskripsi<textarea name="description" rows="3" maxlength="1000"></textarea></label><label>Kota asal<input name="city" type="text" required minlength="2" maxlength="80"></label><label>Nama legal<input name="legal_name" type="text" required minlength="3" maxlength="120"></label><label>Nomor identitas<input name="identity_number" type="text" required minlength="12" maxlength="24" inputmode="numeric"></label><label>Jam operasional<input name="operating_hours" type="text" maxlength="200"></label><label>Kebijakan toko<textarea name="policy" rows="3" maxlength="2000"></textarea></label><label>Dokumen verifikasi<input name="document" type="file" required accept="application/pdf,image/jpeg,image/png"></label><p class="form-error" role="alert" hidden></p><button type="submit" class="button button--primary button--full">Kirim pengajuan toko</button></form></section>
+            <section class="profile-section" id="admin-store-review-section" aria-labelledby="admin-store-review-title" hidden><h3 id="admin-store-review-title">Review Toko</h3><div class="profile-list" id="admin-store-review-list"></div></section>
+            <section class="profile-section" id="admin-product-review-section" aria-labelledby="admin-product-review-title" hidden><h3 id="admin-product-review-title">Moderasi Listing</h3><div class="profile-list" id="admin-product-review-list"></div></section>
             <section class="profile-section account-settings" aria-labelledby="account-settings-title">
                 <h3 id="account-settings-title">Pengaturan Akun</h3>
                 <div class="account-form" id="email-verification-panel"><p id="email-verification-status"></p><button type="button" class="button button--outline" id="resend-verification">Kirim ulang verifikasi</button><button type="button" class="button button--outline" id="accept-legal-consent" hidden>Setujui kebijakan terbaru</button></div>
@@ -281,15 +284,41 @@
         <div class="drawer-form-wrap">
             <form class="stack-form" id="add-product-form">
                 <label>Nama produk<input name="name" type="text" required maxlength="120"></label>
-                <div class="form-row"><label>Harga (Rp)<input name="price" type="number" min="1" step="1" required></label><label>Stok<input name="stock" type="number" min="0" step="1" value="1" required></label></div>
+                <label>Stok total awal<input name="stock" type="number" min="0" step="1" value="1" required></label>
                 <label>Kategori<select name="category" required><option value="Anime">Anime</option><option value="Game">Game</option><option value="VTuber">VTuber</option><option value="Aksesoris">Aksesoris</option></select></label>
                 <label>Series<input name="series" type="text" maxlength="100" placeholder="Contoh: Genshin Impact"></label>
+                <div class="form-row"><label>Karakter<input name="character" type="text" maxlength="100"></label><label>Material<input name="material" type="text" maxlength="100"></label></div>
+                <label>Kesesuaian<select name="fit"><option value="unisex">Unisex</option><option value="women">Perempuan</option><option value="men">Laki-laki</option><option value="kids">Anak</option></select></label>
+                <label>Kelengkapan kostum<input name="costume_includes" type="text" maxlength="1000" placeholder="Atasan, bawahan, wig, aksesori"></label>
                 <div class="form-row"><label>Tipe<select name="type"><option value="Sewa">Sewa</option><option value="Beli">Beli</option></select></label><label>Ukuran<input name="size" type="text" maxlength="30" placeholder="S–XL"></label></div>
+                <label id="sale-price-field" hidden>Harga jual (Rp)<input name="sale_price" type="number" min="1" max="100000000" step="1"></label>
+                <div id="rental-pricing-fields" class="stack-form">
+                    <label>Harga sewa per hari (Rp)<input name="rental_price_per_day" type="number" min="1" max="100000000" step="1" required></label>
+                    <label>Deposit (Rp)<input name="rental_deposit" type="number" min="0" max="100000000" step="1" value="0" required></label>
+                    <div class="form-row"><label>Minimum hari<input name="rental_min_days" type="number" min="1" max="30" step="1" value="1" required></label><label>Maksimum hari<input name="rental_max_days" type="number" min="1" max="30" step="1" value="30" required></label></div>
+                </div>
+                <div class="form-row"><label>Lingkar dada (cm)<input name="measurement_chest" type="number" min="1" max="400" step="0.1"></label><label>Lingkar pinggang (cm)<input name="measurement_waist" type="number" min="1" max="400" step="0.1"></label></div>
+                <div class="form-row"><label>Lingkar pinggul (cm)<input name="measurement_hips" type="number" min="1" max="400" step="0.1"></label><label>Tinggi rekomendasi (cm)<input name="measurement_height" type="number" min="1" max="300" step="0.1"></label></div>
+                <label>Aturan perawatan<textarea name="care_instructions" maxlength="2000" rows="3" placeholder="Contoh: dry clean, jangan disetrika langsung"></textarea></label>
                 <label>Kota<input name="city" type="text" maxlength="80" placeholder="Contoh: Bandung"></label>
-                <label>URL gambar<input name="image" type="url" placeholder="https://…"></label>
-                <label class="status-control" id="product-active-field" hidden><input name="is_active" type="checkbox" value="1"><span><strong>Listing aktif</strong><small>Produk aktif dapat ditemukan dan dipesan pembeli.</small></span></label>
+                <label>Galeri gambar <span class="rental-block-optional">(maksimal 8 JPG, PNG, atau WebP; 5 MB per file)</span><input name="images[]" type="file" accept="image/jpeg,image/png,image/webp" multiple></label>
                 <p class="form-error" id="product-form-error" role="alert" hidden></p>
                 <button type="submit" class="button button--primary button--full" id="product-submit-button">Simpan produk</button>
+            </form>
+        </div>
+    </aside>
+
+    <aside class="cart-drawer" id="variant-drawer" role="dialog" aria-modal="true" aria-labelledby="variant-title" aria-hidden="true" inert>
+        <div class="drawer-header"><div><span class="section-kicker">Inventaris SKU</span><h2 id="variant-title">Tambah Variasi</h2></div><button type="button" class="close-button" data-close-layer aria-label="Tutup formulir variasi">×</button></div>
+        <div class="drawer-form-wrap">
+            <form class="stack-form" id="variant-form">
+                <label>SKU<input name="sku" type="text" required maxlength="64" pattern="[A-Za-z0-9_-]+" placeholder="FURINA-M-BLUE"></label>
+                <label>Nama variasi<input name="label" type="text" required maxlength="100" placeholder="M / Biru"></label>
+                <div class="form-row"><label>Ukuran<input name="size" type="text" maxlength="40"></label><label>Warna<input name="color" type="text" maxlength="50"></label></div>
+                <label>Kondisi<select name="condition" required><option value="new">Baru</option><option value="like_new">Seperti baru</option><option value="good" selected>Baik</option><option value="fair">Cukup</option></select></label>
+                <label>Stok / kapasitas<input name="stock" type="number" min="0" max="10000" step="1" required value="1"></label>
+                <p class="form-error" id="variant-form-error" role="alert" hidden></p>
+                <button type="submit" class="button button--primary button--full" id="variant-submit-button">Simpan variasi</button>
             </form>
         </div>
     </aside>

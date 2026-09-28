@@ -19,7 +19,7 @@ class RentalReservation extends Model
     public const MAX_DAYS = 30;
 
     protected $fillable = [
-        'order_id', 'order_item_id', 'product_id', 'quantity', 'start_date', 'end_date', 'status',
+        'order_id', 'order_item_id', 'product_id', 'product_variant_id', 'quantity', 'start_date', 'end_date', 'status',
     ];
 
     protected function casts(): array
@@ -44,5 +44,10 @@ class RentalReservation extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 }

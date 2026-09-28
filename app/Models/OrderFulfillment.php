@@ -25,7 +25,8 @@ class OrderFulfillment extends Model
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
-        'order_id', 'seller_id', 'seller_name', 'status', 'status_changed_at',
+        'order_id', 'seller_id', 'seller_name', 'handoff_method', 'pickup_instructions',
+        'pickup_city', 'status', 'status_changed_at',
         'accepted_at', 'ready_at', 'completed_at', 'cancelled_at',
         'buyer_read_message_id', 'seller_read_message_id',
     ];

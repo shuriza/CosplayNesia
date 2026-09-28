@@ -75,7 +75,7 @@ class ProductReviewFeedTest extends TestCase
     {
         $seller = $this->user();
         $buyer = $this->user();
-        $inactive = Product::factory()->for($seller, 'owner')->create(['is_active' => false]);
+        $inactive = Product::factory()->for($seller, 'owner')->create(['status' => Product::STATUS_PAUSED]);
         $this->getJson("/api/products/{$inactive->id}/reviews")->assertNotFound();
 
         $deleted = Product::factory()->for($seller, 'owner')->create();

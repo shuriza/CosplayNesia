@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ProductTest extends TestCase
@@ -72,15 +75,27 @@ class ProductTest extends TestCase
     {
         $user = $this->user(['name' => 'Kitsune Rental']);
         $other = $this->user();
+        Store::factory()->for($user, 'owner')->create(['name' => 'Kitsune Rental']);
         Product::factory()->for($other, 'owner')->create();
 
         $this->actingAs($user)->postJson('/api/products', [
             'name' => 'Kafka Premium',
             'category' => 'Game',
-            'price' => 150000,
+            'rental_price_per_day' => 50000,
+            'rental_deposit' => 200000,
+            'rental_min_days' => 3,
+            'rental_max_days' => 14,
             'type' => 'Sewa',
             'stock' => 2,
-        ])->assertCreated()->assertJsonPath('seller_id', $user->id);
+        ])->assertCreated()
+            ->assertJsonPath('seller_id', $user->id)
+            ->assertJsonPath('status', Product::STATUS_DRAFT);
+
+        $this->getJson('/api/products')->assertOk()->assertJsonMissing(['name' => 'Kafka Premium']);
+        $created = Product::query()->where('name', 'Kafka Premium')->firstOrFail();
+        $this->actingAs($user)->patchJson("/api/products/{$created->id}/status", [
+            'status' => Product::STATUS_PUBLISHED,
+        ])->assertUnprocessable()->assertJsonValidationErrors('status');
 
         $this->actingAs($user)->getJson('/api/my-products')
             ->assertOk()
@@ -90,48 +105,145 @@ class ProductTest extends TestCase
 
     public function test_product_input_is_validated(): void
     {
-        $this->actingAs($this->user())->postJson('/api/products', [
+        $user = $this->user();
+        Store::factory()->for($user, 'owner')->create();
+        $this->actingAs($user)->postJson('/api/products', [
             'name' => '<script>alert(1)</script>',
             'category' => 'Invalid',
-            'price' => -1,
+            'sale_price' => -1,
             'type' => 'Invalid',
             'stock' => -1,
-            'image' => 'javascript:alert(1)',
-        ])->assertUnprocessable()->assertJsonValidationErrors(['category', 'price', 'type', 'stock', 'image']);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['category', 'sale_price', 'type', 'stock']);
     }
 
-    public function test_owner_can_update_and_deactivate_a_product(): void
+    public function test_listing_persists_structured_attributes_measurements_and_care_rules(): void
     {
         $owner = $this->user();
+        Store::factory()->for($owner, 'owner')->create();
+
+        $response = $this->actingAs($owner)->postJson('/api/products', [
+            'name' => 'Furina Complete Set',
+            'category' => 'Game',
+            'category_attributes' => [
+                'character' => 'Furina',
+                'material' => 'Polyester',
+                'fit' => 'women',
+            ],
+            'costume_includes' => ['Dress', 'Wig', 'Hat'],
+            'rental_price_per_day' => 75000,
+            'rental_deposit' => 300000,
+            'rental_min_days' => 2,
+            'rental_max_days' => 10,
+            'type' => Product::TYPE_RENTAL,
+            'size' => 'M',
+            'measurements' => ['chest' => 88.5, 'waist' => 72, 'hips' => 92, 'height' => 165],
+            'care_instructions' => 'Dry clean. Jangan setrika aksesori.',
+            'stock' => 2,
+        ])->assertCreated()
+            ->assertJsonPath('category_attributes.character', 'Furina')
+            ->assertJsonPath('costume_includes.2', 'Hat')
+            ->assertJsonPath('measurements.chest', 88.5)
+            ->assertJsonPath('price', 75000)
+            ->assertJsonPath('rental_price_per_day', 75000)
+            ->assertJsonPath('rental_deposit', 300000)
+            ->assertJsonPath('rental_min_days', 2)
+            ->assertJsonPath('rental_max_days', 10)
+            ->assertJsonPath('care_instructions', 'Dry clean. Jangan setrika aksesori.');
+
+        $this->assertDatabaseHas('products', ['id' => $response->json('id'), 'care_instructions' => 'Dry clean. Jangan setrika aksesori.']);
+
+        $this->actingAs($owner)->postJson('/api/products', [
+            'name' => 'Durasi Invalid',
+            'category' => 'Anime',
+            'type' => Product::TYPE_RENTAL,
+            'rental_price_per_day' => 50000,
+            'rental_deposit' => 0,
+            'rental_min_days' => 10,
+            'rental_max_days' => 3,
+            'stock' => 1,
+        ])->assertUnprocessable()->assertJsonValidationErrors('rental_max_days');
+    }
+
+    public function test_owner_can_update_pause_and_publish_a_product(): void
+    {
+        $owner = $this->user();
+        $moderator = $this->user(['role' => User::ROLE_MODERATOR]);
         $product = Product::factory()->for($owner, 'owner')->create([
             'name' => 'Old Name',
             'price' => 100000,
-            'is_active' => true,
+            'status' => Product::STATUS_PUBLISHED,
         ]);
+        $this->actingAs($owner)->getJson("/api/products/{$product->id}/preview")
+            ->assertOk()
+            ->assertJsonPath('readiness.ready', true);
 
         $this->actingAs($owner)->patchJson("/api/products/{$product->id}", [
             'name' => 'Updated Costume',
-            'price' => 125000,
+            'sale_price' => 125000,
             'series' => '',
             'size' => '',
             'city' => '',
-            'image' => '',
         ])->assertOk()
             ->assertJsonPath('name', 'Updated Costume')
+            ->assertJsonPath('status', Product::STATUS_DRAFT)
             ->assertJsonPath('price', 125000)
             ->assertJsonPath('series', 'Original')
             ->assertJsonPath('size', 'All size')
-            ->assertJsonPath('city', 'Online')
-            ->assertJsonPath('image', config('cosplaynesia.default_product_image'));
-
-        $this->actingAs($owner)->patchJson("/api/products/{$product->id}", [
-            'is_active' => false,
-        ])->assertOk()->assertJsonPath('is_active', false);
+            ->assertJsonPath('city', 'Online');
 
         $this->getJson('/api/products')->assertOk()->assertJsonMissing(['id' => $product->id]);
-        $this->actingAs($owner)->getJson('/api/my-products')
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}/status", [
+            'status' => Product::STATUS_PUBLISHED,
+        ])->assertOk()
+            ->assertJsonPath('status', Product::STATUS_DRAFT)
+            ->assertJsonPath('submitted_for_review_at', fn ($value) => filled($value));
+        $this->actingAs($moderator)->getJson('/api/admin/products')
             ->assertOk()
-            ->assertJsonPath('data.0.is_active', false);
+            ->assertJsonPath('data.0.id', $product->id);
+        $this->actingAs($moderator)->patchJson("/api/admin/products/{$product->id}/review", [
+            'status' => Product::STATUS_PUBLISHED,
+        ])->assertOk()
+            ->assertJsonPath('status', Product::STATUS_PUBLISHED)
+            ->assertJsonPath('approved_version', 2);
+        $this->getJson('/api/products')->assertOk()->assertJsonFragment(['id' => $product->id]);
+
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}/status", [
+            'status' => Product::STATUS_PAUSED,
+        ])->assertOk()->assertJsonPath('status', Product::STATUS_PAUSED);
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}/status", [
+            'status' => Product::STATUS_PUBLISHED,
+        ])->assertOk()->assertJsonPath('status', Product::STATUS_PUBLISHED);
+    }
+
+    public function test_moderator_rejection_requires_reason_and_edit_clears_rejection(): void
+    {
+        $owner = $this->user();
+        $buyer = $this->user();
+        $moderator = $this->user(['role' => User::ROLE_MODERATOR]);
+        $product = Product::factory()->for($owner, 'owner')->create([
+            'status' => Product::STATUS_DRAFT,
+            'approved_version' => null,
+        ]);
+
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}/status", [
+            'status' => Product::STATUS_PUBLISHED,
+        ])->assertOk();
+        $this->actingAs($buyer)->getJson('/api/admin/products')->assertForbidden();
+        $this->actingAs($moderator)->patchJson("/api/admin/products/{$product->id}/review", [
+            'status' => Product::STATUS_REJECTED,
+        ])->assertUnprocessable()->assertJsonValidationErrors('reason');
+        $this->actingAs($moderator)->patchJson("/api/admin/products/{$product->id}/review", [
+            'status' => Product::STATUS_REJECTED,
+            'reason' => 'Foto utama buram.',
+        ])->assertOk()
+            ->assertJsonPath('status', Product::STATUS_REJECTED)
+            ->assertJsonPath('rejection_reason', 'Foto utama buram.');
+
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}", [
+            'name' => 'Foto Diperbaiki',
+        ])->assertOk()
+            ->assertJsonPath('status', Product::STATUS_DRAFT)
+            ->assertJsonPath('rejection_reason', null);
     }
 
     public function test_other_user_cannot_update_or_delete_a_product(): void
@@ -148,7 +260,82 @@ class ProductTest extends TestCase
         $this->assertDatabaseHas('products', ['id' => $product->id, 'name' => $product->name]);
     }
 
-    public function test_owner_can_delete_a_product_without_losing_order_item_snapshot(): void
+    public function test_owner_uploads_reorders_and_deletes_validated_gallery_images(): void
+    {
+        Storage::fake('public');
+        config(['cosplaynesia.listing_media_disk' => 'public']);
+        $owner = $this->user();
+        Store::factory()->for($owner, 'owner')->create();
+
+        $response = $this->actingAs($owner)->post('/api/products', [
+            'name' => 'Gallery Costume',
+            'category' => 'Anime',
+            'sale_price' => 125000,
+            'type' => Product::TYPE_SALE,
+            'stock' => 1,
+            'images' => [
+                UploadedFile::fake()->image('front.jpg', 800, 1000),
+                UploadedFile::fake()->image('back.png', 800, 1000),
+            ],
+        ])->assertCreated()->assertJsonCount(2, 'images');
+
+        $product = Product::findOrFail($response->json('id'));
+        $images = $product->images()->orderBy('position')->get();
+        Storage::disk('public')->assertExists($images[0]->path);
+        Storage::disk('public')->assertExists($images[1]->path);
+        $this->assertSame([0, 1], $images->pluck('position')->all());
+
+        $this->patchJson('/api/products/'.$product->id.'/images/order', [
+            'image_ids' => [$images[1]->id, $images[0]->id],
+        ])->assertOk()->assertJsonPath('images.0.id', $images[1]->id);
+
+        $deletedPath = $images[1]->path;
+        $this->deleteJson('/api/products/'.$product->id.'/images/'.$images[1]->id)
+            ->assertOk()->assertJsonCount(1, 'images');
+        Storage::disk('public')->assertMissing($deletedPath);
+
+        $this->withHeader('Accept', 'application/json')
+            ->post('/api/products/'.$product->id.'/images', [
+                'images' => [UploadedFile::fake()->create('payload.pdf', 20, 'application/pdf')],
+            ])->assertUnprocessable()->assertJsonValidationErrors('images.0');
+    }
+
+    public function test_owner_manages_stock_bearing_sku_variants(): void
+    {
+        $owner = $this->user();
+        $other = $this->user();
+        $product = Product::factory()->for($owner, 'owner')->create(['stock' => 2, 'size' => 'M']);
+        $default = $product->variants()->sole();
+
+        $this->assertTrue($default->is_default);
+        $this->assertSame(2, $default->stock);
+
+        $created = $this->actingAs($owner)->postJson("/api/products/{$product->id}/variants", [
+            'sku' => ' furina-l-blue ',
+            'label' => 'L / Biru',
+            'size' => 'L',
+            'color' => 'Biru',
+            'condition' => 'like_new',
+            'stock' => 3,
+        ])->assertCreated()
+            ->assertJsonPath('stock', 5)
+            ->assertJsonPath('variants.1.sku', 'FURINA-L-BLUE')
+            ->assertJsonPath('variants.1.stock', 3);
+
+        $variantId = $created->json('variants.1.id');
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}/variants/{$variantId}", [
+            'stock' => 4,
+        ])->assertOk()->assertJsonPath('stock', 6);
+
+        $this->actingAs($other)->deleteJson("/api/products/{$product->id}/variants/{$variantId}")
+            ->assertForbidden();
+        $this->actingAs($owner)->deleteJson("/api/products/{$product->id}/variants/{$variantId}")
+            ->assertOk()->assertJsonPath('stock', 2)->assertJsonCount(1, 'variants');
+        $this->actingAs($owner)->deleteJson("/api/products/{$product->id}/variants/{$default->id}")
+            ->assertUnprocessable()->assertJsonValidationErrors('variant');
+    }
+
+    public function test_owner_archives_a_product_without_losing_order_item_snapshot(): void
     {
         $owner = $this->user();
         $buyer = $this->user();
@@ -163,12 +350,15 @@ class ProductTest extends TestCase
         ]))->assertCreated();
         $this->actingAs($owner)->deleteJson("/api/products/{$product->id}")->assertNoContent();
 
-        $this->assertDatabaseMissing('products', ['id' => $product->id]);
+        $this->assertDatabaseHas('products', ['id' => $product->id, 'status' => Product::STATUS_ARCHIVED]);
         $this->assertDatabaseHas('order_items', [
-            'product_id' => null,
+            'product_id' => $product->id,
             'product_name' => 'Archived Costume',
             'unit_price' => 175000,
         ]);
+        $this->actingAs($owner)->patchJson("/api/products/{$product->id}/status", [
+            'status' => Product::STATUS_PUBLISHED,
+        ])->assertUnprocessable()->assertJsonValidationErrors('status');
     }
 
     public function test_catalog_cursor_pagination_is_deterministic_and_preserves_filters(): void

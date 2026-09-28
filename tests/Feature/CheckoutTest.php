@@ -25,10 +25,45 @@ class CheckoutTest extends TestCase
 
         $this->assertDatabaseHas('products', ['id' => $product->id, 'stock' => 1]);
         $this->assertDatabaseHas('order_items', ['product_id' => $product->id, 'unit_price' => 145000, 'quantity' => 2]);
+        $item = $user->orders()->firstOrFail()->items()->firstOrFail();
+        $variant = $product->variants()->firstOrFail();
+        $this->assertSame($variant->id, $item->product_variant_id);
+        $this->assertSame($variant->sku, $item->variant_sku);
+        $snapshotLabel = $item->variant_label;
+        $variant->update(['label' => 'Label Baru']);
         $this->actingAs($user)->getJson('/api/orders')
             ->assertOk()
             ->assertJsonPath('data.0.items.0.name', 'Furina Set')
-            ->assertJsonPath('data.0.items.0.price', 145000);
+            ->assertJsonPath('data.0.items.0.price', 145000)
+            ->assertJsonPath('data.0.items.0.variant.label', $snapshotLabel);
+    }
+
+    public function test_checkout_locks_and_decrements_only_the_selected_sku(): void
+    {
+        $user = $this->user();
+        $product = Product::factory()->create(['stock' => 1]);
+        $default = $product->variants()->firstOrFail();
+        $selected = $product->variants()->create([
+            'sku' => 'FURINA-L-BLUE',
+            'label' => 'Large Blue',
+            'size' => 'L',
+            'color' => 'Blue',
+            'condition' => 'like_new',
+            'stock' => 2,
+            'position' => 1,
+            'is_default' => false,
+        ]);
+        $product->forceFill(['stock' => 3])->save();
+
+        $this->actingAs($user)->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'variant_id' => $selected->id, 'quantity' => 2]],
+        ]))->assertCreated()
+            ->assertJsonPath('order.items.0.variant_sku', 'FURINA-L-BLUE')
+            ->assertJsonPath('order.items.0.variant_color', 'Blue');
+
+        $this->assertSame(1, $default->fresh()->stock);
+        $this->assertSame(0, $selected->fresh()->stock);
+        $this->assertSame(1, $product->fresh()->stock);
     }
 
     public function test_duplicate_products_are_rejected(): void
@@ -38,7 +73,7 @@ class CheckoutTest extends TestCase
         $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [
             ['id' => $product->id, 'quantity' => 1],
             ['id' => $product->id, 'quantity' => 1],
-        ]]))->assertUnprocessable()->assertJsonValidationErrors('items.0.id');
+        ]]))->assertUnprocessable()->assertJsonValidationErrors('items.1.variant_id');
 
         $this->assertSame(5, $product->fresh()->stock);
     }
@@ -131,7 +166,7 @@ class CheckoutTest extends TestCase
 
     public function test_inactive_products_cannot_be_checked_out(): void
     {
-        $product = Product::factory()->create(['is_active' => false, 'stock' => 2]);
+        $product = Product::factory()->create(['status' => Product::STATUS_PAUSED, 'stock' => 2]);
 
         $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
             'items' => [['id' => $product->id, 'quantity' => 1]],
@@ -144,10 +179,14 @@ class CheckoutTest extends TestCase
     public function test_transactional_checkout_invariant_rejects_a_product_deactivated_after_validation(): void
     {
         $user = $this->user();
-        $product = Product::factory()->create(['is_active' => false, 'stock' => 2]);
+        $product = Product::factory()->create(['status' => Product::STATUS_PAUSED, 'stock' => 2]);
 
         try {
-            app(CheckoutService::class)->create($user, [['id' => $product->id, 'quantity' => 1]]);
+            app(CheckoutService::class)->create($user, [[
+                'id' => $product->id,
+                'variant_id' => $product->variants()->value('id'),
+                'quantity' => 1,
+            ]]);
             $this->fail('Inactive product was accepted by the checkout service.');
         } catch (InsufficientStockException) {
             $this->assertSame(2, $product->fresh()->stock);

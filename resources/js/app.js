@@ -26,6 +26,9 @@ const state = {
   hasMoreProducts: false,
   cart: new Map(),
   rentalDates: new Map(),
+  cartRevision: 0,
+  cartSync: Promise.resolve(),
+  addresses: [],
   checkoutKey: null,
   favorites: new Set(),
   favoritesOnly: false,
@@ -55,6 +58,11 @@ const state = {
   ordersCursor: null,
   hasMoreOrders: false,
   editingProductId: null,
+  variantProductId: null,
+  editingVariantId: null,
+  store: null,
+  pendingStores: [],
+  pendingProducts: [],
   rentalCalendar: {
     productId: null,
     product: null,
@@ -127,6 +135,24 @@ function valueOf(object, keys, fallback = '') {
 
 function productId(product) {
   return String(valueOf(product, ['id', 'product_id'], ''));
+}
+
+function productVariants(product) {
+  return Array.isArray(product?.variants) ? product.variants : [];
+}
+
+function defaultProductVariant(product) {
+  const variants = productVariants(product);
+  return variants.find((variant) => variant.is_default) ?? variants[0] ?? null;
+}
+
+function selectedProductVariant(product) {
+  const variants = productVariants(product);
+  return variants.find((variant) => String(variant.id) === String(product?.selected_variant_id)) ?? defaultProductVariant(product);
+}
+
+function variantOptionLabel(variant) {
+  return [variant.label, variant.size, variant.color, variant.sku, `Stok ${variant.stock}`].filter(Boolean).join(' · ');
 }
 
 function productName(product) {
@@ -307,6 +333,8 @@ function handleProtectedError(error, trigger) {
   if (error instanceof ApiError && error.status === 401) {
     invalidateCheckoutKey();
     state.user = null;
+    state.cart.clear();
+    state.rentalDates.clear();
     $('#checkout-handoff-form')?.reset();
     state.favorites.clear();
     resetRentalCalendarState({ resetForms: true });
@@ -464,7 +492,8 @@ function submitSearch(value) {
 
 function findProduct(id) {
   return state.products.find((product) => productId(product) === String(id))
-    ?? state.cart.get(String(id));
+    ?? state.cart.get(String(id))
+    ?? state.ownedProducts.get(String(id));
 }
 
 function openProduct(id, trigger) {
@@ -483,20 +512,58 @@ function openProduct(id, trigger) {
     node('span', { text: seller }), node('span', { className: 'verified', text: '✓', attrs: { 'aria-label': 'Terverifikasi' } }),
     node('span', { text: valueOf(product, ['city', 'location'], '') ? `· ${valueOf(product, ['city', 'location'])}` : '' }),
   ]));
+  const storeSlug = product?.store && typeof product.store === 'object'
+    ? String(valueOf(product.store, ['slug'], ''))
+    : '';
+  if (storeSlug) info.append(button('Lihat toko', 'text-link', { 'data-open-store': storeSlug }));
   info.append(node('div', { className: 'modal-product__price' }, [
     node('strong', { text: currency.format(productPrice(product)) }),
-    node('span', { text: valueOf(product, ['type'], 'Sewa') === 'Sewa' ? ' / 3 hari' : '' }),
+    node('span', { text: valueOf(product, ['type'], 'Sewa') === 'Sewa' ? ' / hari' : '' }),
   ]));
-  const stock = Number(valueOf(product, ['stock'], 1));
-  info.append(node('p', { className: 'stock-copy', text: stock > 0 ? `Stok tersedia: ${stock}` : 'Stok habis' }));
+  if (valueOf(product, ['type'], 'Sewa') === 'Sewa') {
+    info.append(node('p', { className: 'pricing-terms', text: `Deposit ${currency.format(valueOf(product, ['rental_deposit'], 0))} · Durasi ${valueOf(product, ['rental_min_days'], 1)}–${valueOf(product, ['rental_max_days'], 30)} hari` }));
+  }
+  const variants = productVariants(product);
+  const initialVariant = selectedProductVariant(product);
+  const stock = Number(initialVariant?.stock ?? 0);
+  const stockCopy = node('p', { className: 'stock-copy', text: stock > 0 ? `Stok tersedia: ${stock}` : 'Stok habis' });
+  info.append(stockCopy);
+  let variantSelect = null;
+  if (variants.length) {
+    variantSelect = node('select', { attrs: { id: 'modal-product-variant', 'aria-label': 'Pilih variasi produk' } });
+    variants.forEach((variant) => {
+      const option = node('option', { text: variantOptionLabel(variant), attrs: { value: variant.id, disabled: Number(variant.stock) < 1 } });
+      option.selected = variant.id === initialVariant?.id;
+      variantSelect.append(option);
+    });
+    info.append(node('label', { className: 'variant-picker', text: 'Variasi' }, [variantSelect]));
+  }
   info.append(node('p', { className: 'product-description', text: valueOf(product, ['description'], 'Kostum terawat dan siap dipakai untuk event berikutnya. Checkout demo mencatat pesanan dan memperbarui stok tanpa memproses pembayaran.') }));
   info.append(node('div', { className: 'modal-meta' }, [
     node('span', {}, [node('strong', { text: valueOf(product, ['size'], 'All size') }), node('br'), document.createTextNode('Ukuran')]),
     node('span', {}, [node('strong', { text: `★ ${productRatingLabel(product)}` }), node('br'), document.createTextNode('Rating terverifikasi')]),
     node('span', {}, [node('strong', { text: valueOf(product, ['type'], 'Sewa') }), node('br'), document.createTextNode('Tipe')]),
   ]));
+  const attributes = valueOf(product, ['category_attributes'], {});
+  const includes = valueOf(product, ['costume_includes'], []);
+  const measurements = valueOf(product, ['measurements'], {});
+  const detailLines = [
+    attributes.character ? `Karakter: ${attributes.character}` : null,
+    attributes.material ? `Material: ${attributes.material}` : null,
+    Array.isArray(includes) && includes.length ? `Kelengkapan: ${includes.join(', ')}` : null,
+    Object.keys(measurements).length ? `Ukuran detail: ${Object.entries(measurements).filter(([, value]) => value).map(([key, value]) => `${key} ${value} cm`).join(', ')}` : null,
+    product.care_instructions ? `Perawatan: ${product.care_instructions}` : null,
+  ].filter(Boolean);
+  if (detailLines.length) info.append(node('ul', { className: 'listing-detail-list' }, detailLines.map((line) => node('li', { text: line }))));
   const add = button(stock === 0 ? 'Stok habis' : 'Tambah ke keranjang', 'button button--primary button--full', { 'data-modal-add': id });
   add.disabled = stock === 0;
+  variantSelect?.addEventListener('change', () => {
+    const selected = variants.find((variant) => String(variant.id) === variantSelect.value);
+    const available = Number(selected?.stock ?? 0);
+    stockCopy.textContent = available > 0 ? `Stok tersedia: ${available}` : 'Stok habis';
+    add.textContent = available > 0 ? 'Tambah ke keranjang' : 'Stok habis';
+    add.disabled = available < 1;
+  });
   info.append(add);
   layout.append(info);
   const reviews = node('section', { className: 'review-feed', attrs: { id: 'review-feed', 'aria-label': 'Ulasan pembeli terverifikasi', 'aria-busy': 'true' } }, [
@@ -505,6 +572,27 @@ function openProduct(id, trigger) {
   content.replaceChildren(layout, reviews);
   openLayer(elements.productModal, trigger);
   loadProductReviews(id);
+}
+
+async function openStore(slug, trigger) {
+  const content = $('#modal-content');
+  content.replaceChildren(listMessage('Memuat toko…'));
+  openLayer(elements.productModal, trigger);
+  try {
+    const payload = await api('/api/stores/' + encodeURIComponent(slug));
+    const store = payload.store ?? {};
+    const section = node('section', { className: 'storefront' });
+    section.append(node('span', { className: 'section-kicker', text: 'Toko terverifikasi' }));
+    section.append(node('h2', { text: String(store.name ?? 'Toko'), attrs: { id: 'modal-product-title' } }));
+    section.append(node('p', { text: `${store.city ?? 'Online'}${store.operating_hours ? ` · ${store.operating_hours}` : ''}` }));
+    if (store.description) section.append(node('p', { className: 'product-description', text: store.description }));
+    if (store.policy) section.append(node('p', {}, [node('strong', { text: 'Kebijakan toko: ' }), document.createTextNode(store.policy)]));
+    const products = Array.isArray(payload.products) ? payload.products : [];
+    section.append(node('div', { className: 'product-grid storefront__products' }, products.map(productCard)));
+    content.replaceChildren(section);
+  } catch (error) {
+    content.replaceChildren(listMessage(error.message));
+  }
 }
 
 function reviewDateLabel(value) {
@@ -602,15 +690,20 @@ async function loadProductReviews(id, { append = false } = {}) {
   }
 }
 
-function addToCart(id) {
+function addToCart(id, variantId = null) {
   const product = findProduct(id);
   if (!product) return;
   const key = productId(product);
+  const variant = productVariants(product).find((entry) => String(entry.id) === String(variantId)) ?? defaultProductVariant(product);
+  if (!variant || Number(variant.stock) < 1) {
+    showToast('Variasi yang dipilih tidak tersedia.');
+    return;
+  }
   if (state.cart.has(key)) {
     showToast(`${productName(product)} sudah ada di keranjang.`);
     return;
   }
-  state.cart.set(key, product);
+  state.cart.set(key, { ...product, selected_variant_id: variant.id, cart_updated_at: new Date().toISOString() });
   invalidateCheckoutKey();
   if (valueOf(product, ['type'], 'Sewa') === 'Sewa' && !state.rentalDates.has(key)) {
     state.rentalDates.set(key, {
@@ -619,7 +712,135 @@ function addToCart(id) {
     });
   }
   renderCart();
+  persistCart();
   showToast(`${productName(product)} ditambahkan ke keranjang.`);
+}
+
+function cartEntries() {
+  return [...state.cart.values()].map((product) => {
+    const id = productId(product);
+    const dates = state.rentalDates.get(id) ?? {};
+    return {
+      product_id: Number(id),
+      product_variant_id: selectedProductVariant(product)?.id,
+      quantity: 1,
+      rental_start_date: dates.start_date ?? null,
+      rental_end_date: dates.end_date ?? null,
+      client_updated_at: product.cart_updated_at ?? new Date().toISOString(),
+    };
+  }).filter((entry) => entry.product_id && entry.product_variant_id);
+}
+
+function applyCartItems(items) {
+  state.cart.clear();
+  state.rentalDates.clear();
+  for (const item of Array.isArray(items) ? items : []) {
+    const product = item.product;
+    if (!product) continue;
+    const key = String(item.product_id);
+    state.cart.set(key, {
+      ...product,
+      selected_variant_id: item.product_variant_id,
+      cart_updated_at: item.client_updated_at ?? new Date().toISOString(),
+    });
+    if (item.rental_start_date || item.rental_end_date) {
+      state.rentalDates.set(key, {
+        start_date: item.rental_start_date ?? '',
+        end_date: item.rental_end_date ?? '',
+      });
+    }
+  }
+  invalidateCheckoutKey();
+  renderCart();
+}
+
+function guestCartEntries() {
+  try {
+    const value = JSON.parse(localStorage.getItem('cosplaynesia.guest-cart') ?? '[]');
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
+}
+
+async function restoreCart({ mergeGuest = false } = {}) {
+  const guestItems = guestCartEntries();
+  if (state.user) {
+    const payload = mergeGuest && guestItems.length
+      ? await api('/api/cart', { method: 'PUT', body: { items: guestItems } })
+      : await api('/api/cart');
+    if (mergeGuest) localStorage.removeItem('cosplaynesia.guest-cart');
+    applyCartItems(payload.items);
+    return;
+  }
+  if (!guestItems.length) { applyCartItems([]); return; }
+  const payload = await api('/api/cart/resolve', { method: 'POST', body: { items: guestItems } });
+  applyCartItems(payload.items);
+  localStorage.setItem('cosplaynesia.guest-cart', JSON.stringify(cartEntries()));
+}
+
+function persistCart() {
+  state.cartRevision += 1;
+  const revision = state.cartRevision;
+  const items = cartEntries();
+  if (!state.user) {
+    localStorage.setItem('cosplaynesia.guest-cart', JSON.stringify(items));
+    return;
+  }
+  state.cartSync = state.cartSync.then(async () => {
+    const payload = await api('/api/cart', { method: 'PUT', body: { replace: true, items } });
+    if (revision === state.cartRevision) applyCartItems(payload.items);
+  }).catch((error) => showToast(error.message));
+}
+
+function renderAddressBook() {
+  const fieldset = $('#checkout-handoff-form fieldset');
+  if (!fieldset) return;
+  let row = $('#checkout-address-book');
+  if (!row) {
+    row = node('div', { attrs: { id: 'checkout-address-book' } }, [
+      node('label', { text: 'Alamat tersimpan' }, [node('select', { attrs: { id: 'checkout-address-select', name: 'address_id' } })]),
+      button('Simpan alamat ini', 'text-link', { id: 'save-checkout-address' }),
+      button('Hapus alamat', 'text-link', { id: 'delete-checkout-address' }),
+    ]);
+    fieldset.prepend(row);
+  }
+  const select = $('#checkout-address-select');
+  select.replaceChildren(node('option', { text: 'Gunakan alamat baru', attrs: { value: '' } }), ...state.addresses.map((address) => node('option', {
+    text: `${address.label}${address.is_default ? ' · Utama' : ''}`,
+    attrs: { value: address.id },
+  })));
+  const preferred = state.addresses.find((address) => address.is_default) ?? state.addresses[0];
+  if (preferred) { select.value = String(preferred.id); fillCheckoutAddress(preferred); }
+  $('#delete-checkout-address').hidden = !preferred;
+}
+
+function fillCheckoutAddress(address) {
+  if (!address) return;
+  const form = $('#checkout-handoff-form');
+  const values = { recipient_name: address.recipient_name, recipient_phone: address.recipient_phone, address_line1: address.address_line1, address_line2: address.address_line2 ?? '', city: address.city, province: address.province, postal_code: address.postal_code };
+  for (const [name, value] of Object.entries(values)) if (form.elements[name]) form.elements[name].value = value;
+}
+
+async function loadAddresses() {
+  if (!state.user) { state.addresses = []; renderAddressBook(); return; }
+  const payload = await api('/api/addresses');
+  state.addresses = Array.isArray(payload.data) ? payload.data : [];
+  renderAddressBook();
+}
+
+async function saveCheckoutAddress(trigger) {
+  const form = $('#checkout-handoff-form');
+  if (!form.reportValidity()) return;
+  trigger.disabled = true;
+  try {
+    const fields = new FormData(form);
+    const label = window.prompt('Nama alamat:', `Alamat ${state.addresses.length + 1}`)?.trim();
+    if (!label) return;
+    await api('/api/addresses', { method: 'POST', body: { label, recipient_name: fields.get('recipient_name'), recipient_phone: fields.get('recipient_phone'), address_line1: fields.get('address_line1'), address_line2: fields.get('address_line2') || null, city: fields.get('city'), province: fields.get('province'), postal_code: fields.get('postal_code'), is_default: !state.addresses.length } });
+    await loadAddresses();
+    showToast('Alamat tersimpan.');
+  } catch (error) { showToast(error.message); } finally { trigger.disabled = false; }
 }
 
 function renderCart() {
@@ -630,13 +851,24 @@ function renderCart() {
   $('#cart-button').setAttribute('aria-label', `Buka keranjang, ${count} produk`);
   const items = products.map((product) => {
     const id = productId(product);
+    const variants = productVariants(product);
+    const selectedVariant = selectedProductVariant(product);
     const item = node('article', { className: 'cart-item' });
     item.append(imageOrFallback(valueOf(product, ['image', 'image_url']), productName(product)));
     item.append(node('div', {}, [
       node('h3', { text: productName(product) }),
       node('p', { text: currency.format(productPrice(product)) }),
-      node('small', { text: `${valueOf(product, ['type'], 'Sewa')} · ${valueOf(product, ['size'], 'All size')} · Jumlah 1` }),
+      node('small', { text: `${valueOf(product, ['type'], 'Sewa')} · ${selectedVariant?.label ?? valueOf(product, ['size'], 'All size')} · Jumlah 1` }),
     ]));
+    if (variants.length > 1) {
+      const select = node('select', { attrs: { 'data-cart-variant': id, 'aria-label': `Variasi ${productName(product)}` } });
+      variants.forEach((variant) => {
+        const option = node('option', { text: variantOptionLabel(variant), attrs: { value: variant.id, disabled: Number(variant.stock) < 1 } });
+        option.selected = variant.id === selectedVariant?.id;
+        select.append(option);
+      });
+      item.append(select);
+    }
     item.append(button('×', 'cart-item__remove', { 'data-remove': id, 'aria-label': `Hapus ${productName(product)} dari keranjang` }));
     if (valueOf(product, ['type'], 'Sewa') === 'Sewa') item.append(rentalDateFields(id));
     return item;
@@ -645,6 +877,28 @@ function renderCart() {
   $('#cart-empty').hidden = count > 0;
   $('#cart-summary').hidden = count === 0;
   $('#cart-subtotal').textContent = currency.format(products.reduce((sum, product) => sum + productPrice(product), 0));
+  renderPickupOptions(products);
+}
+
+function renderPickupOptions(products) {
+  const fieldset = $('#checkout-handoff-form fieldset');
+  if (!fieldset) return;
+  $('#checkout-pickup-options')?.remove();
+  const sellers = new Map();
+  for (const product of products) {
+    const sellerId = Number(valueOf(product, ['seller_id'], 0));
+    const store = valueOf(product, ['store'], null);
+    if (sellerId && store?.pickup_enabled) sellers.set(sellerId, store);
+  }
+  if (!sellers.size) return;
+  const group = node('fieldset', { attrs: { id: 'checkout-pickup-options' } }, [node('legend', { text: 'Metode penyerahan per toko' })]);
+  for (const [sellerId, store] of sellers) {
+    group.append(node('label', {}, [
+      node('input', { attrs: { type: 'checkbox', name: 'pickup_seller_ids[]', value: sellerId } }),
+      ' Pickup langsung dari ' + store.name,
+    ]));
+  }
+  fieldset.before(group);
 }
 
 function rentalDateFields(id) {
@@ -662,6 +916,9 @@ async function refreshRentalAvailability(id) {
   if (!dates?.start_date || !dates?.end_date || !status) return;
   try {
     const query = new URLSearchParams(dates);
+    const variant = selectedProductVariant(state.cart.get(String(id)));
+    if (!variant) return;
+    query.set('variant_id', variant.id);
     const result = await api('/api/products/' + encodeURIComponent(id) + '/availability?' + query.toString());
     status.textContent = result.available
       ? 'Tanggal tersedia.'
@@ -676,8 +933,11 @@ async function refreshRentalAvailability(id) {
 function reconcileCartProduct(product, id = productId(product)) {
   const key = String(id);
   if (!state.cart.has(key)) return;
-  if (product && Boolean(valueOf(product, ['is_active'], true))) state.cart.set(key, product);
-  else {
+  if (product && valueOf(product, ['status'], 'draft') === 'published') {
+    const currentVariant = selectedProductVariant(state.cart.get(key));
+    const stillAvailable = productVariants(product).find((variant) => variant.id === currentVariant?.id);
+    state.cart.set(key, { ...product, selected_variant_id: (stillAvailable ?? defaultProductVariant(product))?.id });
+  } else {
     state.cart.delete(key);
     state.rentalDates.delete(key);
   }
@@ -730,6 +990,7 @@ function normalizedUser(payload) {
 }
 
 async function refreshSession() {
+  const previousUserId = state.user?.id ?? null;
   try {
     const nextUser = normalizedUser(await api('/api/me'));
     if (String(state.user?.id ?? '') !== String(nextUser?.id ?? '')) invalidateCheckoutKey();
@@ -741,6 +1002,7 @@ async function refreshSession() {
   }
   updateAuthUi();
   prefillCheckoutHandoff();
+  await Promise.all([restoreCart({ mergeGuest: Boolean(state.user && !previousUserId) }), loadAddresses()]);
   if (state.user) refreshUnreadCount();
 }
 
@@ -803,7 +1065,7 @@ async function submitAuth(form) {
     updateAuthUi();
     prefillCheckoutHandoff();
     refreshUnreadCount();
-    await fetchProducts();
+    await Promise.all([restoreCart({ mergeGuest: true }), loadAddresses(), fetchProducts()]);
     form.reset();
     closeLayer();
     showToast(state.authMode === 'register' ? 'Akun berhasil dibuat.' : 'Berhasil masuk.');
@@ -874,21 +1136,79 @@ function renderMyProducts() {
   target.replaceChildren(...products.map((product) => {
     const id = productId(product);
     const name = productName(product);
-    const active = Boolean(valueOf(product, ['is_active'], true));
+    const status = valueOf(product, ['status'], 'draft');
+    const pendingReview = status === 'draft' && Boolean(valueOf(product, ['submitted_for_review_at'], null));
+    const statusLabels = { draft: 'Draft', published: 'Terbit', paused: 'Dijeda', rejected: 'Ditolak', archived: 'Diarsipkan' };
+    const active = status === 'published';
     const card = node('article', { className: 'profile-card' });
     card.append(node('div', { className: 'profile-card__row profile-card__heading' }, [
       node('strong', { text: productName(product) }),
-      node('span', { className: `listing-status ${active ? '' : 'listing-status--inactive'}`.trim(), text: active ? 'Aktif' : 'Nonaktif' }),
+      node('span', { className: `listing-status ${active ? '' : 'listing-status--inactive'}`.trim(), text: pendingReview ? 'Menunggu review' : (statusLabels[status] ?? status) }),
     ]));
     card.append(node('small', { text: `${valueOf(product, ['category'], 'Cosplay')} · ${currency.format(productPrice(product))} · Stok ${valueOf(product, ['stock'], 0)}` }));
-    const actions = [
+    if (valueOf(product, ['rejection_reason'], null)) card.append(node('small', { text: `Alasan penolakan: ${product.rejection_reason}` }));
+    const images = Array.isArray(product.images) ? product.images : [];
+    if (images.length) {
+      const gallery = node('div', { className: 'listing-gallery', attrs: { 'aria-label': `Galeri ${name}` } });
+      images.forEach((image, position) => {
+        const item = node('div', { className: 'listing-gallery__item' });
+        item.append(imageOrFallback(image.url, `${name}, gambar ${position + 1}`, 'listing-gallery__image'));
+        if (status !== 'archived') {
+          item.append(node('div', { className: 'listing-gallery__actions' }, [
+            button('Naik', 'text-link', { 'data-image-move': image.id, 'data-product-id': id, 'data-direction': '-1', disabled: position === 0 }),
+            button('Turun', 'text-link', { 'data-image-move': image.id, 'data-product-id': id, 'data-direction': '1', disabled: position === images.length - 1 }),
+            button('Hapus gambar', 'danger-action', { 'data-image-delete': image.id, 'data-product-id': id }),
+          ]));
+        }
+        gallery.append(item);
+      });
+      card.append(gallery);
+    }
+    const variants = Array.isArray(product.variants) ? product.variants : [];
+    if (variants.length) {
+      const conditionLabels = { new: 'Baru', like_new: 'Seperti baru', good: 'Baik', fair: 'Cukup' };
+      const variantList = node('div', { className: 'listing-variants', attrs: { 'aria-label': `Variasi ${name}` } });
+      variants.forEach((variant) => {
+        const detail = [variant.size, variant.color, conditionLabels[variant.condition]].filter(Boolean).join(' · ');
+        const row = node('div', { className: 'listing-variant' }, [
+          node('div', {}, [
+            node('strong', { text: variant.label }),
+            node('small', { text: `${variant.sku}${detail ? ` · ${detail}` : ''} · Stok ${variant.stock}` }),
+          ]),
+        ]);
+        if (status !== 'archived') {
+          row.append(node('div', { className: 'listing-variant__actions' }, [
+            button('Edit variasi', 'text-link', { 'data-edit-variant': variant.id, 'data-product-id': id }),
+            button('Hapus variasi', 'danger-action', { 'data-delete-variant': variant.id, 'data-product-id': id, disabled: variants.length === 1 }),
+          ]));
+        }
+        variantList.append(row);
+      });
+      card.append(variantList);
+    }
+    const readiness = valueOf(product, ['readiness'], null);
+    if (readiness?.items) {
+      card.append(node('div', { className: `listing-readiness ${readiness.ready ? 'listing-readiness--ready' : ''}`.trim() }, [
+        node('strong', { text: readiness.ready ? 'Siap diajukan' : 'Checklist sebelum terbit' }),
+        node('ul', {}, readiness.items.map((item) => node('li', { className: item.complete ? 'is-complete' : '', text: `${item.complete ? '✓' : '○'} ${item.label}` }))),
+      ]));
+    }
+    const actions = status === 'archived' ? [] : [
       button('Edit', '', { 'data-edit-product': id, 'aria-label': `Edit ${name}` }),
-      button(active ? 'Nonaktifkan' : 'Aktifkan', '', { 'data-toggle-product': id, 'data-next-active': String(!active), 'aria-label': `${active ? 'Nonaktifkan' : 'Aktifkan'} ${name}` }),
+      button('Tambah variasi', '', { 'data-add-variant': id, 'aria-label': `Tambah variasi ${name}` }),
+      button('Preview', '', { 'data-preview-product': id, 'aria-label': `Preview ${name}` }),
     ];
-    if (isRentalProduct(product)) {
+    if ((status === 'draft' && !pendingReview) || status === 'paused') {
+      actions.push(button(status === 'draft' ? 'Ajukan review' : 'Terbitkan', '', { 'data-toggle-product': id, 'data-next-status': 'published', 'aria-label': `Terbitkan ${name}` }));
+    } else if (status === 'published') {
+      actions.push(button('Jeda', '', { 'data-toggle-product': id, 'data-next-status': 'paused', 'aria-label': `Jeda ${name}` }));
+    } else if (status === 'rejected') {
+      actions.push(button('Kembalikan ke draft', '', { 'data-toggle-product': id, 'data-next-status': 'draft', 'aria-label': `Kembalikan ${name} ke draft` }));
+    }
+    if (isRentalProduct(product) && status !== 'archived') {
       actions.push(button('Jadwal sewa', '', { 'data-open-rental-calendar': id, 'aria-label': `Kelola jadwal sewa ${name}` }));
     }
-    actions.push(button('Hapus', 'danger-action', { 'data-delete-product': id, 'aria-label': `Hapus ${name}` }));
+    if (status !== 'archived') actions.push(button('Arsipkan', 'danger-action', { 'data-delete-product': id, 'aria-label': `Arsipkan ${name}` }));
     card.append(node('div', { className: 'profile-card__actions' }, actions));
     return card;
   }));
@@ -2027,14 +2347,145 @@ async function loadProfileData() {
   $('#incoming-orders-list').replaceChildren(listMessage('Memuat pesanan masuk…'));
   $('#seller-reviews-list').replaceChildren(listMessage('Memuat ulasan…'));
   $('#orders-list').replaceChildren(listMessage('Memuat pesanan…'));
-  const results = await Promise.allSettled([loadOwnedProducts(), loadIncomingFulfillments(), loadSellerReviews(), loadOrders()]);
+  const results = await Promise.allSettled([loadOwnedProducts(), loadIncomingFulfillments(), loadSellerReviews(), loadOrders(), loadStore()]);
   if (results[0].status === 'rejected') $('#my-products-list').replaceChildren(listMessage(results[0].reason?.message ?? 'Produk gagal dimuat.'));
   if (results[1].status === 'rejected') $('#incoming-orders-list').replaceChildren(listMessage(results[1].reason?.message ?? 'Pesanan masuk gagal dimuat.'));
   if (results[2].status === 'rejected') $('#seller-reviews-list').replaceChildren(listMessage(results[2].reason?.message ?? 'Ulasan gagal dimuat.'));
   if (results[3].status === 'rejected') $('#orders-list').replaceChildren(listMessage(results[3].reason?.message ?? 'Pesanan gagal dimuat.'));
+  if (results[4].status === 'rejected') $('#store-summary').replaceChildren(listMessage(results[4].reason?.message ?? 'Status toko gagal dimuat.'));
   const unauthorized = results.find((result) => result.status === 'rejected' && result.reason?.status === 401);
   if (unauthorized) handleProtectedError(unauthorized.reason);
   refreshUnreadCount();
+}
+
+function storeStatusLabel(status) {
+  return { draft: 'Draft', submitted: 'Menunggu review', approved: 'Disetujui', rejected: 'Ditolak', suspended: 'Ditangguhkan' }[status] ?? 'Belum diajukan';
+}
+
+function renderStore() {
+  const store = state.store;
+  $('#store-status').textContent = storeStatusLabel(store?.status);
+  const summary = $('#store-summary');
+  summary.replaceChildren();
+  const form = $('#store-onboarding-form');
+  const editable = !store || ['draft', 'rejected'].includes(store.status);
+  form.hidden = !editable;
+  $('#add-product-button').hidden = store?.status !== 'approved';
+  if (!store) {
+    summary.append(listMessage('Ajukan verifikasi toko untuk mulai menerbitkan listing.'));
+    return;
+  }
+  summary.append(node('article', { className: 'profile-card' }, [
+    node('strong', { text: store.name }),
+    node('span', { text: `${store.city} · ${storeStatusLabel(store.status)}` }),
+    store.review_note ? node('small', { text: `Catatan review: ${store.review_note}` }) : null,
+  ].filter(Boolean)));
+  if (store.status === 'approved') {
+    const logistics = node('form', { className: 'account-form', attrs: { id: 'store-logistics-form' } }, [
+      node('strong', { text: 'Asal pengiriman & pickup' }),
+      node('label', { text: 'Alamat asal' }, [node('input', { attrs: { name: 'origin_address_line1', required: true, value: store.origin_address_line1 ?? '' } })]),
+      node('label', { text: 'Detail alamat (opsional)' }, [node('input', { attrs: { name: 'origin_address_line2', value: store.origin_address_line2 ?? '' } })]),
+      node('label', { text: 'Provinsi' }, [node('input', { attrs: { name: 'origin_province', required: true, value: store.origin_province ?? '' } })]),
+      node('label', { text: 'Kode pos' }, [node('input', { attrs: { name: 'origin_postal_code', required: true, pattern: '[0-9]{5}', value: store.origin_postal_code ?? '' } })]),
+      node('label', {}, [node('input', { attrs: { type: 'checkbox', name: 'pickup_enabled', checked: Boolean(store.pickup_enabled) } }), ' Izinkan pickup langsung']),
+      node('label', { text: 'Instruksi pickup' }, [node('textarea', { attrs: { name: 'pickup_instructions', maxlength: 500 }, text: store.pickup_instructions ?? '' })]),
+      button('Simpan pengaturan pengiriman', 'button button--outline', { type: 'submit' }),
+    ]);
+    summary.append(logistics);
+  }
+  if (editable) {
+    for (const field of ['name', 'description', 'city', 'operating_hours', 'policy']) {
+      if (form.elements[field]) form.elements[field].value = String(store[field] ?? '');
+    }
+  }
+}
+
+async function loadStore() {
+  const payload = await api('/api/me/store');
+  state.store = payload?.store ?? null;
+  renderStore();
+  const canReviewStores = ['moderator', 'admin'].includes(String(valueOf(state.user, ['role'], 'buyer')));
+  $('#admin-store-review-section').hidden = !canReviewStores;
+  $('#admin-product-review-section').hidden = !canReviewStores;
+  if (canReviewStores) await Promise.all([loadPendingStores(), loadPendingProducts()]);
+}
+
+async function submitStoreOnboarding(form) {
+  const errorBox = $('.form-error', form);
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  const submit = $('button[type="submit"]', form);
+  submit.disabled = true;
+  try {
+    const response = await api('/api/me/store/onboarding', { method: 'POST', body: new FormData(form) });
+    state.store = response.store;
+    renderStore();
+    showToast('Pengajuan toko berhasil dikirim.');
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  } finally { submit.disabled = false; }
+}
+
+async function loadPendingStores() {
+  const payload = await api('/api/admin/stores');
+  state.pendingStores = Array.isArray(payload?.data) ? payload.data : [];
+  const list = $('#admin-store-review-list');
+  list.replaceChildren(...state.pendingStores.map((store) => {
+    const card = node('article', { className: 'profile-card' });
+    card.append(node('strong', { text: store.name }), node('span', { text: `${store.legal_name} · ${store.city} · ${storeStatusLabel(store.status)}` }));
+    if (store.status === 'submitted') {
+      card.append(button('Setujui', 'text-link', { 'data-store-review': store.id, 'data-review-status': 'approved' }));
+      card.append(button('Tolak', 'text-link', { 'data-store-review': store.id, 'data-review-status': 'rejected' }));
+    } else if (store.status === 'approved') {
+      card.append(button('Tangguhkan', 'danger-action', { 'data-store-review': store.id, 'data-review-status': 'suspended' }));
+    }
+    return card;
+  }));
+  if (!state.pendingStores.length) list.append(listMessage('Tidak ada toko yang perlu dikelola.'));
+}
+
+async function reviewStore(id, status, trigger) {
+  const needsReason = ['rejected', 'suspended'].includes(status);
+  const note = needsReason ? window.prompt(status === 'suspended' ? 'Alasan penangguhan:' : 'Alasan penolakan:')?.trim() : '';
+  if (needsReason && !note) return;
+  trigger.disabled = true;
+  try {
+    await api(`/api/admin/stores/${encodeURIComponent(id)}/review`, { method: 'PATCH', body: { status, note } });
+    await loadPendingStores();
+    showToast({ approved: 'Toko disetujui.', rejected: 'Toko ditolak.', suspended: 'Toko ditangguhkan.' }[status]);
+  } catch (error) { handleProtectedError(error, trigger); }
+  finally { trigger.disabled = false; }
+}
+
+async function loadPendingProducts() {
+  const payload = await api('/api/admin/products');
+  state.pendingProducts = Array.isArray(payload?.data) ? payload.data : [];
+  const list = $('#admin-product-review-list');
+  list.replaceChildren(...state.pendingProducts.map((product) => {
+    const card = node('article', { className: 'profile-card' });
+    card.append(
+      node('strong', { text: product.name }),
+      node('span', { text: `${product.store?.name ?? product.seller} · ${product.category} · ${currency.format(productPrice(product))}` }),
+      button('Preview', 'text-link', { 'data-moderation-preview': product.id }),
+      button('Setujui', 'text-link', { 'data-product-review': product.id, 'data-review-status': 'published' }),
+      button('Tolak', 'danger-action', { 'data-product-review': product.id, 'data-review-status': 'rejected' }),
+    );
+    return card;
+  }));
+  if (!state.pendingProducts.length) list.append(listMessage('Tidak ada listing yang menunggu moderasi.'));
+}
+
+async function reviewProduct(id, status, trigger) {
+  const reason = status === 'rejected' ? window.prompt('Alasan penolakan listing:')?.trim() : null;
+  if (status === 'rejected' && !reason) return;
+  trigger.disabled = true;
+  try {
+    await api(`/api/admin/products/${encodeURIComponent(id)}/review`, { method: 'PATCH', body: { status, reason } });
+    await Promise.all([loadPendingProducts(), fetchProducts()]);
+    showToast(status === 'published' ? 'Listing disetujui dan diterbitkan.' : 'Listing ditolak dengan alasan.');
+  } catch (error) { handleProtectedError(error, trigger); }
+  finally { trigger.disabled = false; }
 }
 
 async function updateFulfillmentStatus(id, status, trigger) {
@@ -2164,6 +2615,8 @@ async function revokeAllSessions(trigger) {
   try {
     await api('/api/me/sessions', { method: 'DELETE' });
     state.user = null;
+    state.cart.clear();
+    state.rentalDates.clear();
     updateAuthUi();
     closeLayer();
     showToast('Semua sesi telah dicabut.');
@@ -2270,11 +2723,14 @@ async function logout(trigger) {
     }
     invalidateCheckoutKey();
     state.user = null;
+    state.cart.clear();
+    state.rentalDates.clear();
     $('#checkout-handoff-form')?.reset();
     state.favorites.clear();
     state.favoritesOnly = false;
     resetRentalCalendarState({ resetForms: true });
     updateAuthUi();
+    renderCart();
     await fetchProducts();
     closeLayer(false);
     showToast('Berhasil keluar.');
@@ -2282,6 +2738,8 @@ async function logout(trigger) {
     if (error.status === 401) {
       invalidateCheckoutKey();
       state.user = null;
+      state.cart.clear();
+      state.rentalDates.clear();
       $('#checkout-handoff-form')?.reset();
       resetRentalCalendarState({ resetForms: true });
       updateAuthUi();
@@ -2307,6 +2765,8 @@ async function checkout(trigger) {
       method: 'POST',
       headers: { 'Idempotency-Key': state.checkoutKey },
       body: {
+        address_id: fields.get('address_id') || null,
+        pickup_seller_ids: fields.getAll('pickup_seller_ids[]').map(Number),
         recipient: {
           name: fields.get('recipient_name'),
           phone: fields.get('recipient_phone'),
@@ -2322,6 +2782,7 @@ async function checkout(trigger) {
         handoff_note: fields.get('handoff_note'),
         items: [...state.cart.keys()].map((id) => ({
           id: Number(id) || id,
+          variant_id: selectedProductVariant(state.cart.get(id))?.id,
           quantity: 1,
           ...(valueOf(state.cart.get(id), ['type'], 'Sewa') === 'Sewa' ? state.rentalDates.get(id) : {}),
         })),
@@ -2329,6 +2790,7 @@ async function checkout(trigger) {
     });
     state.cart.clear();
     state.rentalDates.clear();
+    localStorage.removeItem('cosplaynesia.guest-cart');
     state.checkoutKey = null;
     renderCart();
     closeLayer(false);
@@ -2349,14 +2811,42 @@ async function submitProduct(form) {
   if (!form.reportValidity()) return;
   const submit = $('button[type="submit"]', form);
   submit.disabled = true;
-  const data = Object.fromEntries(new FormData(form).entries());
-  data.price = Number(data.price);
+  const fields = new FormData(form);
+  const images = fields.getAll('images[]').filter((entry) => entry instanceof File && entry.size > 0);
+  fields.delete('images[]');
+  const data = Object.fromEntries(fields.entries());
+  data.category_attributes = { character: data.character || null, material: data.material || null, fit: data.fit || null };
+  data.costume_includes = String(data.costume_includes || '').split(',').map((item) => item.trim()).filter(Boolean);
+  data.measurements = {
+    chest: data.measurement_chest ? Number(data.measurement_chest) : null,
+    waist: data.measurement_waist ? Number(data.measurement_waist) : null,
+    hips: data.measurement_hips ? Number(data.measurement_hips) : null,
+    height: data.measurement_height ? Number(data.measurement_height) : null,
+  };
+  ['character', 'material', 'fit', 'measurement_chest', 'measurement_waist', 'measurement_hips', 'measurement_height'].forEach((key) => delete data[key]);
   data.stock = Number(data.stock);
-  if (state.editingProductId) data.is_active = form.elements.is_active.checked;
+  ['sale_price', 'rental_price_per_day', 'rental_deposit', 'rental_min_days', 'rental_max_days'].forEach((key) => {
+    data[key] = data[key] === '' ? null : Number(data[key]);
+  });
+  if (data.type === 'Beli') {
+    ['rental_price_per_day', 'rental_deposit', 'rental_min_days', 'rental_max_days'].forEach((key) => delete data[key]);
+  } else {
+    delete data.sale_price;
+  }
   if (!state.editingProductId) Object.keys(data).forEach((key) => { if (data[key] === '') delete data[key]; });
   try {
     const editing = state.editingProductId;
-    const savedProduct = await api(editing ? `/api/products/${encodeURIComponent(editing)}` : '/api/products', { method: editing ? 'PATCH' : 'POST', body: data });
+    let savedProduct = await api(editing ? `/api/products/${encodeURIComponent(editing)}` : '/api/products', { method: editing ? 'PATCH' : 'POST', body: data });
+    if (images.length) {
+      const upload = new FormData();
+      images.forEach((image) => upload.append('images[]', image));
+      try {
+        savedProduct = await api(`/api/products/${encodeURIComponent(productId(savedProduct))}/images`, { method: 'POST', body: upload });
+      } catch (error) {
+        if (!editing) await api(`/api/products/${encodeURIComponent(productId(savedProduct))}`, { method: 'DELETE' }).catch(() => {});
+        throw error;
+      }
+    }
     if (editing) reconcileCartProduct(savedProduct, editing);
     form.reset();
     closeLayer(false);
@@ -2385,23 +2875,119 @@ function openProductForm(product = null, trigger = document.activeElement) {
   $('#product-form-kicker').textContent = product ? 'Kelola listing' : 'Mulai berjualan';
   $('#add-product-title').textContent = product ? 'Edit Produk' : 'Tambah Produk';
   $('#product-submit-button').textContent = product ? 'Simpan perubahan' : 'Simpan produk';
-  $('#product-active-field').hidden = !product;
 
   if (product) {
-    ['name', 'price', 'stock', 'category', 'series', 'type', 'size', 'city', 'image'].forEach((field) => {
+    ['name', 'stock', 'category', 'series', 'type', 'size', 'city', 'sale_price', 'rental_price_per_day', 'rental_deposit', 'rental_min_days', 'rental_max_days'].forEach((field) => {
       form.elements[field].value = valueOf(product, [field], '');
     });
-    form.elements.is_active.checked = Boolean(valueOf(product, ['is_active'], true));
+    const attributes = valueOf(product, ['category_attributes'], {});
+    form.elements.character.value = attributes.character ?? '';
+    form.elements.material.value = attributes.material ?? '';
+    form.elements.fit.value = attributes.fit ?? 'unisex';
+    form.elements.costume_includes.value = valueOf(product, ['costume_includes'], []).join(', ');
+    const measurements = valueOf(product, ['measurements'], {});
+    ['chest', 'waist', 'hips', 'height'].forEach((key) => { form.elements[`measurement_${key}`].value = measurements[key] ?? ''; });
+    form.elements.care_instructions.value = valueOf(product, ['care_instructions'], '');
   }
+  syncProductPricingFields(form);
   openLayer(elements.addProductDrawer, trigger);
 }
 
-async function updateProductStatus(id, active, trigger) {
+function syncProductPricingFields(form = $('#add-product-form')) {
+  const rental = form.elements.type.value === 'Sewa';
+  $('#sale-price-field').hidden = rental;
+  $('#rental-pricing-fields').hidden = !rental;
+  form.elements.sale_price.required = !rental;
+  ['rental_price_per_day', 'rental_deposit', 'rental_min_days', 'rental_max_days'].forEach((field) => {
+    form.elements[field].required = rental;
+  });
+}
+
+function openVariantForm(product, variant = null, trigger = document.activeElement) {
+  const form = $('#variant-form');
+  state.variantProductId = productId(product);
+  state.editingVariantId = variant?.id ?? null;
+  form.reset();
+  $('#variant-form-error').hidden = true;
+  $('#variant-title').textContent = variant ? 'Edit Variasi' : 'Tambah Variasi';
+  $('#variant-submit-button').textContent = variant ? 'Simpan perubahan' : 'Simpan variasi';
+  if (variant) {
+    ['sku', 'label', 'size', 'color', 'condition', 'stock'].forEach((field) => {
+      form.elements[field].value = valueOf(variant, [field], '');
+    });
+  }
+  openLayer($('#variant-drawer'), trigger);
+}
+
+async function submitVariant(form) {
+  const errorBox = $('#variant-form-error');
+  errorBox.hidden = true;
+  if (!form.reportValidity()) return;
+  const submit = $('#variant-submit-button');
+  submit.disabled = true;
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.stock = Number(data.stock);
+  Object.keys(data).forEach((key) => { if (data[key] === '') data[key] = null; });
+  try {
+    const editing = state.editingVariantId;
+    const path = `/api/products/${encodeURIComponent(state.variantProductId)}/variants${editing ? `/${encodeURIComponent(editing)}` : ''}`;
+    const product = await api(path, { method: editing ? 'PATCH' : 'POST', body: data });
+    reconcileCartProduct(product, state.variantProductId);
+    closeLayer(false);
+    showToast(editing ? 'Variasi berhasil diperbarui.' : 'Variasi berhasil ditambahkan.');
+    await Promise.all([loadOwnedProducts(), fetchProducts()]);
+    state.variantProductId = null;
+    state.editingVariantId = null;
+  } catch (error) {
+    errorBox.textContent = error.message;
+    errorBox.hidden = false;
+  } finally { submit.disabled = false; }
+}
+
+async function deleteVariant(productIdValue, variantId, trigger) {
   trigger.disabled = true;
   try {
-    const product = await api(`/api/products/${encodeURIComponent(id)}`, { method: 'PATCH', body: { is_active: active } });
+    const product = await api(`/api/products/${encodeURIComponent(productIdValue)}/variants/${encodeURIComponent(variantId)}`, { method: 'DELETE' });
+    reconcileCartProduct(product, productIdValue);
+    showToast('Variasi berhasil dihapus.');
+    await Promise.all([loadOwnedProducts(), fetchProducts()]);
+  } catch (error) { handleProtectedError(error, trigger); }
+}
+
+async function reorderProductImage(productIdValue, imageId, direction, trigger) {
+  const product = state.ownedProducts.get(String(productIdValue));
+  const images = Array.isArray(product?.images) ? [...product.images] : [];
+  const from = images.findIndex((image) => String(image.id) === String(imageId));
+  const to = from + Number(direction);
+  if (from < 0 || to < 0 || to >= images.length) return;
+  [images[from], images[to]] = [images[to], images[from]];
+  trigger.disabled = true;
+  try {
+    const updated = await api(`/api/products/${encodeURIComponent(productIdValue)}/images/order`, {
+      method: 'PATCH',
+      body: { image_ids: images.map((image) => image.id) },
+    });
+    state.ownedProducts.set(String(productIdValue), updated);
+    await Promise.all([loadOwnedProducts(), fetchProducts()]);
+  } catch (error) { handleProtectedError(error, trigger); }
+}
+
+async function deleteProductImage(productIdValue, imageId, trigger) {
+  trigger.disabled = true;
+  try {
+    const updated = await api(`/api/products/${encodeURIComponent(productIdValue)}/images/${encodeURIComponent(imageId)}`, { method: 'DELETE' });
+    state.ownedProducts.set(String(productIdValue), updated);
+    await Promise.all([loadOwnedProducts(), fetchProducts()]);
+  } catch (error) { handleProtectedError(error, trigger); }
+}
+
+async function updateProductStatus(id, status, trigger) {
+  trigger.disabled = true;
+  try {
+    const product = await api(`/api/products/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: { status } });
     reconcileCartProduct(product, id);
-    showToast(active ? 'Produk diaktifkan.' : 'Produk dinonaktifkan.');
+    const messages = { published: product.submitted_for_review_at ? 'Listing diajukan untuk review.' : 'Listing berhasil diterbitkan.', paused: 'Listing berhasil dijeda.', draft: 'Listing dikembalikan ke draft.' };
+    showToast(messages[status] ?? 'Status listing diperbarui.');
     await Promise.all([loadProfileData(), fetchProducts()]);
   } catch (error) {
     handleProtectedError(error, trigger);
@@ -2410,14 +2996,23 @@ async function updateProductStatus(id, active, trigger) {
   }
 }
 
+async function previewProduct(id, trigger) {
+  trigger.disabled = true;
+  try {
+    const product = await api(`/api/products/${encodeURIComponent(id)}/preview`);
+    state.ownedProducts.set(String(id), product);
+    openProduct(id, trigger);
+  } catch (error) { handleProtectedError(error, trigger); } finally { trigger.disabled = false; }
+}
+
 async function deleteProduct(id, trigger) {
   const product = state.ownedProducts.get(String(id));
-  if (!product || !window.confirm(`Hapus ${productName(product)}? Riwayat pesanan yang sudah ada tetap tersimpan.`)) return;
+  if (!product || !window.confirm(`Arsipkan ${productName(product)}? Listing tidak dapat diterbitkan kembali, tetapi riwayatnya tetap tersimpan.`)) return;
   trigger.disabled = true;
   try {
     await api(`/api/products/${encodeURIComponent(id)}`, { method: 'DELETE' });
     reconcileCartProduct(null, id);
-    showToast('Produk berhasil dihapus.');
+    showToast('Listing berhasil diarsipkan.');
     await Promise.all([loadProfileData(), fetchProducts()]);
   } catch (error) {
     handleProtectedError(error, trigger);
@@ -2448,9 +3043,11 @@ elements.productGrid.addEventListener('click', (event) => {
 $('#modal-content').addEventListener('click', (event) => {
   const more = event.target.closest('[data-load-reviews]');
   if (more) { loadProductReviews(more.dataset.loadReviews, { append: true }); return; }
+  const store = event.target.closest('[data-open-store]');
+  if (store) { openStore(store.dataset.openStore, store); return; }
   const add = event.target.closest('[data-modal-add]');
   if (!add) return;
-  addToCart(add.dataset.modalAdd);
+  addToCart(add.dataset.modalAdd, $('#modal-product-variant')?.value);
   closeLayer(false);
   window.setTimeout(() => openLayer(elements.cartDrawer, add), 120);
 });
@@ -2463,9 +3060,23 @@ $('#cart-items').addEventListener('click', (event) => {
   state.rentalDates.delete(id);
   invalidateCheckoutKey();
   renderCart();
+  persistCart();
 });
 
 $('#cart-items').addEventListener('change', (event) => {
+  const variant = event.target.closest('[data-cart-variant]');
+  if (variant) {
+    const id = String(variant.dataset.cartVariant);
+    const product = state.cart.get(id);
+    if (!product) return;
+    state.cart.set(id, { ...product, selected_variant_id: Number(variant.value) });
+    state.cart.get(id).cart_updated_at = new Date().toISOString();
+    invalidateCheckoutKey();
+    renderCart();
+    persistCart();
+    if (valueOf(product, ['type'], 'Sewa') === 'Sewa') refreshRentalAvailability(id);
+    return;
+  }
   const input = event.target.closest('[data-rental-date]');
   if (!input) return;
   const id = String(input.dataset.rentalDate);
@@ -2473,8 +3084,31 @@ $('#cart-items').addEventListener('change', (event) => {
   if (dates[input.dataset.dateKind] === input.value) return;
   dates[input.dataset.dateKind] = input.value;
   state.rentalDates.set(id, dates);
+  const product = state.cart.get(id);
+  if (product) product.cart_updated_at = new Date().toISOString();
   invalidateCheckoutKey();
+  persistCart();
   refreshRentalAvailability(id);
+});
+
+$('#checkout-handoff-form').addEventListener('change', (event) => {
+  if (event.target.id !== 'checkout-address-select') return;
+  const address = state.addresses.find((item) => String(item.id) === event.target.value);
+  fillCheckoutAddress(address);
+  $('#delete-checkout-address').hidden = !address;
+});
+
+$('#checkout-handoff-form').addEventListener('click', async (event) => {
+  if (event.target.id === 'save-checkout-address') { await saveCheckoutAddress(event.target); return; }
+  if (event.target.id !== 'delete-checkout-address') return;
+  const id = $('#checkout-address-select').value;
+  if (!id) return;
+  event.target.disabled = true;
+  try {
+    await api(`/api/addresses/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    await loadAddresses();
+    showToast('Alamat dihapus.');
+  } catch (error) { showToast(error.message); } finally { event.target.disabled = false; }
 });
 
 $('#orders-list').addEventListener('click', async (event) => {
@@ -2568,6 +3202,48 @@ $('#reset-password-form').addEventListener('submit', (event) => { event.preventD
 $('#logout-button').addEventListener('click', (event) => logout(event.currentTarget));
 $('#profile-identity-form').addEventListener('submit', (event) => { event.preventDefault(); submitIdentity(event.currentTarget); });
 $('#profile-password-form').addEventListener('submit', (event) => { event.preventDefault(); submitPassword(event.currentTarget); });
+$('#store-onboarding-form').addEventListener('submit', (event) => { event.preventDefault(); submitStoreOnboarding(event.currentTarget); });
+$('#store-summary').addEventListener('submit', async (event) => {
+  if (event.target.id !== 'store-logistics-form') return;
+  event.preventDefault();
+  const form = event.target;
+  if (!form.reportValidity()) return;
+  const submit = form.querySelector('button[type="submit"]');
+  submit.disabled = true;
+  try {
+    const fields = new FormData(form);
+    const response = await api('/api/me/store/logistics', { method: 'PATCH', body: {
+      origin_address_line1: fields.get('origin_address_line1'),
+      origin_address_line2: fields.get('origin_address_line2') || null,
+      origin_province: fields.get('origin_province'),
+      origin_postal_code: fields.get('origin_postal_code'),
+      pickup_enabled: fields.has('pickup_enabled'),
+      pickup_instructions: fields.get('pickup_instructions') || null,
+    } });
+    state.store = response.store;
+    renderStore();
+    showToast('Pengaturan pengiriman tersimpan.');
+  } catch (error) { showToast(error.message); } finally { submit.disabled = false; }
+});
+$('#admin-store-review-list').addEventListener('click', (event) => {
+  const trigger = event.target.closest('[data-store-review]');
+  if (trigger) reviewStore(trigger.dataset.storeReview, trigger.dataset.reviewStatus, trigger);
+});
+$('#admin-product-review-list').addEventListener('click', (event) => {
+  const review = event.target.closest('[data-product-review]');
+  if (review) {
+    reviewProduct(review.dataset.productReview, review.dataset.reviewStatus, review);
+    return;
+  }
+  const preview = event.target.closest('[data-moderation-preview]');
+  if (preview) {
+    const product = state.pendingProducts.find((entry) => String(entry.id) === String(preview.dataset.moderationPreview));
+    if (product) {
+      state.ownedProducts.set(String(product.id), product);
+      openProduct(product.id, preview);
+    }
+  }
+});
 $('#resend-verification').addEventListener('click', (event) => resendVerification(event.currentTarget));
 $('#accept-legal-consent').addEventListener('click', (event) => acceptLegalConsent(event.currentTarget));
 $('#revoke-all-sessions').addEventListener('click', (event) => revokeAllSessions(event.currentTarget));
@@ -2606,8 +3282,43 @@ $('#add-product-button').addEventListener('click', (event) => {
 });
 $('.seller-action').addEventListener('click', (event) => state.user ? openProductForm(null, event.currentTarget) : requireAuthentication(event.currentTarget));
 $('#add-product-form').addEventListener('submit', (event) => { event.preventDefault(); submitProduct(event.currentTarget); });
+$('#add-product-form [name="type"]').addEventListener('change', (event) => syncProductPricingFields(event.currentTarget.form));
+$('#variant-form').addEventListener('submit', (event) => { event.preventDefault(); submitVariant(event.currentTarget); });
 
 $('#my-products-list').addEventListener('click', (event) => {
+  const preview = event.target.closest('[data-preview-product]');
+  if (preview) {
+    previewProduct(preview.dataset.previewProduct, preview);
+    return;
+  }
+  const addVariant = event.target.closest('[data-add-variant]');
+  if (addVariant) {
+    const product = state.ownedProducts.get(String(addVariant.dataset.addVariant));
+    if (product) openVariantForm(product, null, addVariant);
+    return;
+  }
+  const editVariant = event.target.closest('[data-edit-variant]');
+  if (editVariant) {
+    const product = state.ownedProducts.get(String(editVariant.dataset.productId));
+    const variant = product?.variants?.find((entry) => String(entry.id) === editVariant.dataset.editVariant);
+    if (product && variant) openVariantForm(product, variant, editVariant);
+    return;
+  }
+  const removeVariant = event.target.closest('[data-delete-variant]');
+  if (removeVariant) {
+    deleteVariant(removeVariant.dataset.productId, removeVariant.dataset.deleteVariant, removeVariant);
+    return;
+  }
+  const imageMove = event.target.closest('[data-image-move]');
+  if (imageMove) {
+    reorderProductImage(imageMove.dataset.productId, imageMove.dataset.imageMove, imageMove.dataset.direction, imageMove);
+    return;
+  }
+  const imageDelete = event.target.closest('[data-image-delete]');
+  if (imageDelete) {
+    deleteProductImage(imageDelete.dataset.productId, imageDelete.dataset.imageDelete, imageDelete);
+    return;
+  }
   const calendar = event.target.closest('[data-open-rental-calendar]');
   if (calendar) {
     const product = state.ownedProducts.get(String(calendar.dataset.openRentalCalendar));
@@ -2626,7 +3337,7 @@ $('#my-products-list').addEventListener('click', (event) => {
   }
   const toggle = event.target.closest('[data-toggle-product]');
   if (toggle) {
-    updateProductStatus(toggle.dataset.toggleProduct, toggle.dataset.nextActive === 'true', toggle);
+    updateProductStatus(toggle.dataset.toggleProduct, toggle.dataset.nextStatus, toggle);
     return;
   }
   const remove = event.target.closest('[data-delete-product]');

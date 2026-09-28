@@ -3,6 +3,8 @@
 use App\Http\Controllers\AccountSecurityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvailabilityController;
+use App\Http\Controllers\BuyerAddressController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\FavoriteController;
@@ -12,11 +14,13 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProductModerationController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductReviewFeedController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RentalBlockController;
 use App\Http\Controllers\SellerReviewController;
+use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
@@ -26,6 +30,8 @@ Route::prefix('api')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{product}/availability', [AvailabilityController::class, 'show']);
     Route::get('/products/{product}/reviews', [ProductReviewFeedController::class, 'index']);
+    Route::get('/stores/{store:slug}', [StoreController::class, 'show']);
+    Route::post('/cart/resolve', [CartController::class, 'resolve']);
     Route::get('/me', [AuthController::class, 'show'])->middleware(['auth.session', 'account.session']);
     Route::get('/auth/verify-email/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
@@ -52,10 +58,30 @@ Route::prefix('api')->group(function (): void {
         Route::delete('/me/sessions', [AccountSecurityController::class, 'revokeAll']);
         Route::post('/me/legal-consent', [AccountSecurityController::class, 'acceptLegal']);
         Route::delete('/me', [AccountSecurityController::class, 'deactivate'])->middleware('throttle:3,1');
+        Route::get('/me/store', [StoreController::class, 'mine']);
+        Route::post('/me/store/onboarding', [StoreController::class, 'submit'])->middleware(['transaction.ready', 'throttle:3,1']);
+        Route::get('/me/store/document', [StoreController::class, 'myDocument']);
+        Route::patch('/me/store/logistics', [StoreController::class, 'updateLogistics']);
+        Route::get('/cart', [CartController::class, 'show']);
+        Route::put('/cart', [CartController::class, 'merge']);
+        Route::apiResource('/addresses', BuyerAddressController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::get('/admin/stores', [StoreController::class, 'index']);
+        Route::patch('/admin/stores/{store}/review', [StoreController::class, 'review']);
+        Route::get('/admin/stores/{store}/document', [StoreController::class, 'document']);
+        Route::get('/admin/products', [ProductModerationController::class, 'index']);
+        Route::patch('/admin/products/{product}/review', [ProductModerationController::class, 'review'])->middleware('transaction.ready');
 
         Route::post('/products', [ProductController::class, 'store'])->middleware('transaction.ready');
         Route::patch('/products/{product}', [ProductController::class, 'update'])->middleware('transaction.ready');
+        Route::patch('/products/{product}/status', [ProductController::class, 'updateStatus'])->middleware('transaction.ready');
+        Route::get('/products/{product}/preview', [ProductController::class, 'preview']);
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->middleware('transaction.ready');
+        Route::post('/products/{product}/images', [ProductController::class, 'addImages'])->middleware('transaction.ready');
+        Route::patch('/products/{product}/images/order', [ProductController::class, 'reorderImages'])->middleware('transaction.ready');
+        Route::delete('/products/{product}/images/{image}', [ProductController::class, 'deleteImage'])->middleware('transaction.ready');
+        Route::post('/products/{product}/variants', [ProductController::class, 'addVariant'])->middleware('transaction.ready');
+        Route::patch('/products/{product}/variants/{variant}', [ProductController::class, 'updateVariant'])->middleware('transaction.ready');
+        Route::delete('/products/{product}/variants/{variant}', [ProductController::class, 'deleteVariant'])->middleware('transaction.ready');
         Route::get('/my-products', [ProductController::class, 'owned']);
 
         Route::get('/products/{product}/rental-blocks', [RentalBlockController::class, 'index']);

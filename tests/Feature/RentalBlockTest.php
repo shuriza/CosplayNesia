@@ -224,12 +224,12 @@ class RentalBlockTest extends TestCase
         $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['stock' => 1])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('stock');
-        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE])
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE, 'sale_price' => $product->price])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('type');
-        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['is_active' => false])
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}/status", ['status' => Product::STATUS_PAUSED])
             ->assertOk()
-            ->assertJsonPath('is_active', false);
+            ->assertJsonPath('status', Product::STATUS_PAUSED);
         $this->actingAs($seller)->getJson($this->calendarUrl($product, $future))
             ->assertOk()
             ->assertJsonCount(1, 'data');
@@ -244,7 +244,7 @@ class RentalBlockTest extends TestCase
             $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['stock' => 0])
                 ->assertOk()
                 ->assertJsonPath('stock', 0);
-            $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE])
+            $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE, 'sale_price' => $product->price])
                 ->assertOk()
                 ->assertJsonPath('type', Product::TYPE_SALE);
         } finally {
@@ -366,7 +366,10 @@ class RentalBlockTest extends TestCase
 
     private function availabilityUrl(Product $product, array $dates): string
     {
-        return "/api/products/{$product->id}/availability?".http_build_query($dates);
+        return "/api/products/{$product->id}/availability?".http_build_query([
+            ...$dates,
+            'variant_id' => $product->variants()->where('is_default', true)->value('id'),
+        ]);
     }
 
     private function user(array $attributes = []): User

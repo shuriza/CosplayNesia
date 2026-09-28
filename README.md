@@ -76,6 +76,9 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - Consent Syarat, Privasi, dan Kebijakan Rental di-versioning; consent usang memblokir transaksi sampai diterima ulang
 - Deaktivasi akun menganonimkan identitas, menonaktifkan listing, dan mempertahankan snapshot transaksi serta audit keamanan
 - Favorit persisten dan listing milik pengguna dengan akses berbasis kepemilikan
+- Onboarding toko `submitted` → `approved/rejected/suspended` dengan review admin, dokumen KYC privat di object storage, dan audit keamanan
+- Storefront publik untuk toko approved; data legal, nomor identitas, dokumen, dan catatan internal tidak pernah masuk payload publik
+- Hanya toko approved dapat menambah, mengubah, atau menghapus listing; suspension menyembunyikan listing dan menolak checkout baru tanpa memblokir fulfillment existing
 - Tambah, edit, aktifkan/nonaktifkan, dan hapus listing; listing nonaktif tidak dapat di-checkout
 
 ### Checkout dan rental

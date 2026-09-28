@@ -17,6 +17,18 @@ class CheckoutController extends Controller
         $validated = $request->validated();
         $recipient = $validated['recipient'];
         $address = $validated['address'];
+        if (isset($validated['address_id'])) {
+            $saved = $request->user()->buyerAddresses()->findOrFail($validated['address_id']);
+            $recipient['name'] = $saved->recipient_name;
+            $recipient['phone'] = $saved->recipient_phone;
+            $address = [
+                'line1' => $saved->address_line1,
+                'line2' => $saved->address_line2,
+                'city' => $saved->city,
+                'province' => $saved->province,
+                'postal_code' => $saved->postal_code,
+            ];
+        }
 
         try {
             $order = $checkout->create(
@@ -34,6 +46,7 @@ class CheckoutController extends Controller
                     'postal_code' => $address['postal_code'],
                     'handoff_note' => $validated['handoff_note'] ?? null,
                 ],
+                $validated['pickup_seller_ids'] ?? [],
             );
         } catch (InsufficientStockException|OwnedProductCheckoutException|RentalUnavailableException $exception) {
             return response()->json(['message' => $exception->getMessage()], 409);

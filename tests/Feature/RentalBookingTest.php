@@ -74,19 +74,51 @@ class RentalBookingTest extends TestCase
 
     public function test_inactive_rental_is_rejected_by_checkout_and_availability(): void
     {
-        $product = Product::factory()->create(['type' => 'Sewa', 'is_active' => false]);
+        $product = Product::factory()->create(['type' => 'Sewa', 'status' => Product::STATUS_PAUSED]);
         $user = $this->user();
         $this->actingAs($user)->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$this->dates()]]]))->assertUnprocessable()->assertJsonValidationErrors('items.0.id');
-        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($this->dates()))->assertNotFound();
+        $this->getJson($this->availabilityUrl($product, $this->dates()))->assertNotFound();
     }
 
     public function test_public_availability_returns_deterministic_capacity(): void
     {
         $product = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 2]);
         $dates = $this->dates();
-        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 0, 'available_quantity' => 2]);
+        $this->getJson($this->availabilityUrl($product, $dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 0, 'available_quantity' => 2]);
         $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload(['items' => [['id' => $product->id, 'quantity' => 1, ...$dates]]]))->assertCreated();
-        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 1, 'available_quantity' => 1]);
+        $this->getJson($this->availabilityUrl($product, $dates))->assertOk()->assertJson(['available' => true, 'stock' => 2, 'reserved_quantity' => 1, 'available_quantity' => 1]);
+    }
+
+    public function test_rental_capacity_isolated_between_skus(): void
+    {
+        $product = Product::factory()->create(['type' => Product::TYPE_RENTAL, 'stock' => 1]);
+        $default = $product->variants()->firstOrFail();
+        $second = $product->variants()->create([
+            'sku' => 'RENTAL-L',
+            'label' => 'Large',
+            'size' => 'L',
+            'condition' => 'good',
+            'stock' => 1,
+            'position' => 1,
+            'is_default' => false,
+        ]);
+        $product->forceFill(['stock' => 2])->save();
+        $dates = $this->dates();
+
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'variant_id' => $default->id, 'quantity' => 1, ...$dates]],
+        ]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'variant_id' => $second->id, 'quantity' => 1, ...$dates]],
+        ]))->assertCreated();
+        $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
+            'items' => [['id' => $product->id, 'variant_id' => $default->id, 'quantity' => 1, ...$dates]],
+        ]))->assertConflict();
+
+        $this->getJson("/api/products/{$product->id}/availability?".http_build_query([...$dates, 'variant_id' => $default->id]))
+            ->assertOk()->assertJsonPath('available_quantity', 0);
+        $this->getJson("/api/products/{$product->id}/availability?".http_build_query([...$dates, 'variant_id' => $second->id]))
+            ->assertOk()->assertJsonPath('available_quantity', 0);
     }
 
     public function test_disjoint_reservations_share_capacity_across_a_longer_booking(): void
@@ -99,12 +131,12 @@ class RentalBookingTest extends TestCase
         }
 
         $dates = $this->dates(2, 3);
-        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))
+        $this->getJson($this->availabilityUrl($product, $dates))
             ->assertOk()->assertJsonPath('available_quantity', 1);
         $this->actingAs($this->user())->postJson('/api/checkout', $this->checkoutPayload([
             'items' => [['id' => $product->id, 'quantity' => 1, ...$dates]],
         ]))->assertCreated();
-        $this->getJson('/api/products/'.$product->id.'/availability?'.http_build_query($dates))
+        $this->getJson($this->availabilityUrl($product, $dates))
             ->assertOk()->assertJsonPath('available_quantity', 0);
     }
 
@@ -132,13 +164,19 @@ class RentalBookingTest extends TestCase
         $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['stock' => 3])
             ->assertOk()
             ->assertJsonPath('stock', 3);
-        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_RENTAL])
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", [
+            'type' => Product::TYPE_RENTAL,
+            'rental_price_per_day' => $product->rental_price_per_day,
+            'rental_deposit' => $product->rental_deposit,
+            'rental_min_days' => $product->rental_min_days,
+            'rental_max_days' => $product->rental_max_days,
+        ])
             ->assertOk()
             ->assertJsonPath('type', Product::TYPE_RENTAL);
         $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['stock' => 2])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('stock');
-        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE])
+        $this->actingAs($seller)->patchJson("/api/products/{$product->id}", ['type' => Product::TYPE_SALE, 'sale_price' => $product->price])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('type');
 
@@ -188,5 +226,13 @@ class RentalBookingTest extends TestCase
     private function user(array $attributes = []): User
     {
         return User::factory()->create($attributes);
+    }
+
+    private function availabilityUrl(Product $product, array $dates): string
+    {
+        return "/api/products/{$product->id}/availability?".http_build_query([
+            ...$dates,
+            'variant_id' => $product->variants()->where('is_default', true)->value('id'),
+        ]);
     }
 }

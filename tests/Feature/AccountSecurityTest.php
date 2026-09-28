@@ -30,7 +30,7 @@ class AccountSecurityTest extends TestCase
             'items' => [['id' => $product->id, 'quantity' => 1]],
         ]))->assertForbidden()->assertJsonPath('message', 'Verifikasi email diperlukan untuk bertransaksi.');
         $this->actingAs($user)->postJson('/api/products', [
-            'name' => 'Listing Ditolak', 'category' => 'Anime', 'price' => 100000, 'type' => 'Beli', 'stock' => 1,
+            'name' => 'Listing Ditolak', 'category' => 'Anime', 'sale_price' => 100000, 'type' => 'Beli', 'stock' => 1,
         ])->assertForbidden();
 
         $this->postJson('/api/me/email-verification')->assertOk();
@@ -149,7 +149,7 @@ class AccountSecurityTest extends TestCase
         $this->assertNotNull($anonymized->anonymized_at);
         $this->assertSame('Akun dinonaktifkan', $anonymized->name);
         $this->assertStringEndsWith('@invalid.local', $anonymized->email);
-        $this->assertFalse($product->fresh()->is_active);
+        $this->assertSame(Product::STATUS_ARCHIVED, $product->fresh()->status);
         $this->assertDatabaseHas('orders', ['id' => $orderId, 'user_id' => $buyer->id]);
         $this->postJson('/api/auth/login', ['email' => 'seller@example.test', 'password' => 'password123'])->assertUnprocessable();
     }

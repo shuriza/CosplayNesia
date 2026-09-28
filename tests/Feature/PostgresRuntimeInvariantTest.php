@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Exceptions\InsufficientStockException;
+use App\Exceptions\OwnedProductCheckoutException;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\User;
 use App\Services\CheckoutService;
+use App\Services\StoreLifecycle;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -106,17 +109,155 @@ class PostgresRuntimeInvariantTest extends TestCase
         $this->assertDatabaseHas('user_notifications', ['event_key' => $eventKey]);
     }
 
+    public function test_concurrent_store_suspension_and_checkout_never_admit_post_suspension_order(): void
+    {
+        $this->requirePostgres();
+        if (! function_exists('pcntl_fork')) {
+            $this->fail('The PostgreSQL concurrency gate requires the PCNTL extension.');
+        }
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $store = Store::factory()->create();
+        $buyer = User::factory()->create();
+        $product = Product::factory()->for($store->owner, 'owner')->create(['store_id' => $store->id, 'stock' => 1]);
+        $readyFile = tempnam(sys_get_temp_dir(), 'suspend-ready-');
+        $suspendResult = tempnam(sys_get_temp_dir(), 'suspend-result-');
+        $checkoutResult = tempnam(sys_get_temp_dir(), 'suspend-checkout-');
+
+        try {
+            $suspendPid = pcntl_fork();
+            if ($suspendPid === 0) {
+                DB::purge();
+                try {
+                    DB::beginTransaction();
+                    Store::query()->whereKey($store->id)->lockForUpdate()->firstOrFail();
+                    file_put_contents($readyFile, 'locked');
+                    sleep(1);
+                    app(StoreLifecycle::class)->review(
+                        User::query()->findOrFail($admin->id),
+                        Store::query()->findOrFail($store->id),
+                        Store::STATUS_SUSPENDED,
+                        'Concurrency test',
+                    );
+                    DB::commit();
+                    file_put_contents($suspendResult, 'suspended');
+                } catch (Throwable $exception) {
+                    if (DB::transactionLevel() > 0) {
+                        DB::rollBack();
+                    }
+                    file_put_contents($suspendResult, $exception::class);
+                }
+                exit(0);
+            }
+
+            $this->waitForFileContent($readyFile, 'locked');
+            $checkoutPid = pcntl_fork();
+            if ($checkoutPid === 0) {
+                $this->runCheckout($buyer->id, $product->id, $checkoutResult);
+            }
+            pcntl_waitpid($suspendPid, $suspendStatus);
+            pcntl_waitpid($checkoutPid, $checkoutStatus);
+
+            $this->assertSame('suspended', trim((string) file_get_contents($suspendResult)));
+            $this->assertSame('insufficient_stock', trim((string) file_get_contents($checkoutResult)));
+            DB::purge();
+            $this->assertDatabaseCount('orders', 0);
+            $this->assertSame(Store::STATUS_SUSPENDED, Store::query()->findOrFail($store->id)->status);
+        } finally {
+            @unlink($readyFile);
+            @unlink($suspendResult);
+            @unlink($checkoutResult);
+        }
+    }
+
+    public function test_concurrent_store_approval_and_self_checkout_follow_user_store_product_lock_order(): void
+    {
+        $this->requirePostgres();
+        if (! function_exists('pcntl_fork')) {
+            $this->fail('The PostgreSQL concurrency gate requires the PCNTL extension.');
+        }
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $owner = User::factory()->create();
+        $store = Store::factory()->for($owner, 'owner')->create([
+            'status' => Store::STATUS_SUBMITTED,
+            'approved_at' => null,
+        ]);
+        $product = Product::factory()->for($owner, 'owner')->create(['store_id' => $store->id, 'stock' => 1]);
+        $readyFile = tempnam(sys_get_temp_dir(), 'approve-ready-');
+        $approvalResult = tempnam(sys_get_temp_dir(), 'approve-result-');
+        $checkoutResult = tempnam(sys_get_temp_dir(), 'approve-checkout-');
+
+        try {
+            $approvalPid = pcntl_fork();
+            if ($approvalPid === 0) {
+                DB::purge();
+                try {
+                    DB::beginTransaction();
+                    User::query()->whereKey($owner->id)->lockForUpdate()->firstOrFail();
+                    file_put_contents($readyFile, 'locked');
+                    sleep(1);
+                    app(StoreLifecycle::class)->review(
+                        User::query()->findOrFail($admin->id),
+                        Store::query()->findOrFail($store->id),
+                        Store::STATUS_APPROVED,
+                        null,
+                    );
+                    DB::commit();
+                    file_put_contents($approvalResult, 'approved');
+                } catch (Throwable $exception) {
+                    if (DB::transactionLevel() > 0) {
+                        DB::rollBack();
+                    }
+                    file_put_contents($approvalResult, $exception::class);
+                }
+                exit(0);
+            }
+
+            $this->waitForFileContent($readyFile, 'locked');
+            $checkoutPid = pcntl_fork();
+            if ($checkoutPid === 0) {
+                DB::purge();
+                try {
+                    app(CheckoutService::class)->create(User::query()->findOrFail($owner->id), [
+                        ['id' => $product->id, 'variant_id' => $product->variants()->value('id'), 'quantity' => 1],
+                    ], 'approval-self-checkout');
+                    file_put_contents($checkoutResult, 'success');
+                } catch (Throwable $exception) {
+                    file_put_contents($checkoutResult, $exception instanceof OwnedProductCheckoutException ? 'owned_product' : $exception::class);
+                }
+                exit(0);
+            }
+            pcntl_waitpid($approvalPid, $approvalStatus);
+            pcntl_waitpid($checkoutPid, $checkoutStatus);
+
+            $this->assertSame('approved', trim((string) file_get_contents($approvalResult)));
+            $this->assertSame('owned_product', trim((string) file_get_contents($checkoutResult)));
+            DB::purge();
+            $this->assertDatabaseCount('orders', 0);
+            $this->assertSame(Store::STATUS_APPROVED, Store::query()->findOrFail($store->id)->status);
+        } finally {
+            @unlink($readyFile);
+            @unlink($approvalResult);
+            @unlink($checkoutResult);
+        }
+    }
+
     private function runLockHoldingCheckout(int $buyerId, int $productId, string $readyFile, string $resultFile): never
     {
         DB::purge();
 
         try {
             DB::beginTransaction();
+            $storeId = Product::query()->whereKey($productId)->value('store_id');
+            if ($storeId !== null) {
+                Store::query()->whereKey($storeId)->lockForUpdate()->firstOrFail();
+            }
             Product::query()->whereKey($productId)->lockForUpdate()->firstOrFail();
             file_put_contents($readyFile, 'locked');
             sleep(1);
             app(CheckoutService::class)->create(User::query()->findOrFail($buyerId), [
-                ['id' => $productId, 'quantity' => 1],
+                ['id' => $productId, 'variant_id' => Product::query()->findOrFail($productId)->variants()->value('id'), 'quantity' => 1],
             ], 'parallel-first');
             DB::commit();
             file_put_contents($resultFile, 'success');
@@ -136,7 +277,7 @@ class PostgresRuntimeInvariantTest extends TestCase
 
         try {
             app(CheckoutService::class)->create(User::query()->findOrFail($buyerId), [
-                ['id' => $productId, 'quantity' => 1],
+                ['id' => $productId, 'variant_id' => Product::query()->findOrFail($productId)->variants()->value('id'), 'quantity' => 1],
             ], 'parallel-second');
             file_put_contents($resultFile, 'success');
         } catch (Throwable $exception) {
