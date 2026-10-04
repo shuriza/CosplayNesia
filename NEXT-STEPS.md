@@ -1,0 +1,43 @@
+# Langkah Berikutnya
+
+Ringkasan operasional dari ROADMAP.md. Dokumen ini menjawab satu pertanyaan: **apa yang dikerjakan sekarang, sementara VPS dan akun provider belum ada.**
+
+## Blocker aktif
+
+| Blocker | Memblokir | Pemilik |
+|---|---|---|
+| VPS + DNS + TLS | `Deploy staging`, gate pra-Batch 6 | pemilik proyek |
+| Akun payment provider (v1) | Batch 3 onboarding, Batch 6 pembayaran | pemilik proyek |
+| Akun aggregator kurir (v1) | sisa Batch 5, Batch 7 pengiriman | pemilik proyek |
+| Docker belum terpasang di workstation | menjalankan `compose.staging.yml` lokal | pengembang |
+
+Ini keputusan bisnis/aset, bukan pekerjaan kode. Jangan tahan pekerjaan lain menunggu; kerjakan jalur paralel di bawah.
+
+## Yang dikerjakan sekarang (tanpa host, tanpa provider)
+
+1. **Ledger (Batch 13) — desain & fondasi.** ADR `docs/adr/0001-double-entry-ledger.md` dan schema awal sudah ada (`ledger_accounts`, `ledger_transactions`, `ledger_entries`, `fee_policies`) dengan `LedgerService` sebagai jalur tulis tunggal. Berikutnya: helper saldo penjual (pending/available/reserved/paid) dan snapshot `fee_policy_version` di order saat Batch 6 dimulai.
+2. **Skeleton backoffice (awal Batch 12).** Halaman baca-saja untuk payment/webhook exception, cukup untuk mengoperasikan Batch 6 nanti.
+3. **Email transaksional (Batch 11).** Verification, payment, shipment, rental due di atas queue yang sudah ada; tidak butuh payment gateway.
+4. **Discovery/SEO (Batch 10).** Halaman kategori/kota/store, sitemap, filter ketersediaan tanggal — selama tidak mendahului snapshot harga.
+5. **Hardening awal (Batch 14).** Threat model, security headers, dependency scanning, review index/query.
+
+## Gate sebelum Batch 6
+
+Batch 6 tetap blocked sampai **semua** terpenuhi:
+
+- workflow `Deploy staging` sukses untuk commit kandidat pada host nyata;
+- DNS/TLS aktif dan `https://<host>/ready` hijau;
+- rollback database/release terbukti pada environment tersebut.
+
+Job `container` di CI kini menyalakan topology staging penuh dan memverifikasi `/ready`, tetapi itu membuktikan topology, **bukan** pengganti deployment live.
+
+## Opsi host tanpa VPS berbayar
+
+1. Oracle Cloud Always Free / Fly.io / Render — paling dekat dengan definisi "VPS nyata".
+2. Docker Desktop lokal + Cloudflare Tunnel — validasi workflow end-to-end, tapi host-nya PC sendiri.
+3. CI-only — topology terbukti di runner GitHub; deployment live tetap dinyatakan belum ada.
+
+## Keputusan yang masih dibutuhkan
+
+- Payment provider v1: Midtrans atau Xendit?
+- Aggregator kurir v1: RajaOngkir atau Biteship?

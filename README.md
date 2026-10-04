@@ -142,6 +142,7 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - `app/Http/Controllers/NotificationController.php` melayani inbox notifikasi dan status baca
 - `app/Http/Controllers/FulfillmentMessageController.php` melayani percakapan pesanan
 - `app/Services/NotificationRecorder.php` satu-satunya jalur tulis notifikasi, idempotent dan menolak self-notify
+- `app/Services/LedgerService.php` satu-satunya jalur tulis uang: transaksi double-entry yang selalu balance dan idempotent lewat `event_key` unik
 - `app/Services/MessageThread.php` memutuskan peran peserta, mengunci thread, dan mengirim fan-out pesan
 - `app/Services/AccountSessionManager.php` mengelola token perangkat terpisah dari session id Laravel, revoke, dan rotasi saat identitas auth berubah
 - `app/Services/SecurityEventRecorder.php` menjadi jalur tulis audit keamanan append-only

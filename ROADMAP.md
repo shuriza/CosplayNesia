@@ -33,6 +33,13 @@ Setiap batch wajib menghasilkan vertical slice yang dapat digunakan. Batch berik
 
 Keputusan 19 September 2026: karena belum tersedia VPS, DNS, dan credential staging, verifikasi deployment live Batch 1 ditunda sebagai **gate keras sebelum Batch 6**. Batch 2–5 boleh berjalan berdasarkan CI production-like; Batch 6 dan seterusnya tidak boleh dimulai sampai workflow `Deploy staging` sukses pada VPS nyata dan HTTPS `/ready` terverifikasi. Ini bukan klaim bahwa staging live sudah tersedia.
 
+Keputusan 4 Oktober 2026: **belum ada VPS maupun akun provider pembayaran/kurir.** Karena itu blocker dinyatakan eksplisit dan tidak lagi diperlakukan sebagai asumsi:
+
+- **Blocker host:** tanpa VPS + DNS + TLS, workflow `Deploy staging` belum dapat diuji dan gate pra-Batch 6 belum dapat ditutup. Docker juga belum terpasang di workstation pengembang, sehingga `compose.staging.yml` belum dapat dijalankan lokal.
+- **Blocker credential:** onboarding sub-account payment (Batch 3), sisa Batch 5 (aggregator kurir), dan Batch 6 (pembayaran) menunggu akun provider. Ini keputusan bisnis, bukan pekerjaan teknis.
+- **Kompensasi sementara:** job `container` di CI kini menyalakan topology staging penuh (`postgres`, `object-storage`, `migrate`, `web`, `worker`, `scheduler`) dan memverifikasi `/ready` sebelum membongkarnya, sehingga kode deployment tetap teruji tanpa host permanen. Ini membuktikan topology, **bukan** pengganti deployment live.
+- **Jalur paralel yang dibuka:** desain ledger + fee policy (Batch 13) dan skeleton backoffice (awal Batch 12) diizinkan berjalan sebelum Batch 6; keduanya tidak bergantung host maupun provider. Lihat `docs/adr/0001-double-entry-ledger.md`.
+
 Definition of Done universal:
 
 - schema dan migrasi forward/rollback selesai;
@@ -276,6 +283,8 @@ Cakupan:
 **Exit gate:** support dapat menyelesaikan skenario operasional utama tanpa SQL; permission negatif diuji per role; admin tidak dapat menghapus audit log; tindakan keuangan memerlukan reason dan approval policy yang ditetapkan.
 
 ## Batch 13 — Ledger, fee, settlement, dan rekonsiliasi
+
+**Status:** desain dimulai 4 Oktober 2026 (ADR `docs/adr/0001-double-entry-ledger.md`); schema awal dan jalur tulis tunggal sudah ada, belum dipakai oleh alur pembayaran karena Batch 6 masih blocked.
 
 **Tujuan:** setiap rupiah mempunyai sumber, tujuan, dan saldo yang dapat dibuktikan.
 

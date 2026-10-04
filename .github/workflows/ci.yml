@@ -110,6 +110,7 @@ jobs:
       DB_PASSWORD: staging-database-password
       S3_ACCESS_KEY: staging-access-key
       S3_SECRET_KEY: staging-object-storage-secret
+      IMAGE_TAG: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
       - name: Validate staging topology
@@ -121,3 +122,25 @@ jobs:
           docker run --rm --entrypoint php
           cosplaynesia:${{ github.sha }}
           -r "exit(extension_loaded('mbstring') && extension_loaded('pcntl') && extension_loaded('pdo_pgsql') ? 0 : 1);"
+
+      - name: Boot staging topology and verify readiness
+        run: |
+          docker compose --file compose.staging.yml up --detach --wait --wait-timeout 240 \
+            postgres object-storage object-storage-init migrate web worker scheduler
+
+          for attempt in $(seq 1 30); do
+            if docker compose --file compose.staging.yml exec --no-TTY web \
+              php -r '$body = @file_get_contents("http://127.0.0.1/ready"); exit($body !== false && str_contains($body, "ready") ? 0 : 1);'; then
+              echo "Readiness probe passed on attempt $attempt."
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Readiness probe never passed." >&2
+          docker compose --file compose.staging.yml logs --no-color web migrate postgres
+          exit 1
+
+      - name: Tear down staging topology
+        if: always()
+        run: docker compose --file compose.staging.yml down --volumes --remove-orphans
