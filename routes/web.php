@@ -3,6 +3,13 @@
 use App\Http\Controllers\AccountSecurityController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvailabilityController;
+use App\Http\Controllers\Backoffice\AuditController as BackofficeAuditController;
+use App\Http\Controllers\Backoffice\AuthController as BackofficeAuthController;
+use App\Http\Controllers\Backoffice\LedgerController as BackofficeLedgerController;
+use App\Http\Controllers\Backoffice\OrderController as BackofficeOrderController;
+use App\Http\Controllers\Backoffice\QueueController as BackofficeQueueController;
+use App\Http\Controllers\Backoffice\StoreController as BackofficeStoreController;
+use App\Http\Controllers\Backoffice\UserController as BackofficeUserController;
 use App\Http\Controllers\BuyerAddressController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
@@ -113,4 +120,32 @@ Route::prefix('api')->group(function (): void {
         Route::post('/fulfillments/{fulfillment}/messages', [FulfillmentMessageController::class, 'store']);
         Route::patch('/fulfillments/{fulfillment}/messages/read', [FulfillmentMessageController::class, 'markRead']);
     });
+
+    // Read-only backoffice console. Access needs the backoffice capability; sensitive reads also
+    // require a fresh password confirmation (step-up). Nothing in this group mutates domain data.
+    Route::middleware(['auth', 'auth.session', 'account.session', 'backoffice'])
+        ->prefix('backoffice')
+        ->group(function (): void {
+            Route::get('/step-up', [BackofficeAuthController::class, 'status']);
+            Route::post('/step-up', [BackofficeAuthController::class, 'confirm'])->middleware('throttle:10,1');
+
+            Route::get('/users', [BackofficeUserController::class, 'index']);
+            Route::get('/users/{user}', [BackofficeUserController::class, 'show'])->middleware('step.up');
+
+            Route::get('/stores', [BackofficeStoreController::class, 'index']);
+            Route::get('/stores/{store}', [BackofficeStoreController::class, 'show'])->middleware('step.up');
+
+            Route::get('/orders', [BackofficeOrderController::class, 'index']);
+            Route::get('/orders/{order}', [BackofficeOrderController::class, 'show'])->middleware('step.up');
+
+            Route::get('/ledger/transactions', [BackofficeLedgerController::class, 'transactions']);
+            Route::get('/ledger/accounts', [BackofficeLedgerController::class, 'accounts']);
+            Route::get('/ledger/sellers', [BackofficeLedgerController::class, 'sellers']);
+            Route::get('/ledger/sellers/{sellerId}', [BackofficeLedgerController::class, 'seller'])->whereNumber('sellerId');
+            Route::get('/ledger/reconciliation', [BackofficeLedgerController::class, 'reconciliation']);
+
+            Route::get('/queue', [BackofficeQueueController::class, 'index']);
+
+            Route::get('/audit', [BackofficeAuditController::class, 'index'])->middleware('step.up');
+        });
 });

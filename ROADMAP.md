@@ -11,9 +11,11 @@ Sudah tersedia dan terverifikasi:
 - checkout atomik dan idempotent, snapshot pesanan, kapasitas sewa, serta blok jadwal;
 - fulfillment multi-penjual, timeline immutable, ulasan terverifikasi, balasan penjual;
 - notifikasi in-app dan percakapan per fulfillment;
-- 138 feature tests / 1349 assertions (4 integration tests PostgreSQL dilewati saat service tidak tersedia), Pint, syntax check JavaScript, build Vite, dan browser smoke headless desktop/mobile terakhir lulus.
+- fondasi ledger (double-entry, satu jalur tulis) dengan proyeksi saldo penjual plus rekonsiliasi;
+- konsol backoffice read-only (RBAC capability, step-up, audit log);
+- 162 feature tests / 1432 assertions (4 integration tests PostgreSQL dilewati saat service tidak tersedia), Pint, syntax check JavaScript, build Vite, dan browser smoke headless desktop/mobile terakhir lulus.
 
-Baseline ini tetap disebut **demo** karena belum mempunyai pembayaran nyata, pengiriman, lifecycle pengembalian sewa, refund/dispute, backoffice, maupun deployment produksi.
+Baseline ini tetap disebut **demo** karena belum mempunyai pembayaran nyata, pengiriman, lifecycle pengembalian sewa, refund/dispute, backoffice penuh (baru konsol baca), maupun deployment produksi.
 
 ## Definisi “feature complete”
 
@@ -267,7 +269,7 @@ Cakupan:
 
 ## Batch 12 — Admin, moderasi, dan trust & safety
 
-**Tujuan:** platform dapat dioperasikan tanpa akses database manual.
+**Status:** skeleton baca-saja dimulai 6 Oktober 2026: konsol `/api/backoffice/*` dengan RBAC capability, step-up password, lookup users/stores/orders, ledger + rekonsiliasi, queue health, dan audit log append-only. Tindakan mutasi (suspend/takedown/freeze/correction) dan backoffice UI belum ada.
 
 Cakupan:
 
@@ -284,7 +286,7 @@ Cakupan:
 
 ## Batch 13 — Ledger, fee, settlement, dan rekonsiliasi
 
-**Status:** desain dimulai 4 Oktober 2026 (ADR `docs/adr/0001-double-entry-ledger.md`); schema awal dan jalur tulis tunggal sudah ada, belum dipakai oleh alur pembayaran karena Batch 6 masih blocked.
+**Status:** fondasi baca selesai 6 Oktober 2026 (ADR `docs/adr/0001-double-entry-ledger.md`, `docs/adr/0002-seller-balance-projection.md`); schema, jalur tulis tunggal, proyeksi saldo penjual, snapshot `fee_policy_version`, dan laporan rekonsiliasi read-only sudah ada. Sisi tulis (transisi `settlement_status`, posting `seller_payable` saat pembayaran, payout) belum dipakai karena Batch 6 masih blocked.
 
 **Tujuan:** setiap rupiah mempunyai sumber, tujuan, dan saldo yang dapat dibuktikan.
 

@@ -24,9 +24,17 @@ class OrderFulfillment extends Model
 
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const SETTLEMENT_PENDING = 'pending';
+
+    public const SETTLEMENT_AVAILABLE = 'available';
+
+    public const SETTLEMENT_RESERVED = 'reserved';
+
+    public const SETTLEMENT_PAID = 'paid';
+
     protected $fillable = [
         'order_id', 'seller_id', 'seller_name', 'handoff_method', 'pickup_instructions',
-        'pickup_city', 'status', 'status_changed_at',
+        'pickup_city', 'status', 'settlement_status', 'settled_at', 'status_changed_at',
         'accepted_at', 'ready_at', 'completed_at', 'cancelled_at',
         'buyer_read_message_id', 'seller_read_message_id',
     ];
@@ -39,6 +47,7 @@ class OrderFulfillment extends Model
             'ready_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'settled_at' => 'datetime',
             'buyer_read_message_id' => 'integer',
             'seller_read_message_id' => 'integer',
         ];
@@ -52,6 +61,16 @@ class OrderFulfillment extends Model
             self::STATUS_READY,
             self::STATUS_COMPLETED,
             self::STATUS_CANCELLED,
+        ];
+    }
+
+    public static function settlementStatuses(): array
+    {
+        return [
+            self::SETTLEMENT_PENDING,
+            self::SETTLEMENT_AVAILABLE,
+            self::SETTLEMENT_RESERVED,
+            self::SETTLEMENT_PAID,
         ];
     }
 

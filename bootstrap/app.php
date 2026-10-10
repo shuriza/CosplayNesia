@@ -2,7 +2,9 @@
 
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureAccountSession;
+use App\Http\Middleware\EnsureBackofficeAccess;
 use App\Http\Middleware\EnsureTransactionReady;
+use App\Http\Middleware\RequireStepUp;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'account.session' => EnsureAccountSession::class,
             'transaction.ready' => EnsureTransactionReady::class,
+            'backoffice' => EnsureBackofficeAccess::class,
+            'step.up' => RequireStepUp::class,
         ]);
         $middleware->redirectGuestsTo(fn () => null);
     })

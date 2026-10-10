@@ -26,7 +26,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 'total_amount', 'merchandise_subtotal', 'shipping_fee', 'platform_fee',
-        'rental_deposit', 'grand_total', 'fee_currency', 'status', 'idempotency_key', 'idempotency_hash',
+        'rental_deposit', 'grand_total', 'fee_currency', 'fee_policy_version', 'status', 'idempotency_key', 'idempotency_hash',
         'recipient_name', 'recipient_phone', 'recipient_email', 'address_line1', 'address_line2',
         'city', 'province', 'postal_code', 'handoff_note',
     ];

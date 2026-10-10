@@ -23,6 +23,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.log
+/storage/framework/testing/
 
 # JCE context index runtime state
 .opencode-jce/context/

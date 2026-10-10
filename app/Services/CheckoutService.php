@@ -9,6 +9,7 @@ use App\Exceptions\OwnedProductCheckoutException;
 use App\Exceptions\RentalCancellationNotAllowedException;
 use App\Exceptions\RentalUnavailableException;
 use App\Models\CartItem;
+use App\Models\FeePolicy;
 use App\Models\Order;
 use App\Models\OrderActivity;
 use App\Models\OrderFulfillment;
@@ -162,6 +163,7 @@ class CheckoutService
                 'rental_deposit' => $rentalDeposit,
                 'grand_total' => null,
                 'fee_currency' => 'IDR',
+                'fee_policy_version' => FeePolicy::activeFor()?->version,
                 'status' => Order::STATUS_DEMO_CONFIRMED,
                 'idempotency_key' => $idempotencyKey,
                 'idempotency_hash' => $idempotencyHash,

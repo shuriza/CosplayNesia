@@ -39,6 +39,12 @@ class User extends Authenticatable implements MustVerifyEmailContract
 
     public const CAPABILITY_ADMINISTER = 'administer';
 
+    public const CAPABILITY_BACKOFFICE = 'backoffice';
+
+    public const CAPABILITY_BACKOFFICE_FINANCE = 'backoffice_finance';
+
+    public const CAPABILITY_BACKOFFICE_QUEUE = 'backoffice_queue';
+
     protected $attributes = ['role' => self::ROLE_BUYER];
 
     protected $fillable = [
@@ -93,12 +99,13 @@ class User extends Authenticatable implements MustVerifyEmailContract
         $capabilities = [
             self::ROLE_BUYER => [],
             self::ROLE_SELLER => [],
-            self::ROLE_SUPPORT => [self::CAPABILITY_SUPPORT],
-            self::ROLE_MODERATOR => [self::CAPABILITY_REVIEW_STORES, self::CAPABILITY_REVIEW_LISTINGS],
-            self::ROLE_FINANCE => [self::CAPABILITY_FINANCE],
+            self::ROLE_SUPPORT => [self::CAPABILITY_SUPPORT, self::CAPABILITY_BACKOFFICE],
+            self::ROLE_MODERATOR => [self::CAPABILITY_REVIEW_STORES, self::CAPABILITY_REVIEW_LISTINGS, self::CAPABILITY_BACKOFFICE],
+            self::ROLE_FINANCE => [self::CAPABILITY_FINANCE, self::CAPABILITY_BACKOFFICE, self::CAPABILITY_BACKOFFICE_FINANCE],
             self::ROLE_ADMIN => [
                 self::CAPABILITY_REVIEW_STORES, self::CAPABILITY_REVIEW_LISTINGS, self::CAPABILITY_SUPPORT,
                 self::CAPABILITY_FINANCE, self::CAPABILITY_ADMINISTER,
+                self::CAPABILITY_BACKOFFICE, self::CAPABILITY_BACKOFFICE_FINANCE, self::CAPABILITY_BACKOFFICE_QUEUE,
             ],
         ];
 
@@ -113,6 +120,21 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function canReviewListings(): bool
     {
         return $this->hasCapability(self::CAPABILITY_REVIEW_LISTINGS);
+    }
+
+    public function canAccessBackoffice(): bool
+    {
+        return $this->hasCapability(self::CAPABILITY_BACKOFFICE);
+    }
+
+    public function canViewBackofficeFinance(): bool
+    {
+        return $this->hasCapability(self::CAPABILITY_BACKOFFICE_FINANCE);
+    }
+
+    public function canViewBackofficeQueue(): bool
+    {
+        return $this->hasCapability(self::CAPABILITY_BACKOFFICE_QUEUE);
     }
 
     public function favoriteProducts(): BelongsToMany
