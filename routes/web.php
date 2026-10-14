@@ -18,6 +18,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FulfillmentController;
 use App\Http\Controllers\FulfillmentMessageController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProductController;
@@ -43,6 +44,11 @@ Route::prefix('api')->group(function (): void {
     Route::get('/auth/verify-email/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
+    Route::get('/notifications/unsubscribe/{user}/{category}', [NotificationPreferenceController::class, 'unsubscribe'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->whereNumber('user')
+        ->name('notifications.unsubscribe');
+
     Route::get('/auth/confirm-email/{user}/{token}', [EmailVerificationController::class, 'confirmChange'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('email-change.confirm');
@@ -99,6 +105,8 @@ Route::prefix('api')->group(function (): void {
         Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead'])
             ->whereNumber('notification');
+        Route::get('/notification-preferences', [NotificationPreferenceController::class, 'index']);
+        Route::patch('/notification-preferences', [NotificationPreferenceController::class, 'update']);
 
         Route::post('/favorites', [FavoriteController::class, 'store']);
         Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy']);

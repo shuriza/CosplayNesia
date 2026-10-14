@@ -254,6 +254,8 @@ Cakupan:
 
 ## Batch 11 — Komunikasi multi-channel
 
+**Status:** kanal email transaksional dimulai 14 Oktober 2026 (ADR `docs/adr/0003-transactional-email-outbox.md`); outbox `notification_deliveries`, katalog `NotificationCatalog`, job retry-aman, preferensi per channel/kategori, dan unsubscribe bertanda tangan sudah ada untuk event yang sudah tersedia (pesanan, fulfillment, sewa, ulasan, pesan, keamanan akun). Broadcast realtime, provider message id dari vendor nyata, dan suppression/bounce handling belum ada.
+
 **Tujuan:** pengguna menerima informasi penting tanpa harus membuka drawer notifikasi.
 
 Cakupan:

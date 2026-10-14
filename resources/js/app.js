@@ -3370,6 +3370,7 @@ renderCart();
 const resetParams = new URLSearchParams(window.location.search);
 if (resetParams.has('email_verified')) showToast('Email berhasil diverifikasi.');
 if (resetParams.has('email_changed')) showToast('Email berhasil diperbarui.');
+if (resetParams.has('notifications_unsubscribed')) showToast('Kamu tidak akan menerima email untuk kategori itu lagi.');
 if (resetParams.has('reset_token') && resetParams.has('email')) {
   const resetForm = $('#reset-password-form');
   resetForm.hidden = false;

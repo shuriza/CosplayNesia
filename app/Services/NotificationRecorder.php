@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\DB;
  */
 class NotificationRecorder
 {
+    public function __construct(private readonly NotificationChannel $channel) {}
+
     public function record(array $attributes): void
     {
         $recipientId = $attributes['recipient_id'] ?? null;
@@ -30,7 +32,17 @@ class NotificationRecorder
             $attributes['payload'] = json_encode($attributes['payload'], JSON_THROW_ON_ERROR);
         }
 
-        UserNotification::query()->insertOrIgnore([$attributes]);
+        $inserted = UserNotification::query()->insertOrIgnore([$attributes]);
+        if ($inserted === 0) {
+            return;
+        }
+
+        // Fan-out to outbound channels only when this call actually created the row, so a replayed
+        // mutation cannot queue a second email for an event the user was already told about.
+        $notification = UserNotification::query()->where('event_key', $attributes['event_key'])->first();
+        if ($notification !== null) {
+            $this->channel->enqueue($notification);
+        }
     }
 
     /**
