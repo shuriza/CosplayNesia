@@ -7,6 +7,7 @@ use App\Http\Controllers\Backoffice\AuditController as BackofficeAuditController
 use App\Http\Controllers\Backoffice\AuthController as BackofficeAuthController;
 use App\Http\Controllers\Backoffice\LedgerController as BackofficeLedgerController;
 use App\Http\Controllers\Backoffice\ModerationController as BackofficeModerationController;
+use App\Http\Controllers\Backoffice\ModerationReportController as BackofficeModerationReportController;
 use App\Http\Controllers\Backoffice\OrderController as BackofficeOrderController;
 use App\Http\Controllers\Backoffice\PrivacyExportController as BackofficePrivacyExportController;
 use App\Http\Controllers\Backoffice\QueueController as BackofficeQueueController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\EmailVerificationController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FulfillmentController;
 use App\Http\Controllers\FulfillmentMessageController;
+use App\Http\Controllers\ModerationReportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\OrderController;
@@ -104,6 +106,8 @@ Route::prefix('api')->group(function (): void {
         Route::post('/products/{product}/rental-blocks', [RentalBlockController::class, 'store'])->middleware('transaction.ready');
         Route::delete('/products/{product}/rental-blocks/{block}', [RentalBlockController::class, 'destroy'])->middleware('transaction.ready');
 
+        Route::post('/reports', [ModerationReportController::class, 'store'])->middleware('throttle:10,1');
+
         Route::get('/notifications', [NotificationController::class, 'index']);
         Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead']);
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markRead'])
@@ -175,6 +179,15 @@ Route::prefix('api')->group(function (): void {
 
             Route::get('/support-notes', [BackofficeSupportNoteController::class, 'index']);
             Route::post('/support-notes', [BackofficeSupportNoteController::class, 'store']);
+
+            // Reported content is private (message bodies, review bodies), so reading the queue
+            // needs a fresh confirmation even though it is a read.
+            Route::get('/reports', [BackofficeModerationReportController::class, 'index'])
+                ->middleware('step.up');
+            Route::get('/reports/{report}', [BackofficeModerationReportController::class, 'show'])
+                ->middleware('step.up');
+            Route::post('/reports/{report}/resolve', [BackofficeModerationReportController::class, 'resolve'])
+                ->middleware(['capability:review_listings', 'step.up']);
 
             Route::get('/users/{user}/privacy-export', [BackofficePrivacyExportController::class, 'show'])
                 ->middleware('step.up');

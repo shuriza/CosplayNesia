@@ -271,7 +271,7 @@ Cakupan:
 
 ## Batch 12 — Admin, moderasi, dan trust & safety
 
-**Status:** skeleton baca-saja dimulai 6 Oktober 2026: konsol `/api/backoffice/*` dengan RBAC capability, step-up password, lookup users/stores/orders, ledger + rekonsiliasi, queue health, dan audit log append-only. Tindakan mutasi ditambahkan 14 Oktober 2026: takedown/restore listing, suspend/reactivate toko, catatan support privat, dan export privasi — semuanya dengan alasan wajib, capability sebelum step-up, dan audit before/after teredaksi. Backoffice UI, moderation report, freeze payout, dan correction action belum ada.
+**Status:** skeleton baca-saja dimulai 6 Oktober 2026: konsol `/api/backoffice/*` dengan RBAC capability, step-up password, lookup users/stores/orders, ledger + rekonsiliasi, queue health, dan audit log append-only. Tindakan mutasi ditambahkan 14 Oktober 2026: takedown/restore listing, suspend/reactivate toko, catatan support privat, export privasi, dan laporan moderasi dengan evidence — semuanya dengan alasan wajib, capability sebelum step-up, dan audit before/after teredaksi. Backoffice UI, freeze payout, dan correction action belum ada.
 
 Cakupan:
 

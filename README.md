@@ -138,6 +138,11 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - Suspend dan reactivate toko bersifat operator-only dengan alasan wajib; suspend menjeda listing yang sedang terbit
 - Setiap tindakan menulis baris audit append-only berisi actor, alasan, dan before/after teredaksi yang hanya menyimpan kunci yang berubah
 - Catatan support bersifat privat dan append-only; tidak ada endpoint pembeli atau penjual yang membacanya, dan catatan bertahan setelah targetnya dihapus
+- Laporan moderasi untuk listing, akun, pesan, dan ulasan dengan kategori, alasan, dan resolusi yang tercatat
+- Evidence laporan adalah snapshot bounded yang diambil saat laporan dibuat, bukan foreign key, sehingga keputusan operator tetap terbaca setelah listing diedit atau dihapus
+- Snapshot hanya memuat id dan konten; tidak pernah memuat email, telepon, alamat, atau dokumen KYC
+- Satu laporan terbuka per pelapor per target, sehingga pelaporan tidak bisa dipakai untuk mengubur listing di antrean operator
+- Resolusi bersifat final: tidak ada "buka kembali", dan laporan yang ditolak tidak dapat membawa tindakan punitif
 - Export privasi memakai allowlist field eksplisit dan tidak pernah memuat hash kata sandi, token, fingerprint sesi, hash identitas, path dokumen KYC, atau data pihak lain
 
 ### Percakapan pesanan
@@ -153,7 +158,7 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 
 - Index khusus untuk cursor pagination dan pencarian katalog
 - Query list dijaga bounded terhadap ukuran halaman
-- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, blok jadwal sewa, fulfillment, timeline, handoff, ulasan, feed ulasan publik, notifikasi, email transaksional, ledger, tindakan operator backoffice, dan isolasi data
+- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, blok jadwal sewa, fulfillment, timeline, handoff, ulasan, feed ulasan publik, notifikasi, email transaksional, ledger, tindakan operator backoffice, laporan moderasi, dan isolasi data
 - CI memverifikasi SQLite dan PostgreSQL, checkout paralel, retry queue idempotent, rollback migration/database, restore backup, build container, dan extension runtime
 
 ## Struktur Utama
@@ -196,6 +201,8 @@ Feed ulasan publik `GET /api/products/{product}/reviews` tidak membutuhkan auten
 Inbox ulasan penjual `GET /api/seller/reviews` hanya memuat ulasan pada produk milik penjual tersebut, memakai snapshot `seller_id` yang diambil saat ulasan dibuat sehingga akses tetap ada setelah listing dihapus. Balasan ditulis lewat `PATCH /api/seller/reviews/{review}/reply` dan dihapus lewat `DELETE`; kepemilikan diperiksa ulang terhadap baris yang sudah dilock agar transfer listing bersamaan tidak meloloskan penjual lama. Balasan tidak pernah mengubah rating atau teks pembeli, dan label pengulas pada inbox tetap dimask seperti pada feed publik.
 
 Notifikasi ditulis pada tabel `user_notifications` yang sengaja dipisah dari tabel `notifications` milik Laravel agar tidak menimpa relasi trait `Notifiable`. Semua penulisan lewat `NotificationRecorder` di dalam transaksi mutasi yang sama, memakai `insertOrIgnore` terhadap `event_key` unik sehingga aman terhadap retry. Balasan ulasan hanya memberi tahu pembeli saat balasan pertama muncul; penyuntingan berikutnya tidak mengirim notifikasi lagi. Endpoint `GET /api/notifications` mengembalikan `unread_count` bersama halaman cursor, sedangkan `PATCH /api/notifications/{id}/read` dan `PATCH /api/notifications/read-all` mengubah status baca tanpa menyentuh isi notifikasi.
+
+Laporan moderasi dibuat lewat `POST /api/reports` oleh akun mana pun dan diproses operator melalui `GET /api/backoffice/reports` serta `POST /api/backoffice/reports/{id}/resolve`. Respons pembuatan laporan selalu seragam dan tidak pernah mengungkap apakah target pernah dilaporkan sebelumnya; kalau tidak, pelaporan menjadi cara membaca antrean moderasi dan membangun kasus terhadap penjual saingan. Evidence disimpan sebagai snapshot bounded (id dan konten, maksimal 500 karakter per teks) pada saat laporan dibuat, karena yang dilaporkan justru paling mungkin diubah atau dihapus berikutnya — operator yang membuka antrean tiga minggu kemudian masih bisa melihat apa yang sebenarnya dilaporkan. Snapshot tidak pernah memuat email, telepon, alamat, atau dokumen KYC. Laporan bersifat final setelah diselesaikan dan tidak dapat dibuka kembali; laporan yang ditolak tidak membawa tindakan punitif, karena dilaporkan bukan alasan untuk dihukum.
 
 Tindakan operator di backoffice bersifat append-only terhadap riwayat: takedown, restore, suspend, dan reactivate hanya mengubah status dan menulis baris audit, tidak pernah menghapus baris. Karena `taken_down` adalah status produk yang nyata, seluruh jalur visibilitas yang sudah ada (katalog, `CartService`, `CheckoutService`, `AvailabilityController`, feed ulasan, storefront) otomatis mengecualikannya tanpa kondisi tambahan, dan penjual tidak punya transisi keluar dari status itu. Mengubah tabel `products` di SQLite — termasuk menambah kolom ber-foreign key — membangun ulang tabel dan menjatuhkan trigger sinkronisasi FTS5, sehingga setiap migrasi yang menyentuh tabel itu memanggil `App\Support\ProductSearchIndex::restore()`; tanpa itu pencarian katalog diam-diam berhenti mencocokkan baris baru tanpa error apa pun.
 
