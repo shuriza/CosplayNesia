@@ -10,7 +10,10 @@ use Illuminate\Support\Facades\DB;
 
 class StoreLifecycle
 {
-    public function __construct(private readonly SecurityEventRecorder $events) {}
+    public function __construct(
+        private readonly SecurityEventRecorder $events,
+        private readonly AdminAuditRecorder $audit,
+    ) {}
 
     public function review(User $admin, Store $store, string $target, ?string $note, ?Request $request = null): Store
     {
@@ -18,9 +21,13 @@ class StoreLifecycle
             // Global mutation lock order: relevant user, store, then products by id.
             $owner = User::query()->whereKey($store->user_id)->lockForUpdate()->firstOrFail();
             $locked = Store::query()->lockForUpdate()->findOrFail($store->id);
-            $valid = $locked->status === Store::STATUS_SUBMITTED
-                ? in_array($target, [Store::STATUS_APPROVED, Store::STATUS_REJECTED], true)
-                : $locked->status === Store::STATUS_APPROVED && $target === Store::STATUS_SUSPENDED;
+            $valid = match (true) {
+                $locked->status === Store::STATUS_SUBMITTED => in_array($target, [Store::STATUS_APPROVED, Store::STATUS_REJECTED], true),
+                $locked->status === Store::STATUS_APPROVED => $target === Store::STATUS_SUSPENDED,
+                // Reactivation is the only way back from a suspension, and it is operator-only.
+                $locked->status === Store::STATUS_SUSPENDED => $target === Store::STATUS_APPROVED,
+                default => false,
+            };
             abort_unless($valid, 409, 'Transisi status toko tidak diizinkan.');
 
             $attributes = [
@@ -39,8 +46,20 @@ class StoreLifecycle
                 $products->where('status', Product::STATUS_PUBLISHED)
                     ->each->update(['status' => Product::STATUS_PAUSED]);
             }
+            $previous = $locked->status;
             $locked->update($attributes);
             $this->events->record($admin, 'store.'.$target, $request, ['store_id' => $locked->id]);
+            $this->audit->recordChange(
+                actor: $admin,
+                action: 'store.'.$target,
+                targetType: 'store',
+                targetId: $locked->id,
+                before: ['status' => $previous],
+                after: ['status' => $target],
+                keys: ['status'],
+                reason: $note,
+                request: $request,
+            );
 
             return $locked->fresh();
         }, 3);

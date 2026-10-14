@@ -165,6 +165,7 @@ class ProductController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
             abort_if($lockedProduct->status === Product::STATUS_ARCHIVED, 422, 'Listing yang sudah diarsipkan tidak dapat diubah.');
+            abort_if($lockedProduct->status === Product::STATUS_TAKEN_DOWN, 422, 'Listing yang diturunkan operator tidak dapat diubah.');
 
             if ($lockedProduct->type === Product::TYPE_RENTAL && (
                 array_key_exists('stock', $attributes) || array_key_exists('type', $attributes)
@@ -316,6 +317,7 @@ class ProductController extends Controller
         abort_unless($product->seller_id === $request->user()?->id, 403);
         abort_unless($request->user()->store?->isApproved(), 403, 'Toko harus aktif untuk mengelola galeri.');
         abort_if($product->status === Product::STATUS_ARCHIVED, 422, 'Listing yang sudah diarsipkan tidak dapat diubah.');
+        abort_if($product->status === Product::STATUS_TAKEN_DOWN, 422, 'Listing yang diturunkan operator tidak dapat diubah.');
     }
 
     /** @return array<string, list<mixed>> */

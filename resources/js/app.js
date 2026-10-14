@@ -1138,8 +1138,11 @@ function renderMyProducts() {
     const name = productName(product);
     const status = valueOf(product, ['status'], 'draft');
     const pendingReview = status === 'draft' && Boolean(valueOf(product, ['submitted_for_review_at'], null));
-    const statusLabels = { draft: 'Draft', published: 'Terbit', paused: 'Dijeda', rejected: 'Ditolak', archived: 'Diarsipkan' };
+    const statusLabels = { draft: 'Draft', published: 'Terbit', paused: 'Dijeda', rejected: 'Ditolak', archived: 'Diarsipkan', taken_down: 'Diturunkan operator' };
     const active = status === 'published';
+    // A taken-down listing is operator-frozen exactly like an archived one: the seller may read it
+    // and its history, but no edit action is offered because the API would refuse it anyway.
+    const locked = status === 'archived' || status === 'taken_down';
     const card = node('article', { className: 'profile-card' });
     card.append(node('div', { className: 'profile-card__row profile-card__heading' }, [
       node('strong', { text: productName(product) }),
@@ -1147,13 +1150,14 @@ function renderMyProducts() {
     ]));
     card.append(node('small', { text: `${valueOf(product, ['category'], 'Cosplay')} · ${currency.format(productPrice(product))} · Stok ${valueOf(product, ['stock'], 0)}` }));
     if (valueOf(product, ['rejection_reason'], null)) card.append(node('small', { text: `Alasan penolakan: ${product.rejection_reason}` }));
+    if (status === 'taken_down' && valueOf(product, ['takedown_reason'], null)) card.append(node('small', { text: `Alasan penurunan oleh operator: ${product.takedown_reason}` }));
     const images = Array.isArray(product.images) ? product.images : [];
     if (images.length) {
       const gallery = node('div', { className: 'listing-gallery', attrs: { 'aria-label': `Galeri ${name}` } });
       images.forEach((image, position) => {
         const item = node('div', { className: 'listing-gallery__item' });
         item.append(imageOrFallback(image.url, `${name}, gambar ${position + 1}`, 'listing-gallery__image'));
-        if (status !== 'archived') {
+        if (!locked) {
           item.append(node('div', { className: 'listing-gallery__actions' }, [
             button('Naik', 'text-link', { 'data-image-move': image.id, 'data-product-id': id, 'data-direction': '-1', disabled: position === 0 }),
             button('Turun', 'text-link', { 'data-image-move': image.id, 'data-product-id': id, 'data-direction': '1', disabled: position === images.length - 1 }),
@@ -1176,7 +1180,7 @@ function renderMyProducts() {
             node('small', { text: `${variant.sku}${detail ? ` · ${detail}` : ''} · Stok ${variant.stock}` }),
           ]),
         ]);
-        if (status !== 'archived') {
+        if (!locked) {
           row.append(node('div', { className: 'listing-variant__actions' }, [
             button('Edit variasi', 'text-link', { 'data-edit-variant': variant.id, 'data-product-id': id }),
             button('Hapus variasi', 'danger-action', { 'data-delete-variant': variant.id, 'data-product-id': id, disabled: variants.length === 1 }),
@@ -1193,7 +1197,7 @@ function renderMyProducts() {
         node('ul', {}, readiness.items.map((item) => node('li', { className: item.complete ? 'is-complete' : '', text: `${item.complete ? '✓' : '○'} ${item.label}` }))),
       ]));
     }
-    const actions = status === 'archived' ? [] : [
+    const actions = locked ? [] : [
       button('Edit', '', { 'data-edit-product': id, 'aria-label': `Edit ${name}` }),
       button('Tambah variasi', '', { 'data-add-variant': id, 'aria-label': `Tambah variasi ${name}` }),
       button('Preview', '', { 'data-preview-product': id, 'aria-label': `Preview ${name}` }),
@@ -1205,10 +1209,10 @@ function renderMyProducts() {
     } else if (status === 'rejected') {
       actions.push(button('Kembalikan ke draft', '', { 'data-toggle-product': id, 'data-next-status': 'draft', 'aria-label': `Kembalikan ${name} ke draft` }));
     }
-    if (isRentalProduct(product) && status !== 'archived') {
+    if (isRentalProduct(product) && !locked) {
       actions.push(button('Jadwal sewa', '', { 'data-open-rental-calendar': id, 'aria-label': `Kelola jadwal sewa ${name}` }));
     }
-    if (status !== 'archived') actions.push(button('Arsipkan', 'danger-action', { 'data-delete-product': id, 'aria-label': `Arsipkan ${name}` }));
+    if (!locked) actions.push(button('Arsipkan', 'danger-action', { 'data-delete-product': id, 'aria-label': `Arsipkan ${name}` }));
     card.append(node('div', { className: 'profile-card__actions' }, actions));
     return card;
   }));

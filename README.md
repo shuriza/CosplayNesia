@@ -128,6 +128,18 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - Tautan unsubscribe bertanda tangan berumur 30 hari yang mengikat pengguna dan kategori, dan tidak pernah dibuat untuk kategori wajib
 - Percobaan kirim mencatat status, jumlah percobaan, `provider_message_id`, dan pesan error terakhir untuk triase
 
+### Konsol operator
+
+- Backoffice `/api/backoffice/*` dengan RBAC capability dan step-up password untuk pembacaan sensitif serta seluruh tindakan mutasi
+- Capability diperiksa sebelum step-up, sehingga operator tanpa izin diberi 403 alih-alih diminta mengonfirmasi kata sandi untuk tindakan yang bukan miliknya
+- Takedown listing adalah status tersendiri (`taken_down`), bukan flag di samping `published`, sehingga katalog, cart, checkout, ketersediaan, dan feed ulasan mengecualikannya tanpa kondisi baru
+- Restore mengembalikan listing ke status persis sebelum penurunan (`moderation_hold_status`), sehingga listing yang dijeda tidak diam-diam diterbitkan kembali
+- Penjual tidak memiliki transisi keluar dari `taken_down`: API penjual menolak edit, perubahan status, dan arsip pada listing yang diturunkan operator
+- Suspend dan reactivate toko bersifat operator-only dengan alasan wajib; suspend menjeda listing yang sedang terbit
+- Setiap tindakan menulis baris audit append-only berisi actor, alasan, dan before/after teredaksi yang hanya menyimpan kunci yang berubah
+- Catatan support bersifat privat dan append-only; tidak ada endpoint pembeli atau penjual yang membacanya, dan catatan bertahan setelah targetnya dihapus
+- Export privasi memakai allowlist field eksplisit dan tidak pernah memuat hash kata sandi, token, fingerprint sesi, hash identitas, path dokumen KYC, atau data pihak lain
+
 ### Percakapan pesanan
 
 - Thread pesan per fulfillment antara pembeli dan penjual yang terikat pada pesanan tersebut
@@ -141,7 +153,7 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 
 - Index khusus untuk cursor pagination dan pencarian katalog
 - Query list dijaga bounded terhadap ukuran halaman
-- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, blok jadwal sewa, fulfillment, timeline, handoff, ulasan, feed ulasan publik, notifikasi, email transaksional, ledger, dan isolasi data
+- Feature tests mencakup autentikasi, katalog, pagination, favorit, checkout, rental, blok jadwal sewa, fulfillment, timeline, handoff, ulasan, feed ulasan publik, notifikasi, email transaksional, ledger, tindakan operator backoffice, dan isolasi data
 - CI memverifikasi SQLite dan PostgreSQL, checkout paralel, retry queue idempotent, rollback migration/database, restore backup, build container, dan extension runtime
 
 ## Struktur Utama
@@ -152,6 +164,7 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - `app/Http/Controllers/NotificationController.php` melayani inbox notifikasi dan status baca
 - `app/Http/Controllers/FulfillmentMessageController.php` melayani percakapan pesanan
 - `app/Services/NotificationRecorder.php` satu-satunya jalur tulis notifikasi, idempotent dan menolak self-notify
+- `app/Support/ProductSearchIndex.php` memulihkan trigger FTS SQLite yang dijatuhkan setiap kali tabel `products` dibangun ulang
 - `app/Services/NotificationChannel.php` satu-satunya jalur tulis outbox channel luar, memproyeksikan payload lewat allowlist
 - `app/Jobs/SendNotificationEmail.php` mengklaim delivery secara bersyarat dan mengirim email transaksional
 - `app/Notifications/NotificationCatalog.php` katalog tipe ke kategori, kategori wajib, subjek, dan proyeksi isi email
@@ -183,6 +196,8 @@ Feed ulasan publik `GET /api/products/{product}/reviews` tidak membutuhkan auten
 Inbox ulasan penjual `GET /api/seller/reviews` hanya memuat ulasan pada produk milik penjual tersebut, memakai snapshot `seller_id` yang diambil saat ulasan dibuat sehingga akses tetap ada setelah listing dihapus. Balasan ditulis lewat `PATCH /api/seller/reviews/{review}/reply` dan dihapus lewat `DELETE`; kepemilikan diperiksa ulang terhadap baris yang sudah dilock agar transfer listing bersamaan tidak meloloskan penjual lama. Balasan tidak pernah mengubah rating atau teks pembeli, dan label pengulas pada inbox tetap dimask seperti pada feed publik.
 
 Notifikasi ditulis pada tabel `user_notifications` yang sengaja dipisah dari tabel `notifications` milik Laravel agar tidak menimpa relasi trait `Notifiable`. Semua penulisan lewat `NotificationRecorder` di dalam transaksi mutasi yang sama, memakai `insertOrIgnore` terhadap `event_key` unik sehingga aman terhadap retry. Balasan ulasan hanya memberi tahu pembeli saat balasan pertama muncul; penyuntingan berikutnya tidak mengirim notifikasi lagi. Endpoint `GET /api/notifications` mengembalikan `unread_count` bersama halaman cursor, sedangkan `PATCH /api/notifications/{id}/read` dan `PATCH /api/notifications/read-all` mengubah status baca tanpa menyentuh isi notifikasi.
+
+Tindakan operator di backoffice bersifat append-only terhadap riwayat: takedown, restore, suspend, dan reactivate hanya mengubah status dan menulis baris audit, tidak pernah menghapus baris. Karena `taken_down` adalah status produk yang nyata, seluruh jalur visibilitas yang sudah ada (katalog, `CartService`, `CheckoutService`, `AvailabilityController`, feed ulasan, storefront) otomatis mengecualikannya tanpa kondisi tambahan, dan penjual tidak punya transisi keluar dari status itu. Mengubah tabel `products` di SQLite — termasuk menambah kolom ber-foreign key — membangun ulang tabel dan menjatuhkan trigger sinkronisasi FTS5, sehingga setiap migrasi yang menyentuh tabel itu memanggil `App\Support\ProductSearchIndex::restore()`; tanpa itu pencarian katalog diam-diam berhenti mencocokkan baris baru tanpa error apa pun.
 
 Email transaksional dikirim lewat outbox `notification_deliveries` dengan unique index `(channel, event_key)`, sehingga satu event domain menghasilkan paling banyak satu email. Baris outbox ditulis di dalam transaksi mutasi yang sama dengan notifikasi in-app, dan job hanya di-dispatch setelah transaksi commit; checkout yang gagal tidak meninggalkan email. Job mengklaim baris `pending → processing` secara bersyarat sebelum mengirim, jadi redelivery queue tidak pernah mengirim dua kali. Isi email diproyeksikan lewat allowlist kunci payload sehingga data internal dan identitas pembeli tidak keluar dari platform. Pengguna dapat mematikan kategori `orders`, `fulfillment`, `reviews`, dan `messages` lewat `GET|PATCH /api/notification-preferences` atau tautan unsubscribe bertanda tangan di footer email; kategori `security` tidak pernah dibaca dari tabel preferensi sehingga selalu terkirim. Kegagalan permanen tersimpan sebagai status `failed` dan dipulihkan dengan `php artisan notifications:retry`. Belum ada provider email nyata: `MAIL_MAILER=log` menulis ke log lokal, dan pengiriman nyata menunggu kredensial SMTP/API provider.
 

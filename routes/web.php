@@ -6,9 +6,12 @@ use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\Backoffice\AuditController as BackofficeAuditController;
 use App\Http\Controllers\Backoffice\AuthController as BackofficeAuthController;
 use App\Http\Controllers\Backoffice\LedgerController as BackofficeLedgerController;
+use App\Http\Controllers\Backoffice\ModerationController as BackofficeModerationController;
 use App\Http\Controllers\Backoffice\OrderController as BackofficeOrderController;
+use App\Http\Controllers\Backoffice\PrivacyExportController as BackofficePrivacyExportController;
 use App\Http\Controllers\Backoffice\QueueController as BackofficeQueueController;
 use App\Http\Controllers\Backoffice\StoreController as BackofficeStoreController;
+use App\Http\Controllers\Backoffice\SupportNoteController as BackofficeSupportNoteController;
 use App\Http\Controllers\Backoffice\UserController as BackofficeUserController;
 use App\Http\Controllers\BuyerAddressController;
 use App\Http\Controllers\CartController;
@@ -155,5 +158,25 @@ Route::prefix('api')->group(function (): void {
             Route::get('/queue', [BackofficeQueueController::class, 'index']);
 
             Route::get('/audit', [BackofficeAuditController::class, 'index'])->middleware('step.up');
+
+            // Operator mutations. Capability is checked before step-up: a support operator is told
+            // the action is not theirs to take, not asked to confirm a password for it. Each action
+            // then requires a fresh step-up, because a session trusted to read a minute ago is not
+            // automatically trusted to remove a listing.
+            Route::post('/products/{product}/takedown', [BackofficeModerationController::class, 'takedownProduct'])
+                ->middleware(['capability:review_listings', 'step.up']);
+            Route::post('/products/{product}/restore', [BackofficeModerationController::class, 'restoreProduct'])
+                ->middleware(['capability:review_listings', 'step.up']);
+            Route::get('/products/taken-down', [BackofficeModerationController::class, 'takenDownProducts']);
+            Route::post('/stores/{store}/suspend', [BackofficeModerationController::class, 'suspendStore'])
+                ->middleware(['capability:review_stores', 'step.up']);
+            Route::post('/stores/{store}/reactivate', [BackofficeModerationController::class, 'reactivateStore'])
+                ->middleware(['capability:review_stores', 'step.up']);
+
+            Route::get('/support-notes', [BackofficeSupportNoteController::class, 'index']);
+            Route::post('/support-notes', [BackofficeSupportNoteController::class, 'store']);
+
+            Route::get('/users/{user}/privacy-export', [BackofficePrivacyExportController::class, 'show'])
+                ->middleware('step.up');
         });
 });

@@ -3,6 +3,7 @@
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureAccountSession;
 use App\Http\Middleware\EnsureBackofficeAccess;
+use App\Http\Middleware\EnsureCapability;
 use App\Http\Middleware\EnsureTransactionReady;
 use App\Http\Middleware\RequireStepUp;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'account.session' => EnsureAccountSession::class,
             'transaction.ready' => EnsureTransactionReady::class,
             'backoffice' => EnsureBackofficeAccess::class,
+            'capability' => EnsureCapability::class,
             'step.up' => RequireStepUp::class,
         ]);
         $middleware->redirectGuestsTo(fn () => null);

@@ -19,6 +19,9 @@ class ProductLifecycle
         Product::STATUS_PAUSED => [Product::STATUS_PUBLISHED, Product::STATUS_ARCHIVED],
         Product::STATUS_REJECTED => [Product::STATUS_DRAFT, Product::STATUS_ARCHIVED],
         Product::STATUS_ARCHIVED => [],
+        // A takedown is an operator decision. The seller has no edge out of it, so an operator
+        // removal cannot be undone from the seller API; only a restore action can.
+        Product::STATUS_TAKEN_DOWN => [],
     ];
 
     public function transition(User $seller, Product $product, string $target): Product

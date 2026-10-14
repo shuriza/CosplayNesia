@@ -28,6 +28,13 @@ class Product extends Model
 
     public const STATUS_ARCHIVED = 'archived';
 
+    /**
+     * Removed by an operator. Distinct from `paused` (the seller's own choice) and from
+     * `archived` (permanent, seller-driven): a takedown is reversible and the seller may not
+     * undo it, so the seller transition table has no outgoing edge from this state.
+     */
+    public const STATUS_TAKEN_DOWN = 'taken_down';
+
     protected $fillable = [
         'seller_id', 'store_id', 'name', 'series', 'category', 'category_attributes', 'costume_includes',
         'price', 'sale_price', 'rental_price_per_day', 'rental_deposit', 'rental_min_days',
@@ -52,6 +59,7 @@ class Product extends Model
             'archived_at' => 'datetime',
             'submitted_for_review_at' => 'datetime',
             'moderated_at' => 'datetime',
+            'taken_down_at' => 'datetime',
             'content_version' => 'integer',
             'approved_version' => 'integer',
             'category_attributes' => 'array',
