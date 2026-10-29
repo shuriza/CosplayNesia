@@ -23,6 +23,8 @@ const state = {
   filter: 'Semua',
   sort: 'popular',
   discovery: { type: '', size: '', city: '', condition: '', min_price: '', max_price: '', min_rating: '', start_date: '', end_date: '', quantity: '1' },
+  savedSearches: [],
+  lastAppliedFilters: null,
   nextProductCursor: null,
   hasMoreProducts: false,
   cart: new Map(),
@@ -2360,6 +2362,7 @@ async function loadProfileData() {
   $('#incoming-orders-list').replaceChildren(listMessage('Memuat pesanan masuk…'));
   $('#seller-reviews-list').replaceChildren(listMessage('Memuat ulasan…'));
   $('#orders-list').replaceChildren(listMessage('Memuat pesanan…'));
+  loadSavedSearches();
   const results = await Promise.allSettled([loadOwnedProducts(), loadIncomingFulfillments(), loadSellerReviews(), loadOrders(), loadStore()]);
   if (results[0].status === 'rejected') $('#my-products-list').replaceChildren(listMessage(results[0].reason?.message ?? 'Produk gagal dimuat.'));
   if (results[1].status === 'rejected') $('#incoming-orders-list').replaceChildren(listMessage(results[1].reason?.message ?? 'Pesanan masuk gagal dimuat.'));
@@ -3084,6 +3087,11 @@ $('#discovery-filter').addEventListener('submit', (event) => {
     end_date: end,
     quantity: String(fields.get('quantity') ?? '1').trim() || '1',
   };
+  state.lastAppliedFilters = { ...state.discovery };
+  // A saved search with no criterion would match everything forever, so "save" only appears once
+  // the shopper has actually expressed an intent.
+  const hasCriteria = Object.entries(state.lastAppliedFilters).some(([key, value]) => key !== 'quantity' && String(value).trim() !== '');
+  $('#save-search').hidden = !hasCriteria || !state.user;
   fetchProducts({ scroll: true });
 });
 
@@ -3092,9 +3100,150 @@ $('#reset-filters').addEventListener('click', () => {
   form.reset();
   $('#discovery-filter-error').hidden = true;
   state.discovery = { type: '', size: '', city: '', condition: '', min_price: '', max_price: '', min_rating: '', start_date: '', end_date: '', quantity: '1' };
+  state.lastAppliedFilters = null;
+  $('#save-search').hidden = true;
   fetchProducts({ scroll: true });
 });
 
+$('#save-search').addEventListener('click', async (event) => {
+  const trigger = event.currentTarget;
+  if (!requireAuthentication(trigger)) return;
+  const filters = state.lastAppliedFilters ?? state.discovery;
+  const hasCriteria = Object.entries(filters).some(([key, value]) => key !== 'quantity' && String(value).trim() !== '');
+  if (!hasCriteria) {
+    showToast('Terapkan minimal satu filter sebelum menyimpan.');
+    return;
+  }
+
+  const name = window.prompt('Beri nama untuk pencarian ini:', defaultSavedSearchName(filters));
+  if (!name || !name.trim()) return;
+
+  const payload = { name: name.trim().slice(0, 100), filters: { ...filters } };
+  // min_rating is a display filter the scanner cannot evaluate server-side yet; keep it out of the
+  // stored payload rather than saving an alert that would run with looser rules than the screen.
+  delete payload.filters.min_rating;
+
+  trigger.disabled = true;
+  try {
+    await api('/api/saved-searches', { method: 'POST', body: payload });
+    showToast('Pencarian disimpan. Notifikasi akan dikirim saat ada yang cocok.');
+    await loadSavedSearches();
+  } catch (error) {
+    handleProtectedError(error, trigger);
+  } finally {
+    trigger.disabled = false;
+  }
+});
+
+function formatDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value ?? '');
+  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
+function defaultSavedSearchName(filters) {
+  const parts = [];
+  if (filters.q) parts.push(`"${filters.q}"`);
+  if (filters.category) parts.push(filters.category);
+  if (filters.type) parts.push(filters.type);
+  if (filters.size) parts.push(`ukuran ${filters.size}`);
+  if (filters.city) parts.push(filters.city);
+  if (filters.start_date) parts.push(`sewa ${filters.start_date}`);
+  return parts.length ? parts.join(' · ') : 'Pencarian kustom';
+}
+
+async function loadSavedSearches() {
+  const list = $('#saved-searches-list');
+  if (!list) return;
+  if (!state.user) {
+    list.replaceChildren(node('p', { className: 'list-message', text: 'Masuk untuk menyimpan dan memantau pencarian.' }));
+    $('#saved-searches-count').textContent = '';
+    return;
+  }
+  try {
+    const payload = await api('/api/saved-searches');
+    state.savedSearches = Array.isArray(payload?.data) ? payload.data : [];
+    $('#saved-searches-count').textContent = `${state.savedSearches.length} tersimpan`;
+    if (!state.savedSearches.length) {
+      list.replaceChildren(node('p', { className: 'list-message', text: 'Belum ada pencarian yang dipantau.' }));
+      return;
+    }
+    list.replaceChildren(...state.savedSearches.map((entry) => savedSearchCard(entry)));
+  } catch (error) {
+    handleProtectedError(error);
+  }
+}
+
+function savedSearchCard(entry) {
+  const filters = entry.filters ?? {};
+  const summary = defaultSavedSearchName(filters) === 'Pencarian kustom' && !filters.start_date && !filters.type && !filters.size && !filters.city && !filters.category
+    ? Object.entries(filters).map(([key, value]) => `${key}: ${value}`).join(', ')
+    : defaultSavedSearchName(filters);
+  const isWindow = Boolean(filters.start_date && filters.end_date);
+
+  const card = node('article', { className: 'profile-card saved-search-card' }, [
+    node('div', { className: 'profile-card__row profile-card__heading' }, [
+      node('strong', { text: entry.name ?? 'Pencarian' }),
+      node('span', { className: `listing-status ${entry.alert_enabled ? '' : 'listing-status--inactive'}`, text: entry.alert_enabled ? 'Memantau' : 'Nonaktif' }),
+    ]),
+    node('small', { text: `${isWindow ? 'Alert tanggal tersedia' : 'Alert kostum baru'} · ${summary}` }),
+    node('small', { text: entry.last_scanned_at ? `Terakhir diperiksa ${formatDateTime(entry.last_scanned_at)}` : 'Belum pernah diperiksa' }),
+  ]);
+
+  const actions = node('div', { className: 'profile-card__actions' }, [
+    node('button', { className: 'button button--outline', text: isWindow ? 'Cek tanggal sekarang' : 'Cek sekarang', attrs: { 'data-run-saved-search': entry.id } }),
+    node('button', { className: 'button button--outline', text: entry.alert_enabled ? 'Matikan pantauan' : 'Nyalakan pantauan', attrs: { 'data-toggle-saved-search': entry.id, 'data-next-enabled': entry.alert_enabled ? '0' : '1' } }),
+    node('button', { className: 'button button--outline danger-action', text: 'Hapus', attrs: { 'data-delete-saved-search': entry.id } }),
+  ]);
+  card.append(actions);
+  return card;
+}
+
+$('#saved-searches-list').addEventListener('click', async (event) => {
+  const run = event.target.closest('[data-run-saved-search]');
+  if (run) {
+    run.disabled = true;
+    try {
+      const payload = await api(`/api/saved-searches/${encodeURIComponent(run.dataset.runSavedSearch)}`, { method: 'PATCH', body: { run: true } });
+      const matched = Number(payload?.result?.matched ?? 0);
+      showToast(matched > 0 ? `${matched} kostum cocok ditemukan. Notifikasi dikirim bila baru.` : 'Belum ada yang cocok sekarang.');
+      await loadSavedSearches();
+    } catch (error) {
+      handleProtectedError(error, run);
+    } finally {
+      run.disabled = false;
+    }
+    return;
+  }
+  const toggle = event.target.closest('[data-toggle-saved-search]');
+  if (toggle) {
+    toggle.disabled = true;
+    try {
+      await api(`/api/saved-searches/${encodeURIComponent(toggle.dataset.toggleSavedSearch)}`, { method: 'PATCH', body: { alert_enabled: toggle.dataset.nextEnabled === '1' } });
+      await loadSavedSearches();
+    } catch (error) {
+      handleProtectedError(error, toggle);
+    } finally {
+      toggle.disabled = false;
+    }
+    return;
+  }
+  const remove = event.target.closest('[data-delete-saved-search]');
+  if (!remove) return;
+  if (!window.confirm('Hapus pencarian yang dipantau ini?')) return;
+  remove.disabled = true;
+  try {
+    await api(`/api/saved-searches/${encodeURIComponent(remove.dataset.deleteSavedSearch)}`, { method: 'DELETE' });
+    showToast('Pencarian dihapus.');
+    await loadSavedSearches();
+  } catch (error) {
+    handleProtectedError(error, remove);
+  } finally {
+    remove.disabled = false;
+  }
+});
+
+$('#refresh-saved-searches').addEventListener('click', () => loadSavedSearches());
 
 elements.productGrid.addEventListener('click', (event) => {
   const favorite = event.target.closest('[data-favorite]');
@@ -3443,4 +3592,7 @@ if (resetParams.has('reset_token') && resetParams.has('email')) {
   resetForm.elements.email.value = resetParams.get('email') ?? '';
   openLayer(elements.authModal);
 }
-refreshSession().then(fetchProducts);
+refreshSession().then(() => {
+  fetchProducts();
+  loadSavedSearches();
+});

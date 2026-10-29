@@ -142,6 +142,11 @@ class User extends Authenticatable implements MustVerifyEmailContract
         return $this->belongsToMany(Product::class, 'favorites')->withTimestamps();
     }
 
+    public function savedSearches(): HasMany
+    {
+        return $this->hasMany(SavedSearch::class);
+    }
+
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);

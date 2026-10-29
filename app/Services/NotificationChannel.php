@@ -122,6 +122,7 @@ class NotificationChannel
             array_intersect_key($payload, array_flip([
                 'product_name', 'variant_label', 'seller_name', 'item_count', 'quantity', 'subtotal',
                 'rating', 'rental_start_date', 'rental_end_date', 'preview', 'from_domain',
+                'search_name', 'price',
             ])),
             fn ($value) => is_scalar($value),
         );

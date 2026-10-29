@@ -47,3 +47,6 @@ Artisan::command('ledger:reconcile {--from=} {--to=} {--json}', function (Ledger
 Schedule::command('queue:prune-failed --hours=168')->daily()->withoutOverlapping();
 Schedule::command('queue:prune-batches --hours=168 --unfinished=336 --cancelled=336')->daily()->withoutOverlapping();
 Schedule::command('data:prune')->daily()->withoutOverlapping();
+// Saved-search alerts do not need to be real-time; twice a day keeps the "match" cursor moving
+// without hammering the catalog or burying the shopper in notifications.
+Schedule::command('searches:scan')->twiceDaily(8, 18)->withoutOverlapping();

@@ -27,6 +27,8 @@ class NotificationCatalog
 
     public const CATEGORY_MESSAGES = 'messages';
 
+    public const CATEGORY_DISCOVERY = 'discovery';
+
     public const CATEGORY_SECURITY = 'security';
 
     public const CHANNEL_EMAIL = 'email';
@@ -43,6 +45,7 @@ class NotificationCatalog
             self::CATEGORY_FULFILLMENT,
             self::CATEGORY_REVIEWS,
             self::CATEGORY_MESSAGES,
+            self::CATEGORY_DISCOVERY,
         ];
     }
 
@@ -81,6 +84,9 @@ class NotificationCatalog
             UserNotification::TYPE_REVIEW_RECEIVED => self::CATEGORY_REVIEWS,
             UserNotification::TYPE_REVIEW_REPLIED => self::CATEGORY_REVIEWS,
             UserNotification::TYPE_MESSAGE_RECEIVED => self::CATEGORY_MESSAGES,
+
+            UserNotification::TYPE_NEW_MATCH => self::CATEGORY_DISCOVERY,
+            UserNotification::TYPE_AVAILABILITY_ALERT => self::CATEGORY_DISCOVERY,
 
             // Security events are recorded through SecurityEventRecorder, not the in-app feed, but
             // they share this catalog so preferences and subjects stay in one place.
@@ -123,6 +129,8 @@ class NotificationCatalog
             UserNotification::TYPE_REVIEW_RECEIVED => 'Listing kamu menerima ulasan baru',
             UserNotification::TYPE_REVIEW_REPLIED => 'Penjual membalas ulasanmu',
             UserNotification::TYPE_MESSAGE_RECEIVED => 'Pesan baru pada pesananmu',
+            UserNotification::TYPE_NEW_MATCH => 'Ada kostum baru yang cocok dengan pencarianmu',
+            UserNotification::TYPE_AVAILABILITY_ALERT => 'Kostum yang kamu pantau sudah tersedia',
             self::TYPE_SECURITY_PASSWORD_CHANGED => 'Kata sandi CosplayNesia diubah',
             self::TYPE_SECURITY_EMAIL_CHANGED => 'Email akun CosplayNesia diubah',
             self::TYPE_SECURITY_SESSIONS_REVOKED => 'Semua perangkat CosplayNesia dikeluarkan',
@@ -167,6 +175,12 @@ class NotificationCatalog
         }
         if (isset($payload['preview']) && is_string($payload['preview'])) {
             $lines[] = 'Cuplikan pesan: '.$payload['preview'];
+        }
+        if (isset($payload['search_name']) && is_string($payload['search_name'])) {
+            $lines[] = 'Pencarian: '.$payload['search_name'];
+        }
+        if (isset($payload['price'])) {
+            $lines[] = 'Harga: Rp'.number_format((int) $payload['price'], 0, ',', '.');
         }
         if (isset($payload['from_domain']) && is_string($payload['from_domain'])) {
             $lines[] = 'Domain email sebelumnya: '.$payload['from_domain'];

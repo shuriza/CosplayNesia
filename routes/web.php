@@ -34,6 +34,7 @@ use App\Http\Controllers\ProductReviewFeedController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RentalBlockController;
+use App\Http\Controllers\SavedSearchController;
 use App\Http\Controllers\SellerReviewController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\StoreController;
@@ -131,6 +132,10 @@ Route::prefix('api')->group(function (): void {
         Route::post('/favorites', [FavoriteController::class, 'store']);
         Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy']);
 
+        Route::get('/saved-searches', [SavedSearchController::class, 'index']);
+        Route::post('/saved-searches', [SavedSearchController::class, 'store']);
+        Route::patch('/saved-searches/{saved_search}', [SavedSearchController::class, 'update']);
+        Route::delete('/saved-searches/{saved_search}', [SavedSearchController::class, 'destroy']);
 
         Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('transaction.ready');
         Route::get('/orders', [OrderController::class, 'index']);

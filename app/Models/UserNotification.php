@@ -31,6 +31,10 @@ class UserNotification extends Model
 
     public const TYPE_MESSAGE_RECEIVED = 'message.received';
 
+    public const TYPE_NEW_MATCH = 'saved_search.new_match';
+
+    public const TYPE_AVAILABILITY_ALERT = 'saved_search.availability';
+
     protected $table = 'user_notifications';
 
     protected $fillable = [

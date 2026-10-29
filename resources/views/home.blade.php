@@ -138,7 +138,9 @@
                     </div>
                     <div class="discovery-filter__actions">
                         <button type="submit" class="button button--primary">Terapkan filter</button>
-                        <button type="button" class="button button--outline" id="reset-filters">Bersihkan</button>                    </div>
+                        <button type="button" class="button button--outline" id="reset-filters">Bersihkan</button>
+                        <button type="button" class="button button--outline" id="save-search" hidden>Simpan &amp; pantau</button>
+                    </div>
                     <p class="form-error" id="discovery-filter-error" role="alert" hidden></p>
                 </form>
                 <div class="product-grid" id="product-grid" aria-busy="true"></div>
@@ -255,6 +257,7 @@
             <section class="profile-section" aria-labelledby="my-products-title"><div class="profile-section__heading"><div><h3 id="my-products-title">Toko Saya</h3><span id="my-products-count" class="profile-section__count" aria-live="polite"></span></div><button type="button" class="text-link" id="refresh-profile">Muat ulang</button></div><div class="profile-list" id="my-products-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-my-products" hidden>Muat lebih banyak produk</button></section>
             <section class="profile-section" aria-labelledby="incoming-orders-title"><div class="profile-section__heading"><h3 id="incoming-orders-title">Pesanan Masuk</h3><span id="incoming-orders-count" class="profile-section__count" aria-live="polite"></span></div><div class="profile-list" id="incoming-orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-incoming-orders" hidden>Muat lebih banyak pesanan masuk</button></section>
             <section class="profile-section" aria-labelledby="seller-reviews-title"><div class="profile-section__heading"><div><h3 id="seller-reviews-title">Ulasan Produkmu</h3><span id="seller-reviews-count" class="profile-section__count" aria-live="polite"></span></div><label class="review-filter"><input type="checkbox" id="seller-reviews-unanswered"><span>Belum dibalas</span></label></div><div class="profile-list" id="seller-reviews-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-seller-reviews" hidden>Muat lebih banyak ulasan</button></section>
+            <section class="profile-section" aria-labelledby="saved-searches-title"><div class="profile-section__heading"><div><h3 id="saved-searches-title">Pencarian Dipantau</h3><span id="saved-searches-count" class="profile-section__count" aria-live="polite"></span></div><button type="button" class="text-link" id="refresh-saved-searches">Muat ulang</button></div><p class="profile-section__hint" id="saved-searches-hint">Simpan kombinasi filter dari beranda, lalu kami beri tahu saat ada kostum baru atau tanggal sewa yang kamu pantau tersedia.</p><div class="profile-list" id="saved-searches-list" aria-live="polite"></div></section>
             <section class="profile-section" aria-labelledby="orders-title"><div class="profile-section__heading"><div><h3 id="orders-title">Riwayat Pesanan</h3><span id="orders-count" class="profile-section__count" aria-live="polite"></span></div></div><div class="profile-list" id="orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-orders" hidden>Muat lebih banyak riwayat</button></section>
         </div>
     </aside>
