@@ -238,6 +238,8 @@ Cakupan:
 
 ## Batch 10 — Promosi, discovery, dan retensi
 
+**Status:** sebagian. Halaman kategori/kota/toko dengan metadata/canonical, `/sitemap.xml`, serta filter katalog dan tanggal rental sudah diimplementasikan. Pemeriksaan runtime lanjutan menemukan kombinasi ukuran/tanggal belum menjamin SKU yang cocok tersedia, dan sitemap dapat memuat kota yang halaman publiknya 404 karena tokonya suspended. Halaman SEO masih dibatasi 24 produk tanpa pagination. Belum dikerjakan: halaman series, recent views, saved search, restock/availability alert, voucher/campaign, dan analytics funnel.
+
 **Tujuan:** membuat marketplace dapat ditemukan dan digunakan ulang tanpa merusak integritas harga.
 
 Cakupan:
@@ -271,7 +273,7 @@ Cakupan:
 
 ## Batch 12 — Admin, moderasi, dan trust & safety
 
-**Status:** skeleton baca-saja dimulai 6 Oktober 2026: konsol `/api/backoffice/*` dengan RBAC capability, step-up password, lookup users/stores/orders, ledger + rekonsiliasi, queue health, dan audit log append-only. Tindakan mutasi ditambahkan 14 Oktober 2026: takedown/restore listing, suspend/reactivate toko, catatan support privat, export privasi, dan laporan moderasi dengan evidence — semuanya dengan alasan wajib, capability sebelum step-up, dan audit before/after teredaksi. Backoffice UI, freeze payout, dan correction action belum ada.
+**Status:** hampir selesai dan sudah terverifikasi lokal: konsol `/api/backoffice/*` dengan RBAC capability, step-up password, lookup users/stores/orders, ledger + rekonsiliasi, queue health, audit log append-only, tindakan takedown/restore listing, suspend/reactivate toko, catatan support privat, export privasi, laporan moderasi dengan evidence, UI `/backoffice`, freeze payout, koreksi ledger via compensating transaction, dan retention job. **Sisa:** tampilan export privasi di UI serta acceptance pada staging nyata.
 
 Cakupan:
 

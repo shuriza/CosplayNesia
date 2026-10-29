@@ -15,7 +15,7 @@ return [
     'cookie' => env('SESSION_COOKIE', Str::slug((string) env('APP_NAME', 'CosplayNesia')).'_session'),
     'path' => env('SESSION_PATH', '/'),
     'domain' => env('SESSION_DOMAIN'),
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production' ? true : null),
     'http_only' => true,
     'same_site' => env('SESSION_SAME_SITE', 'lax'),
     'partitioned' => false,

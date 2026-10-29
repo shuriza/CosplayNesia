@@ -144,6 +144,14 @@ Deployment VPS dijalankan melalui workflow GitHub Actions `Deploy staging`. GitH
 - Satu laporan terbuka per pelapor per target, sehingga pelaporan tidak bisa dipakai untuk mengubur listing di antrean operator
 - Resolusi bersifat final: tidak ada "buka kembali", dan laporan yang ditolak tidak dapat membawa tindakan punitif
 - Export privasi memakai allowlist field eksplisit dan tidak pernah memuat hash kata sandi, token, fingerprint sesi, hash identitas, path dokumen KYC, atau data pihak lain
+- Antarmuka konsol `/backoffice` memakai kontrak yang sama dengan `/api/backoffice/*`: server memutuskan apa yang boleh dilihat dan dilakukan, klien hanya merender
+- Halaman konsol `noindex, nofollow` dan tidak memuat satu pun data akun atau toko di markup; seluruhnya diambil sisi klien setelah melewati gate backoffice
+- Saat pembacaan sensitif menjawab 423, konsol meminta konfirmasi kata sandi lalu memutar ulang permintaan itu sekali—"boleh melakukan" dan "buktikan ini kamu" adalah dua keputusan terpisah
+- Pembekuan pencairan (`freeze-payout`/`unfreeze-payout`) memerlukan kapabilitas `finance`, alasan, dan step-up; pembekuan hanya menahan pencairan dan **tidak mengubah saldo ledger**, sehingga laporan rekonsiliasi tetap dapat membuktikan asal-usul tiap rupiah
+- Koreksi ledger memposting transaksi baru dengan arah terbalik dan menautkannya lewat `reverses_transaction_id` yang unik; entri asli tidak pernah diedit, dan koreksi ganda tidak mungkin karena tautan itu
+- Daftar transaksi mengirim status reversal, sehingga konsol tidak menawarkan "koreksi" atas koreksi—yang justru mengembalikan kesalahan
+- `php artisan data:prune` menghapus data transien lewat jendela retensi (token reset, sesi kedaluwarsa, event keamanan, outbox terkirim) dan terdaftar harian di scheduler; order, ledger, ulasan, pesan, laporan, dan log audit tidak pernah disentuh
+- Pengiriman outbox yang gagal dipertahankan meski sudah tua karena itu antrean eksepsi yang dikerjakan operator
 
 ### Percakapan pesanan
 
