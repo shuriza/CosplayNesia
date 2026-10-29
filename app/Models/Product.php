@@ -72,12 +72,17 @@ class Product extends Model
     protected static function booted(): void
     {
         // Order evidence survives product deletion through its snapshot columns, and the FK ids on
-        // order_items are advisory. Nulling them here makes the delete path explicit instead of
-        // depending on FK action ordering across engines: PostgreSQL evaluates the product_id and
-        // product_variant_id FK actions while the cascade removes the variant rows, and a NO ACTION
-        // evaluation order between the two fails the delete even though both FKs are SET NULL.
+        // order_items and rental_reservations are advisory. Nulling them here makes the delete path
+        // explicit instead of depending on FK action ordering across engines: PostgreSQL evaluates
+        // FK actions while the cascade removes the variant rows, and a referencing row that still
+        // points at a just-deleted variant fails its own FK check mid-statement — SQLite happens to
+        // order the same actions differently and passes.
         static::deleting(function (Product $product): void {
             $product->orderItems()->update([
+                'product_id' => null,
+                'product_variant_id' => null,
+            ]);
+            $product->rentalReservations()->update([
                 'product_id' => null,
                 'product_variant_id' => null,
             ]);
