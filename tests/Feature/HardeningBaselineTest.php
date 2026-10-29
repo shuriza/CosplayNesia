@@ -16,6 +16,8 @@ class HardeningBaselineTest extends TestCase
 
     public function test_every_response_carries_the_security_baseline(): void
     {
+        $this->withoutVite();
+
         $response = $this->get('/')->assertOk();
 
         $csp = $response->headers->get('Content-Security-Policy');
@@ -34,7 +36,9 @@ class HardeningBaselineTest extends TestCase
 
     public function test_security_headers_also_cover_api_and_public_pages(): void
     {
-        foreach (['/', '/ready', '/api/products', '/sitemap.xml'] as $path) {
+        $this->withoutVite();
+
+        foreach (['/', '/ready', '/api/products', '/sitemap.xml', '/backoffice', '/kategori/game'] as $path) {
             $response = $this->get($path);
             $status = $response->getStatusCode();
             $this->assertContains($status, [200, 404], "Path {$path} returned {$status}.");

@@ -23,9 +23,10 @@ jobs:
           cache: npm
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci
+      # HTML-rendering tests need the built manifest; build before testing, not after.
+      - run: npm run build
       - run: php artisan test
       - run: vendor/bin/pint --test
-      - run: npm run build
       - run: composer audit --locked
 
   postgres:

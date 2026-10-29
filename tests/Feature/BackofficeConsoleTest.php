@@ -13,6 +13,10 @@ class BackofficeConsoleTest extends TestCase
 
     public function test_console_page_is_served_without_exposing_data_in_the_markup(): void
     {
+        // Rendering must not depend on a build artifact: CI runs the suite before (or without)
+        // npm build, so the page is asserted exactly as a runner would serve it.
+        $this->withoutVite();
+
         $seller = User::factory()->create(['role' => User::ROLE_SELLER, 'email' => 'secret.seller@example.test']);
         Store::factory()->for($seller, 'owner')->create(['status' => Store::STATUS_APPROVED]);
 
@@ -26,6 +30,8 @@ class BackofficeConsoleTest extends TestCase
 
     public function test_console_page_is_not_indexable(): void
     {
+        $this->withoutVite();
+
         $this->get('/backoffice')
             ->assertOk()
             ->assertSee('name="robots" content="noindex, nofollow"', false);
@@ -33,9 +39,11 @@ class BackofficeConsoleTest extends TestCase
 
     public function test_console_bundle_is_registered_with_vite(): void
     {
-        $manifest = json_decode((string) file_get_contents(public_path('build/manifest.json')), true);
+        // The contract is that backoffice.js is a build entry point; assert it against the source
+        // of truth (vite.config.js) instead of build output, which may not exist when tests run.
+        $config = (string) file_get_contents(base_path('vite.config.js'));
 
-        $this->assertArrayHasKey('resources/js/backoffice.js', $manifest);
+        $this->assertStringContainsString("'resources/js/backoffice.js'", $config);
     }
 
     public function test_backoffice_capability_matrix_matches_the_console_expectations(): void
@@ -59,6 +67,8 @@ class BackofficeConsoleTest extends TestCase
 
     public function test_console_markup_carries_the_privacy_export_panel(): void
     {
+        $this->withoutVite();
+
         // The panel lives in the shell (no data), while the JSON itself stays behind the audited,
         // step-up protected endpoint. Asserting the wiring exists keeps the feature discoverable
         // in the UI without loosening the server-side gate.
