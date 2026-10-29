@@ -54,6 +54,10 @@ class LedgerController extends BackofficeController
             'description' => $transaction->description,
             'reference_type' => $transaction->reference_type,
             'reference_id' => $transaction->reference_id,
+            // Without this the console would offer to "correct" a correction, which restores the
+            // mistake it was meant to fix.
+            'reverses_transaction_id' => $transaction->reverses_transaction_id,
+            'reversed_by_id' => $transaction->reversedBy?->id,
             'occurred_at' => $transaction->occurred_at,
             'entries' => $transaction->entries->map(fn (LedgerEntry $entry): array => [
                 'account_code' => $entry->account?->code,

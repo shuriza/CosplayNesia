@@ -7,12 +7,14 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\Store;
+use App\Services\CatalogAvailability;
 use App\Services\ProductGallery;
 use App\Services\ProductLifecycle;
 use App\Services\ProductModeration;
 use App\Services\ProductReadiness;
 use App\Services\ProductVariantInventory;
 use App\Services\RentalCapacity;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,15 +26,32 @@ class ProductController extends Controller
 {
     public function __construct(private readonly ProductModeration $moderation) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, CatalogAvailability $availability): JsonResponse
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'category' => ['nullable', Rule::in(['Anime', 'Game', 'VTuber', 'Aksesoris'])],
+            'type' => ['nullable', Rule::in([Product::TYPE_RENTAL, Product::TYPE_SALE])],
+            'size' => ['nullable', 'string', 'max:40'],
+            'city' => ['nullable', 'string', 'max:80'],
+            'min_price' => ['nullable', 'integer', 'min:0', 'max:100000000'],
+            'max_price' => ['nullable', 'integer', 'min:0', 'max:100000000', 'gte:min_price'],
+            'min_rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
+            'condition' => ['nullable', Rule::in(['new', 'like_new', 'good', 'fair'])],
+            'start_date' => ['nullable', 'date', 'required_with:end_date'],
+            'end_date' => ['nullable', 'date', 'required_with:start_date', 'after_or_equal:start_date'],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'sort' => ['nullable', Rule::in(['popular', 'newest', 'low', 'high', 'price_asc', 'price_desc'])],
             'favorites' => ['nullable', 'boolean'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:24'],
         ]);
+
+        if (isset($filters['start_date'], $filters['end_date'])) {
+            $start = Carbon::parse($filters['start_date']);
+            $end = Carbon::parse($filters['end_date']);
+            abort_if($start->lt(today(config('app.timezone'))), 422, 'Tanggal mulai tidak boleh sebelum hari ini.');
+            abort_if($start->diffInDays($end) + 1 > 30, 422, 'Periode ketersediaan maksimal 30 hari.');
+        }
 
         $favoritesOnly = (bool) ($filters['favorites'] ?? false);
         if ($favoritesOnly) {
@@ -63,15 +82,45 @@ class ProductController extends Controller
             })
             ->search($filters['q'] ?? null)
             ->when($filters['category'] ?? null, fn ($query, $category) => $query->where('category', $category))
+            ->when($filters['type'] ?? null, fn ($query, $type) => $query->where('type', $type))
+            ->when($filters['size'] ?? null, fn ($query, $size) => $query->where(function ($nested) use ($size): void {
+                $nested->where('size', $size)->orWhereHas('variants', fn ($variants) => $variants->where('size', $size));
+            }))
+            ->when($filters['city'] ?? null, fn ($query, $city) => $query->whereRaw('lower(city) = ?', [mb_strtolower($city)]))
+            ->when(isset($filters['min_price']), fn ($query) => $query->where('price', '>=', $filters['min_price']))
+            ->when(isset($filters['max_price']), fn ($query) => $query->where('price', '<=', $filters['max_price']))
+            ->when(isset($filters['min_rating']), fn ($query) => $query->whereRaw(
+                // Cast explicitly: without it SQLite compares the numeric AVG against the bound
+                // string "4.5" using text ordering, and every row silently disappears.
+                'cast((select coalesce(avg(product_reviews.rating), 0) from product_reviews where product_reviews.product_id = products.id) as real) >= cast(? as real)',
+                [$filters['min_rating']],
+            ))
+            ->when($filters['condition'] ?? null, fn ($query, $condition) => $query->whereHas('variants', fn ($variants) => $variants->where('condition', $condition)))
             ->when($favoritesOnly, fn ($query) => $query->whereHas(
                 'favoritedBy',
                 fn ($favorites) => $favorites->whereKey($request->user()->id),
-            ))
-            ->orderBy($ordering[0], $ordering[1])
-            ->orderBy('id', $ordering[2]);
+            ));
 
-        $perPage = (int) ($filters['per_page'] ?? 8);
-        $products = $query->cursorPaginate($perPage);
+        // A date window only means something for rentals, but an explicitly requested `type` still
+        // wins: a shopper filtering for sale items must not be silently switched to rentals just
+        // because they also supplied dates.
+        if (isset($filters['start_date'], $filters['end_date']) && ($filters['type'] ?? Product::TYPE_RENTAL) === Product::TYPE_RENTAL) {
+            $query->where('type', Product::TYPE_RENTAL);
+            $candidateIds = $query->clone()->reorder()->pluck('products.id');
+            $query->whereIn('products.id', $availability->availableProductIds(
+                $candidateIds,
+                $filters['start_date'],
+                $filters['end_date'],
+                (int) ($filters['quantity'] ?? 1),
+                $filters['size'] ?? null,
+                $filters['condition'] ?? null,
+            ));
+        }
+
+        $products = $query
+            ->orderBy($ordering[0], $ordering[1])
+            ->orderBy('id', $ordering[2])
+            ->cursorPaginate((int) ($filters['per_page'] ?? 8));
 
         return response()->json([
             'data' => $products->items(),

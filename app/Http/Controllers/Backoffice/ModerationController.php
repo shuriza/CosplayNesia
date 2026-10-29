@@ -85,6 +85,32 @@ class ModerationController extends BackofficeController
     }
 
     /**
+     * Stop (or restart) money leaving for a store. A freeze blocks the payout step; it does not
+     * move any rupiah, so the ledger stays the single record of what is owed.
+     */
+    public function freezePayout(Request $request, Store $store, StoreLifecycle $lifecycle): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $updated = $lifecycle->setPayoutFreeze($request->user(), $store, true, $validated['reason'], $request);
+
+        return response()->json(['store' => $this->storePayload($updated)]);
+    }
+
+    public function unfreezePayout(Request $request, Store $store, StoreLifecycle $lifecycle): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $updated = $lifecycle->setPayoutFreeze($request->user(), $store, false, $validated['reason'], $request);
+
+        return response()->json(['store' => $this->storePayload($updated)]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function productPayload(Product $product): array
@@ -113,6 +139,9 @@ class ModerationController extends BackofficeController
             'name' => $store->name,
             'status' => $store->status,
             'review_note' => $store->review_note,
+            'payout_frozen' => (bool) $store->payout_frozen,
+            'payout_freeze_reason' => $store->payout_frozen ? $store->payout_freeze_reason : null,
+            'payout_frozen_at' => $store->payout_frozen_at,
         ];
     }
 }

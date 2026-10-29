@@ -28,6 +28,7 @@ class LedgerService
         ?string $referenceType = null,
         ?int $referenceId = null,
         ?\DateTimeInterface $occurredAt = null,
+        ?int $reversesTransactionId = null,
     ): LedgerTransaction {
         if ($entries === []) {
             throw new InvalidArgumentException('A ledger transaction needs at least one entry.');
@@ -62,7 +63,7 @@ class LedgerService
             throw new InvalidArgumentException("Unbalanced ledger transaction: debits [{$debits}] vs credits [{$credits}].");
         }
 
-        return DB::transaction(function () use ($eventKey, $normalized, $description, $referenceType, $referenceId, $occurredAt): LedgerTransaction {
+        return DB::transaction(function () use ($eventKey, $normalized, $description, $referenceType, $referenceId, $occurredAt, $reversesTransactionId): LedgerTransaction {
             $existing = LedgerTransaction::query()->where('event_key', $eventKey)->first();
             if ($existing !== null) {
                 return $existing;
@@ -73,6 +74,7 @@ class LedgerService
                 'description' => $description,
                 'reference_type' => $referenceType,
                 'reference_id' => $referenceId,
+                'reverses_transaction_id' => $reversesTransactionId,
                 'occurred_at' => $occurredAt ?? now(),
             ]);
 

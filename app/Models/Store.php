@@ -29,6 +29,7 @@ class Store extends Model
         'suspended_at', 'reviewed_at',
         'origin_address_line1', 'origin_address_line2', 'origin_province',
         'origin_postal_code', 'pickup_enabled', 'pickup_instructions',
+        'payout_frozen', 'payout_freeze_reason', 'payout_frozen_at', 'payout_frozen_by',
     ];
 
     protected $hidden = ['identity_number_hash', 'document_path', 'reviewed_by'];
@@ -41,6 +42,8 @@ class Store extends Model
             'suspended_at' => 'datetime',
             'reviewed_at' => 'datetime',
             'pickup_enabled' => 'boolean',
+            'payout_frozen' => 'boolean',
+            'payout_frozen_at' => 'datetime',
         ];
     }
 
@@ -57,6 +60,11 @@ class Store extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function payoutFrozenBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payout_frozen_by');
     }
 
     public function products(): HasMany

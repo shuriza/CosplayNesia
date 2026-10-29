@@ -3,10 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\AdminAuditLog;
+use App\Models\LedgerAccount;
+use App\Models\LedgerEntry;
+use App\Models\LedgerTransaction;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\SupportNote;
 use App\Models\User;
+use App\Services\LedgerService;
+use App\Services\SellerBalance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use LogicException;
 use Tests\TestCase;
@@ -208,6 +213,226 @@ class BackofficeModerationTest extends TestCase
             $suspend->context['changes'],
         );
         $this->assertSame(1, AdminAuditLog::query()->where('action', 'store.'.Store::STATUS_APPROVED)->count());
+    }
+
+    public function test_payout_freeze_is_finance_only_and_audited(): void
+    {
+        $store = Store::factory()->create(['status' => Store::STATUS_APPROVED]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+        $moderator = $this->staff(User::ROLE_MODERATOR);
+
+        // A moderator can suspend a store but has no claim over money leaving the platform.
+        $this->flushSession()->actingAs($moderator)
+            ->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Ada dispute buyer.'])
+            ->assertForbidden();
+
+        $this->flushSession()->actingAsGuest();
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Ada dispute buyer.'])
+            ->assertOk()
+            ->assertJsonPath('store.payout_frozen', true)
+            ->assertJsonPath('store.payout_freeze_reason', 'Ada dispute buyer.');
+
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'actor_id' => $finance->id,
+            'action' => 'store.payout_frozen',
+            'target_type' => 'store',
+            'target_id' => $store->id,
+        ]);
+    }
+
+    public function test_payout_freeze_requires_step_up_and_a_reason(): void
+    {
+        $store = Store::factory()->create(['status' => Store::STATUS_APPROVED]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        $this->actingAs($finance)
+            ->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Dispute terbuka.'])
+            ->assertStatus(423);
+
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'abc'])
+            ->assertStatus(422);
+
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", [])
+            ->assertStatus(422);
+
+        $this->assertDatabaseMissing('admin_audit_logs', ['action' => 'store.payout_frozen']);
+    }
+
+    public function test_payout_unfreeze_clears_the_reason_and_freezing_twice_is_idempotent(): void
+    {
+        $store = Store::factory()->create(['status' => Store::STATUS_APPROVED]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+        $this->confirmStepUp($finance);
+
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Dispute terbuka.'])->assertOk();
+        $frozenAt = $store->fresh()->payout_frozen_at;
+
+        // Re-freezing with a newer reason must not reset the original freeze timestamp: that
+        // timestamp is how long the money has actually been held.
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Dispute diperluas.'])->assertOk();
+        $this->assertSame(
+            $frozenAt?->toDateTimeString(),
+            $store->fresh()->payout_frozen_at?->toDateTimeString(),
+        );
+
+        $this->postJson("/api/backoffice/stores/{$store->id}/unfreeze-payout", ['reason' => 'Dispute selesai.'])
+            ->assertOk()
+            ->assertJsonPath('store.payout_frozen', false)
+            ->assertJsonPath('store.payout_freeze_reason', null);
+
+        // Each freeze is a distinct operator action and is audited as one, even when the store
+        // was already frozen: the second row is what shows the reason was revised.
+        $this->assertSame(2, AdminAuditLog::query()->where('action', 'store.payout_frozen')->count());
+        $this->assertSame(1, AdminAuditLog::query()->where('action', 'store.payout_unfrozen')->count());
+    }
+
+    public function test_a_frozen_store_keeps_its_ledger_balance_untouched(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $store = Store::factory()->for($seller, 'owner')->create(['status' => Store::STATUS_APPROVED]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        app(LedgerService::class)->post('checkout:1:paid', [
+            ['account' => LedgerAccount::CASH, 'direction' => LedgerEntry::DIRECTION_DEBIT, 'amount' => 90_000],
+            ['account' => LedgerAccount::sellerPayableCode($seller->id), 'direction' => LedgerEntry::DIRECTION_CREDIT, 'amount' => 90_000],
+        ]);
+
+        $before = app(SellerBalance::class)->for($seller->id);
+
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Investigasi internal.'])->assertOk();
+
+        // A freeze is a policy flag, not a money movement. If it changed the balance, the
+        // reconciliation report could no longer prove where every rupiah came from.
+        $this->assertSame($before['liability'], app(SellerBalance::class)->for($seller->id)['liability']);
+        $this->assertSame(1, LedgerTransaction::query()->count());
+    }
+
+    public function test_ledger_correction_posts_a_mirror_and_never_edits_the_original(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        $original = app(LedgerService::class)->post('checkout:7:paid', [
+            ['account' => LedgerAccount::CASH, 'direction' => LedgerEntry::DIRECTION_DEBIT, 'amount' => 50_000],
+            ['account' => LedgerAccount::sellerPayableCode($seller->id), 'direction' => LedgerEntry::DIRECTION_CREDIT, 'amount' => 50_000],
+        ], description: 'Pembayaran salah input');
+
+        $originalEventKey = $original->event_key;
+
+        $this->flushSession()->actingAs($this->staff(User::ROLE_MODERATOR))
+            ->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", ['reason' => 'Nominal salah.'])
+            ->assertForbidden();
+
+        $this->flushSession()->actingAsGuest();
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", [
+            'reason' => 'Nominal salah input oleh sistem.',
+        ])
+            ->assertOk()
+            ->assertJsonPath('correction.reverses_transaction_id', $original->id);
+
+        // The original is still exactly as it was posted.
+        $this->assertDatabaseHas('ledger_transactions', [
+            'id' => $original->id,
+            'event_key' => $originalEventKey,
+            'reverses_transaction_id' => null,
+        ]);
+
+        // Net effect is zero: the correction mirrors every entry with the direction swapped.
+        $this->assertSame(0, app(LedgerService::class)->balance(LedgerAccount::CASH));
+        $this->assertSame(0, app(LedgerService::class)->balance(LedgerAccount::sellerPayableCode($seller->id)));
+
+        $this->assertDatabaseHas('admin_audit_logs', [
+            'actor_id' => $finance->id,
+            'action' => 'ledger.corrected',
+            'target_type' => 'ledger_transaction',
+            'target_id' => $original->id,
+        ]);
+    }
+
+    public function test_ledger_correction_is_idempotent_under_retry(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        $original = app(LedgerService::class)->post('checkout:8:paid', [
+            ['account' => LedgerAccount::CASH, 'direction' => LedgerEntry::DIRECTION_DEBIT, 'amount' => 20_000],
+            ['account' => LedgerAccount::sellerPayableCode($seller->id), 'direction' => LedgerEntry::DIRECTION_CREDIT, 'amount' => 20_000],
+        ]);
+
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", ['reason' => 'Salah input nominal.'])->assertOk();
+        $this->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", ['reason' => 'Salah input nominal.'])->assertOk();
+
+        // Reversing twice would put the balance back at the wrong value, which is worse than
+        // not correcting it at all.
+        $this->assertSame(2, LedgerTransaction::query()->count());
+        $this->assertSame(0, app(LedgerService::class)->balance(LedgerAccount::CASH));
+    }
+
+    public function test_ledger_correction_requires_step_up_and_an_explanatory_reason(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        $original = app(LedgerService::class)->post('checkout:9:paid', [
+            ['account' => LedgerAccount::CASH, 'direction' => LedgerEntry::DIRECTION_DEBIT, 'amount' => 10_000],
+            ['account' => LedgerAccount::sellerPayableCode($seller->id), 'direction' => LedgerEntry::DIRECTION_CREDIT, 'amount' => 10_000],
+        ]);
+
+        $this->actingAs($finance)
+            ->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", ['reason' => 'Nominal tidak sesuai.'])
+            ->assertStatus(423);
+
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", ['reason' => 'salah'])
+            ->assertStatus(422);
+
+        $this->assertSame(1, LedgerTransaction::query()->count());
+    }
+
+    public function test_transaction_list_exposes_reversal_state_so_the_console_cannot_correct_a_correction(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        $original = app(LedgerService::class)->post('checkout:11:paid', [
+            ['account' => LedgerAccount::CASH, 'direction' => LedgerEntry::DIRECTION_DEBIT, 'amount' => 30_000],
+            ['account' => LedgerAccount::sellerPayableCode($seller->id), 'direction' => LedgerEntry::DIRECTION_CREDIT, 'amount' => 30_000],
+        ]);
+
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/ledger/transactions/{$original->id}/reverse", ['reason' => 'Nominal salah input.'])
+            ->assertOk();
+
+        // Without reversal state the console would offer to "correct" the correction, which puts
+        // the balance back at the wrong value.
+        $list = $this->getJson('/api/backoffice/ledger/transactions')->assertOk();
+        $originalRow = collect($list->json('data'))->firstWhere('id', $original->id);
+        $correctionRow = collect($list->json('data'))->firstWhere('reverses_transaction_id', $original->id);
+
+        $this->assertNull($originalRow['reverses_transaction_id']);
+        $this->assertSame($correctionRow['id'], $originalRow['reversed_by_id']);
+        $this->assertNotNull($correctionRow['reverses_transaction_id']);
+    }
+
+    public function test_store_list_carries_payout_freeze_state(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $store = Store::factory()->for($seller, 'owner')->create(['status' => Store::STATUS_APPROVED]);
+        $finance = $this->staff(User::ROLE_FINANCE);
+
+        $this->confirmStepUp($finance);
+        $this->postJson("/api/backoffice/stores/{$store->id}/freeze-payout", ['reason' => 'Dispute terbuka.'])->assertOk();
+
+        // The console renders the held flag from the list, so it must be there without a second
+        // request per row.
+        $this->getJson('/api/backoffice/stores')
+            ->assertOk()
+            ->assertJsonPath('data.0.payout_frozen', true);
     }
 
     public function test_support_notes_are_append_only_and_never_reach_the_seller(): void

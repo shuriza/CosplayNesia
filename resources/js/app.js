@@ -22,6 +22,7 @@ const state = {
   query: '',
   filter: 'Semua',
   sort: 'popular',
+  discovery: { type: '', size: '', city: '', condition: '', min_price: '', max_price: '', min_rating: '', start_date: '', end_date: '', quantity: '1' },
   nextProductCursor: null,
   hasMoreProducts: false,
   cart: new Map(),
@@ -354,6 +355,14 @@ function productQuery(cursor = null) {
   params.set('sort', effectiveSort);
   params.set('per_page', '8');
   if (state.favoritesOnly) params.set('favorites', '1');
+  // Only send what the shopper actually set: an empty filter must stay absent so the catalog
+  // endpoint keeps its default behaviour instead of matching empty strings.
+  Object.entries(state.discovery).forEach(([key, value]) => {
+    const normalized = String(value ?? '').trim();
+    if (normalized !== '' && !(key === 'quantity' && normalized === '1' && !state.discovery.start_date && !state.discovery.end_date)) {
+      params.set(key, normalized);
+    }
+  });
   if (cursor) params.set('cursor', cursor);
   return params.toString();
 }
@@ -3034,6 +3043,58 @@ $$('[data-filter]').forEach((control) => control.addEventListener('click', () =>
 $$('[data-filter-trigger]').forEach((control) => control.addEventListener('click', () => setFilter(control.dataset.filterTrigger)));
 $('#reset-search').addEventListener('click', () => { state.query = ''; state.filter = 'Semua'; submitSearch(''); });
 elements.loadMore.addEventListener('click', () => fetchProducts({ append: true }));
+
+$('#discovery-filter').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const error = $('#discovery-filter-error');
+  const fields = new FormData(form);
+  const start = String(fields.get('start_date') ?? '');
+  const end = String(fields.get('end_date') ?? '');
+  const min = String(fields.get('min_price') ?? '').trim();
+  const max = String(fields.get('max_price') ?? '').trim();
+
+  // Mirrors the server rule so a shopper sees the reason before the request is made.
+  if (Boolean(start) !== Boolean(end)) {
+    error.textContent = 'Isi tanggal mulai dan tanggal selesai sewa bersamaan.';
+    error.hidden = false;
+    return;
+  }
+  if (start && end && end < start) {
+    error.textContent = 'Tanggal selesai tidak boleh sebelum tanggal mulai.';
+    error.hidden = false;
+    return;
+  }
+  if (min && max && Number(max) < Number(min)) {
+    error.textContent = 'Harga maksimum tidak boleh di bawah harga minimum.';
+    error.hidden = false;
+    return;
+  }
+
+  error.hidden = true;
+  state.discovery = {
+    type: String(fields.get('type') ?? ''),
+    size: String(fields.get('size') ?? ''),
+    city: String(fields.get('city') ?? '').trim(),
+    condition: String(fields.get('condition') ?? ''),
+    min_price: min,
+    max_price: max,
+    min_rating: String(fields.get('min_rating') ?? ''),
+    start_date: start,
+    end_date: end,
+    quantity: String(fields.get('quantity') ?? '1').trim() || '1',
+  };
+  fetchProducts({ scroll: true });
+});
+
+$('#reset-filters').addEventListener('click', () => {
+  const form = $('#discovery-filter');
+  form.reset();
+  $('#discovery-filter-error').hidden = true;
+  state.discovery = { type: '', size: '', city: '', condition: '', min_price: '', max_price: '', min_rating: '', start_date: '', end_date: '', quantity: '1' };
+  fetchProducts({ scroll: true });
+});
+
 
 elements.productGrid.addEventListener('click', (event) => {
   const favorite = event.target.closest('[data-favorite]');

@@ -1,0 +1,212 @@
+/* Operator console. Deliberately plain: this is a tool, not a storefront. */
+
+.console-body { background: var(--surface); }
+
+.console-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: white;
+  border-bottom: 1px solid var(--line);
+}
+
+.console-topbar__inner {
+  width: min(calc(100% - 40px), 1180px);
+  min-height: 64px;
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.console-badge {
+  padding: 5px 10px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.console-topbar__right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+.console-actor { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+.console-shell { width: min(calc(100% - 40px), 1180px); margin-inline: auto; padding: 26px 0 60px; }
+
+.console-gate {
+  max-width: 520px;
+  margin: 60px auto;
+  padding: 32px;
+  text-align: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.console-gate h1 { margin: 0 0 10px; font: 800 24px/1.25 "Plus Jakarta Sans", sans-serif; }
+.console-gate p { margin: 0 0 20px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+.console-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+
+.console-tab {
+  min-height: 38px;
+  padding: 0 15px;
+  color: var(--muted);
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.console-tab:hover { border-color: var(--primary); color: var(--primary); }
+
+.console-tab.active {
+  color: white;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.console-note {
+  margin: 0 0 18px;
+  padding: 10px 14px;
+  color: #8a6116;
+  background: #fff4d6;
+  border-radius: 10px;
+  font-size: 12.5px;
+}
+
+.console-note--ready { color: #17633d; background: #def7e9; }
+
+.console-panel {
+  padding: 22px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.console-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.console-panel__head h2 { margin: 0 0 4px; font: 800 19px/1.25 "Plus Jakarta Sans", sans-serif; }
+.console-panel__head p { margin: 0; color: var(--muted); font-size: 13px; }
+
+.console-filter { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+.console-filter label { display: grid; gap: 5px; color: var(--muted); font-size: 12px; font-weight: 600; }
+
+.console-filter input,
+.console-filter select {
+  min-height: 38px;
+  padding: 0 11px;
+  color: var(--ink);
+  background: white;
+  border: 1px solid #d8d7e3;
+  border-radius: 9px;
+}
+
+.console-list { display: grid; gap: 10px; }
+.console-list[aria-busy="true"] { opacity: 0.6; }
+
+.console-card {
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.console-card__heading { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.console-card strong { font: 700 14px/1.35 "DM Sans", sans-serif; overflow-wrap: anywhere; }
+.console-card p { margin: 8px 0 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.console-card small { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+
+.console-card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--line); }
+.console-card__actions .button { min-height: 34px; padding: 0 13px; font-size: 12.5px; }
+
+.console-pill {
+  padding: 4px 8px;
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.console-pill--good { color: #17633d; background: #def7e9; }
+.console-pill--bad { color: #8b2439; background: #fde8ed; }
+.console-pill--warn { color: #8a6116; background: #fff4d6; }
+.console-pill--muted { color: var(--muted); background: #eeedf4; }
+
+.console-flag {
+  margin-top: 9px !important;
+  padding: 9px 11px;
+  color: #8b2439;
+  background: #fde8ed;
+  border-radius: 9px;
+  font-size: 12.5px;
+}
+
+.console-evidence { margin: 9px 0 0; padding-left: 18px; display: grid; gap: 4px; color: var(--muted); font-size: 12px; }
+.console-evidence li { overflow-wrap: anywhere; }
+
+.console-resolution { color: #17633d !important; font-weight: 600; }
+
+.console-empty { margin: 0; padding: 26px 10px; text-align: center; color: var(--muted); font-size: 13px; }
+
+.console-summary { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
+
+.console-stat {
+  padding: 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+
+.console-stat span { display: block; color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.console-stat strong { display: block; margin-top: 4px; font: 700 16px/1.2 "DM Sans", sans-serif; }
+
+.console-load-more { width: 100%; margin-top: 12px; }
+
+.console-modal { width: min(520px, calc(100% - 32px)); padding: 30px; }
+.console-modal h2 { margin: 8px 0 10px; font: 800 21px/1.25 "Plus Jakarta Sans", sans-serif; }
+.console-modal > p { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.console-modal label { display: grid; gap: 6px; margin-bottom: 14px; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+
+.console-modal input {
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: white;
+  border: 1px solid #d8d7e3;
+  border-radius: 10px;
+  font-weight: 400;
+}
+
+.privacy-export { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.privacy-export h3 { margin: 0; color: var(--ink); font: 700 15px "Plus Jakarta Sans", sans-serif; }
+.privacy-export p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+.privacy-export__actions { display: flex; gap: 8px; }
+.privacy-export__note { margin-top: 10px; padding: 9px 11px; color: var(--muted); background: var(--surface); border-radius: 9px; font-size: 11px; line-height: 1.5; }
+.privacy-export__body {
+  max-height: 420px; margin: 12px 0 0; padding: 13px; overflow: auto;
+  color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  font: 12px/1.6 ui-monospace, "Cascadia Mono", "Courier New", monospace; white-space: pre; overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .console-topbar__inner { flex-wrap: wrap; padding-block: 12px; }
+  .console-topbar__right { width: 100%; margin-left: 0; }
+  .console-actor { flex: 1; }
+  .console-panel { padding: 16px; }
+  .console-filter { display: grid; }
+}

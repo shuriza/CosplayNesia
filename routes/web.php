@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AvailabilityController;
 use App\Http\Controllers\Backoffice\AuditController as BackofficeAuditController;
 use App\Http\Controllers\Backoffice\AuthController as BackofficeAuthController;
+use App\Http\Controllers\Backoffice\CorrectionController as BackofficeCorrectionController;
 use App\Http\Controllers\Backoffice\LedgerController as BackofficeLedgerController;
 use App\Http\Controllers\Backoffice\ModerationController as BackofficeModerationController;
 use App\Http\Controllers\Backoffice\ModerationReportController as BackofficeModerationReportController;
@@ -30,14 +31,26 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductModerationController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductReviewFeedController;
+use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\ReadinessController;
 use App\Http\Controllers\RentalBlockController;
 use App\Http\Controllers\SellerReviewController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'home')->name('home');
 Route::get('/ready', ReadinessController::class)->name('readiness');
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('/kategori/{category}', [PublicCatalogController::class, 'category'])
+    ->whereIn('category', ['anime', 'game', 'vtuber', 'aksesoris'])
+    ->name('catalog.category');
+Route::get('/kota/{city}', [PublicCatalogController::class, 'city'])
+    ->where('city', '[^/]+')
+    ->name('catalog.city');
+Route::get('/toko/{store:slug}', [PublicCatalogController::class, 'store'])->name('catalog.store');
+
+Route::view('/backoffice', 'backoffice')->name('backoffice');
 
 Route::prefix('api')->group(function (): void {
     Route::get('/products', [ProductController::class, 'index']);
@@ -118,6 +131,7 @@ Route::prefix('api')->group(function (): void {
         Route::post('/favorites', [FavoriteController::class, 'store']);
         Route::delete('/favorites/{product}', [FavoriteController::class, 'destroy']);
 
+
         Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('transaction.ready');
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
@@ -176,6 +190,14 @@ Route::prefix('api')->group(function (): void {
                 ->middleware(['capability:review_stores', 'step.up']);
             Route::post('/stores/{store}/reactivate', [BackofficeModerationController::class, 'reactivateStore'])
                 ->middleware(['capability:review_stores', 'step.up']);
+            Route::post('/stores/{store}/freeze-payout', [BackofficeModerationController::class, 'freezePayout'])
+                ->middleware(['capability:finance', 'step.up']);
+            Route::post('/stores/{store}/unfreeze-payout', [BackofficeModerationController::class, 'unfreezePayout'])
+                ->middleware(['capability:finance', 'step.up']);
+
+            // Money already posted is fixed by posting again, mirrored. The original is never edited.
+            Route::post('/ledger/transactions/{transaction}/reverse', [BackofficeCorrectionController::class, 'reverseTransaction'])
+                ->middleware(['capability:finance', 'step.up']);
 
             Route::get('/support-notes', [BackofficeSupportNoteController::class, 'index']);
             Route::post('/support-notes', [BackofficeSupportNoteController::class, 'store']);

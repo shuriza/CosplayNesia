@@ -7,6 +7,7 @@ use App\Models\LedgerAccount;
 use App\Models\LedgerEntry;
 use App\Models\Order;
 use App\Models\OrderFulfillment;
+use App\Models\Store;
 use App\Models\User;
 use App\Services\LedgerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -155,6 +156,33 @@ class BackofficeTest extends TestCase
             ->assertOk()
             ->assertJsonPath('available', 150_000)
             ->assertJsonPath('balanced', true);
+    }
+
+    public function test_store_list_includes_the_owner_without_loading_an_undefined_relation(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER, 'email' => 'owner.person@example.test']);
+        Store::factory()->for($seller, 'owner')->create(['status' => 'approved']);
+
+        // The relationship is `owner`, not `user`. Getting this wrong is a 500 that no capability
+        // check catches, and it only surfaces once an operator opens the console.
+        $this->actingAs($this->staff(User::ROLE_SUPPORT))
+            ->getJson('/api/backoffice/stores')
+            ->assertOk()
+            ->assertJsonPath('data.0.owner.id', $seller->id)
+            ->assertJsonPath('data.0.owner.email', 'o***@example.test');
+    }
+
+    public function test_store_detail_resolves_the_owner_under_step_up(): void
+    {
+        $seller = User::factory()->create(['role' => User::ROLE_SELLER]);
+        $store = Store::factory()->for($seller, 'owner')->create(['status' => 'approved']);
+        $support = $this->staff(User::ROLE_SUPPORT);
+
+        $this->confirmStepUp($support);
+        $this->getJson("/api/backoffice/stores/{$store->id}")
+            ->assertOk()
+            ->assertJsonPath('owner.id', $seller->id)
+            ->assertJsonPath('counts.products', 0);
     }
 
     public function test_audit_log_is_append_only(): void

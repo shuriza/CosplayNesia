@@ -119,6 +119,28 @@
                     <div><span class="section-kicker">Koleksi terkurasi</span><h2 id="produk-title">Lagi banyak dicari</h2></div>
                     <div class="product-controls"><span id="result-count" aria-live="polite">Memuat produk…</span><label class="sort-select"><span>Urutkan:</span><select id="sort-select" aria-label="Urutkan produk"><option value="popular">Terpopuler</option><option value="newest">Terbaru</option><option value="low">Harga terendah</option><option value="high">Harga tertinggi</option></select></label></div>
                 </div>
+                <form class="discovery-filter" id="discovery-filter" novalidate>
+                    <div class="discovery-filter__row">
+                        <label>Tipe<select name="type"><option value="">Semua</option><option value="Sewa">Sewa</option><option value="Beli">Beli</option></select></label>
+                        <label>Ukuran<select name="size"><option value="">Semua</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="All size">All size</option></select></label>
+                        <label>Kota<input name="city" type="text" autocomplete="off" placeholder="Contoh: Bandung" maxlength="80"></label>
+                        <label>Kondisi<select name="condition"><option value="">Semua</option><option value="new">Baru</option><option value="like_new">Seperti baru</option><option value="good">Baik</option><option value="fair">Cukup</option></select></label>
+                    </div>
+                    <div class="discovery-filter__row">
+                        <label>Harga minimum (Rp)<input name="min_price" type="number" min="0" step="1000" inputmode="numeric" placeholder="0"></label>
+                        <label>Harga maksimum (Rp)<input name="max_price" type="number" min="0" step="1000" inputmode="numeric" placeholder="500000"></label>
+                        <label>Rating minimum<select name="min_rating"><option value="">Semua</option><option value="4.5">4.5 ke atas</option><option value="4">4 ke atas</option><option value="3">3 ke atas</option></select></label>
+                    </div>
+                    <div class="discovery-filter__row">
+                        <label>Tanggal mulai sewa<input name="start_date" type="date"></label>
+                        <label>Tanggal selesai sewa<input name="end_date" type="date"></label>
+                        <label>Jumlah<input name="quantity" type="number" min="1" step="1" value="1" inputmode="numeric"></label>
+                    </div>
+                    <div class="discovery-filter__actions">
+                        <button type="submit" class="button button--primary">Terapkan filter</button>
+                        <button type="button" class="button button--outline" id="reset-filters">Bersihkan</button>                    </div>
+                    <p class="form-error" id="discovery-filter-error" role="alert" hidden></p>
+                </form>
                 <div class="product-grid" id="product-grid" aria-busy="true"></div>
                 <div class="empty-state" id="empty-state" hidden><span aria-hidden="true">⌕</span><h3>Kostum belum ditemukan</h3><p>Coba kata kunci lain atau tampilkan semua koleksi.</p><button type="button" class="button button--primary" id="reset-search">Tampilkan semua</button></div>
                 <button type="button" class="button button--outline load-more" id="load-more" hidden>Tampilkan lebih banyak</button>
@@ -233,7 +255,7 @@
             <section class="profile-section" aria-labelledby="my-products-title"><div class="profile-section__heading"><div><h3 id="my-products-title">Toko Saya</h3><span id="my-products-count" class="profile-section__count" aria-live="polite"></span></div><button type="button" class="text-link" id="refresh-profile">Muat ulang</button></div><div class="profile-list" id="my-products-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-my-products" hidden>Muat lebih banyak produk</button></section>
             <section class="profile-section" aria-labelledby="incoming-orders-title"><div class="profile-section__heading"><h3 id="incoming-orders-title">Pesanan Masuk</h3><span id="incoming-orders-count" class="profile-section__count" aria-live="polite"></span></div><div class="profile-list" id="incoming-orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-incoming-orders" hidden>Muat lebih banyak pesanan masuk</button></section>
             <section class="profile-section" aria-labelledby="seller-reviews-title"><div class="profile-section__heading"><div><h3 id="seller-reviews-title">Ulasan Produkmu</h3><span id="seller-reviews-count" class="profile-section__count" aria-live="polite"></span></div><label class="review-filter"><input type="checkbox" id="seller-reviews-unanswered"><span>Belum dibalas</span></label></div><div class="profile-list" id="seller-reviews-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-seller-reviews" hidden>Muat lebih banyak ulasan</button></section>
-            <section class="profile-section" aria-labelledby="orders-title"><div class="profile-section__heading"><h3 id="orders-title">Riwayat Pesanan</h3><span id="orders-count" class="profile-section__count" aria-live="polite"></span></div><div class="profile-list" id="orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-orders" hidden>Muat lebih banyak riwayat</button></section>
+            <section class="profile-section" aria-labelledby="orders-title"><div class="profile-section__heading"><div><h3 id="orders-title">Riwayat Pesanan</h3><span id="orders-count" class="profile-section__count" aria-live="polite"></span></div></div><div class="profile-list" id="orders-list" aria-live="polite"></div><button type="button" class="button button--outline profile-load-more" id="load-more-orders" hidden>Muat lebih banyak riwayat</button></section>
         </div>
     </aside>
 

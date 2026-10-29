@@ -23,7 +23,7 @@ class StoreController extends BackofficeController
         ]);
 
         $stores = Store::query()
-            ->with('user:id,name,email,role')
+            ->with('owner:id,name,email,role')
             ->when($filters['q'] ?? null, function ($query, string $term): void {
                 $like = '%'.$term.'%';
                 $query->where(fn ($inner) => $inner
@@ -40,19 +40,24 @@ class StoreController extends BackofficeController
             'name' => $store->name,
             'city' => $store->city,
             'status' => $store->status,
-            'owner' => $store->user ? [
-                'id' => $store->user->id,
-                'name' => $store->user->name,
-                'email' => $this->maskEmail($store->user->email),
+            'owner' => $store->owner ? [
+                'id' => $store->owner->id,
+                'name' => $store->owner->name,
+                'email' => $this->maskEmail($store->owner->email),
             ] : null,
             'submitted_at' => $store->submitted_at,
             'reviewed_at' => $store->reviewed_at,
+            // Carried on the list so the console can show which stores are already held without
+            // a second request per row.
+            'payout_frozen' => (bool) $store->payout_frozen,
+            'payout_freeze_reason' => $store->payout_frozen ? $store->payout_freeze_reason : null,
+            'payout_frozen_at' => $store->payout_frozen_at,
         ]));
     }
 
     public function show(Store $store): JsonResponse
     {
-        $store->loadMissing('user:id,name,email,role');
+        $store->loadMissing('owner:id,name,email,role');
 
         return response()->json([
             'id' => $store->id,
@@ -69,11 +74,11 @@ class StoreController extends BackofficeController
             'suspended_at' => $store->suspended_at,
             'reviewed_at' => $store->reviewed_at,
             'pickup_enabled' => $store->pickup_enabled,
-            'owner' => $store->user ? [
-                'id' => $store->user->id,
-                'name' => $store->user->name,
-                'email' => $store->user->email,
-                'role' => $store->user->role,
+            'owner' => $store->owner ? [
+                'id' => $store->owner->id,
+                'name' => $store->owner->name,
+                'email' => $store->owner->email,
+                'role' => $store->owner->role,
             ] : null,
             'counts' => [
                 'products' => $store->products()->count(),

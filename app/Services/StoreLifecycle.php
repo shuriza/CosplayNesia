@@ -64,4 +64,56 @@ class StoreLifecycle
             return $locked->fresh();
         }, 3);
     }
+
+    /**
+     * Freeze or release payouts for a store.
+     *
+     * A freeze is a flag on the store plus an audit row; it never touches the ledger. The ledger
+     * stays the authoritative record of what is owed — a freeze only stops the (not yet built)
+     * payout step from disbursing it. That separation matters: if a freeze mutated balances, the
+     * reconciliation report could no longer prove that every rupiah has a source and a target.
+     *
+     * Idempotent in both directions: freezing an already-frozen store re-records the reason rather
+     * than failing, because an operator retrying a slow request has already achieved that state.
+     */
+    public function setPayoutFreeze(
+        User $operator,
+        Store $store,
+        bool $frozen,
+        string $reason,
+        ?Request $request = null,
+    ): Store {
+        abort_unless($operator->hasCapability(User::CAPABILITY_FINANCE), 403);
+
+        return DB::transaction(function () use ($operator, $store, $frozen, $reason, $request): Store {
+            $locked = Store::query()->lockForUpdate()->findOrFail($store->id);
+            $previous = (bool) $locked->payout_frozen;
+
+            $locked->forceFill([
+                'payout_frozen' => $frozen,
+                'payout_freeze_reason' => $frozen ? $reason : null,
+                'payout_frozen_at' => $frozen ? ($locked->payout_frozen_at ?? now()) : null,
+                'payout_frozen_by' => $frozen ? $operator->id : null,
+            ])->save();
+
+            $action = $frozen ? 'store.payout_frozen' : 'store.payout_unfrozen';
+            $this->events->record($operator, $action, $request, [
+                'store_id' => $locked->id,
+                'reason' => $reason,
+            ]);
+            $this->audit->recordChange(
+                actor: $operator,
+                action: $action,
+                targetType: 'store',
+                targetId: $locked->id,
+                before: ['payout_frozen' => $previous],
+                after: ['payout_frozen' => $frozen],
+                keys: ['payout_frozen'],
+                reason: $reason,
+                request: $request,
+            );
+
+            return $locked->fresh();
+        }, 3);
+    }
 }
