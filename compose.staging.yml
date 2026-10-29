@@ -127,12 +127,27 @@ services:
   worker:
     <<: *app
     command: ["php", "artisan", "queue:work", "database", "--sleep=1", "--tries=3", "--timeout=90", "--max-time=3600"]
+    # The image healthcheck probes Apache on 127.0.0.1:80, which does not exist in a
+    # queue worker — the compose command replaces Apache with queue:work. Probe the
+    # actual process instead, or compose declares the worker unhealthy and fails boot.
     depends_on: *runtime-dependencies
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'queue:work' > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
 
   scheduler:
     <<: *app
     command: ["php", "artisan", "schedule:work"]
     depends_on: *runtime-dependencies
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'schedule:work' > /dev/null"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
 
   proxy:
     image: caddy:2.10-alpine
