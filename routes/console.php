@@ -46,3 +46,4 @@ Artisan::command('ledger:reconcile {--from=} {--to=} {--json}', function (Ledger
 
 Schedule::command('queue:prune-failed --hours=168')->daily()->withoutOverlapping();
 Schedule::command('queue:prune-batches --hours=168 --unfinished=336 --cancelled=336')->daily()->withoutOverlapping();
+Schedule::command('data:prune')->daily()->withoutOverlapping();
