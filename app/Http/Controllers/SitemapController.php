@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Store;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -12,7 +13,13 @@ class SitemapController extends Controller
     {
         // Enumerate from the same query the public pages serve. A sitemap URL that 404s wastes
         // crawl budget and reads as a site-quality defect, so visibility cannot drift here.
-        $cityLabels = PublicCatalogController::visibleProducts()
+        // distinct() runs on city alone: PostgreSQL has no equality operator for the products
+        // table's json columns, so a table-wide DISTINCT would fail there.
+        $cityLabels = Product::query()
+            ->published()
+            ->where(function ($query): void {
+                $query->whereNull('seller_id')->orWhereHas('store', fn ($store) => $store->publiclyVisible());
+            })
             ->whereNotNull('city')
             ->distinct()
             ->pluck('city');

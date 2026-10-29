@@ -71,6 +71,18 @@ class Product extends Model
 
     protected static function booted(): void
     {
+        // Order evidence survives product deletion through its snapshot columns, and the FK ids on
+        // order_items are advisory. Nulling them here makes the delete path explicit instead of
+        // depending on FK action ordering across engines: PostgreSQL evaluates the product_id and
+        // product_variant_id FK actions while the cascade removes the variant rows, and a NO ACTION
+        // evaluation order between the two fails the delete even though both FKs are SET NULL.
+        static::deleting(function (Product $product): void {
+            $product->orderItems()->update([
+                'product_id' => null,
+                'product_variant_id' => null,
+            ]);
+        });
+
         static::created(function (Product $product): void {
             if ($product->type === self::TYPE_RENTAL && $product->rental_price_per_day === null) {
                 $product->forceFill([
